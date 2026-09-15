@@ -1,0 +1,3655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Counterweight</title>
+<title>Counterweight</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #12161a;
+    --bg-deep: #0c0f12;
+    --panel: #1b2127;
+    --panel-hi: #232a31;
+    --steel: #333d47;
+    --steel-lo: #262d34;
+    --text: #edf0f2;
+    --text-dim: #8b96a3;
+    --amber: #ffb400;
+    --amber-dim: #a87a1c;
+    --good: #5fd98a;
+    --bad: #ff6b5e;
+    --font-display: "Big Shoulders Display", "Arial Narrow", sans-serif;
+    --font-body: "IBM Plex Sans", system-ui, sans-serif;
+    --font-mono: "Space Mono", ui-monospace, monospace;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    margin: 0;
+    padding: 32px 16px 48px;
+    display: flex;
+    justify-content: center;
+    background-image:
+      linear-gradient(var(--steel-lo) 1px, transparent 1px),
+      linear-gradient(90deg, var(--steel-lo) 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-position: center;
+    background-attachment: fixed;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+  }
+
+  .console{
+    width: 100%;
+    max-width: 640px;
+    background: var(--panel);
+    border: 1px solid var(--steel);
+    border-radius: 24px;
+    padding: 28px 24px 24px;
+    box-shadow:
+      0 40px 80px -30px rgba(0,0,0,0.6),
+      inset 0 1px 0 rgba(255,255,255,0.04);
+    position: relative;
+  }
+
+  @media (max-width: 380px){
+    body{ padding: 20px 8px 32px; }
+    .console{ padding: 20px 14px 18px; border-radius: 18px; }
+    .bay{ padding: 14px 10px 18px; }
+    .card .emoji-badge{ width: 68px; height: 68px; }
+    .card .emoji{ font-size: 2.1rem; }
+  }
+
+  .confetti-layer{
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .confetti-piece{
+    position: absolute;
+    top: -12px;
+    width: 7px;
+    height: 12px;
+    opacity: 0.9;
+    animation: confetti-fall 900ms ease-in forwards;
+  }
+  @keyframes confetti-fall{
+    to{ transform: translateY(200px) rotate(280deg); opacity: 0; }
+  }
+
+  .plate{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--steel);
+    padding-bottom: 18px;
+    margin-bottom: 20px;
+  }
+
+  .plate-title{ min-width: 0; flex: 1 1 220px; }
+
+  .wordmark{
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(1.5rem, 9vw, 2.6rem);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    line-height: 0.9;
+    margin: 0;
+    color: var(--text);
+    overflow-wrap: anywhere;
+  }
+
+  .wordmark span{ color: var(--amber); }
+
+  .tagline{
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin: 6px 0 0;
+    max-width: 30ch;
+  }
+
+  .readout{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .readout[hidden]{ display: none; }
+
+  .readout dl{ margin: 0; text-align: right; }
+  .readout dt{
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .readout dd{
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--amber);
+    text-shadow: 0 0 10px rgba(255,180,0,0.45);
+  }
+
+  .sound-toggle{
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--steel);
+    background: var(--bg-deep);
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: border-color 150ms, transform 150ms;
+  }
+  .sound-toggle:hover{ border-color: var(--amber-dim); }
+  .sound-toggle:focus-visible{ outline: 2px solid var(--amber); outline-offset: 2px; }
+  .sound-toggle:active{ transform: scale(0.92); }
+  .sound-toggle.is-muted{ color: var(--text-dim); opacity: 0.6; }
+
+  .unit-toggle{
+    height: 32px;
+    min-width: 32px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid var(--steel);
+    background: var(--bg-deep);
+    color: var(--text-dim);
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: border-color 150ms, color 150ms, transform 150ms;
+  }
+  .unit-toggle:hover{ border-color: var(--amber-dim); color: var(--text); }
+  .unit-toggle:focus-visible{ outline: 2px solid var(--amber); outline-offset: 2px; }
+  .unit-toggle:active{ transform: scale(0.92); }
+
+  .diff-row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .diff-row[hidden]{ display: none; }
+
+  .diff-label{
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .diff-buttons{
+    display: flex;
+    gap: 6px;
+    background: var(--bg-deep);
+    border: 1px solid var(--steel);
+    border-radius: 999px;
+    padding: 3px;
+  }
+
+  .diff-btn{
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    background: transparent;
+    border: none;
+    border-radius: 999px;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: background 150ms, color 150ms;
+  }
+  .diff-btn:hover:not(.active){ color: var(--text); }
+  .diff-btn:focus-visible{ outline: 2px solid var(--amber); outline-offset: 2px; }
+  .diff-btn.active{ background: var(--amber); color: #1a1305; }
+
+  /* The custom-mode picker has 5 options (vs. 3 for difficulty) and is
+     more likely to overflow on narrow screens, so let it wrap instead
+     of forcing a single pill-shaped row. */
+  #custom-mode-buttons{ flex-wrap: wrap; border-radius: 14px; }
+  #custom-mode-buttons .diff-btn{ flex: 1 1 auto; text-align: center; }
+
+  .diff-desc{
+    width: 100%;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin: -8px 0 0;
+  }
+
+  .bay{
+    background: var(--bg-deep);
+    border: 1px solid var(--steel);
+    border-radius: 16px;
+    padding: 18px 16px 22px;
+  }
+
+  .timer-row{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .timer-row[hidden]{ display: none; }
+
+  .timer-track{
+    flex: 1;
+    height: 7px;
+    background: var(--steel-lo);
+    border: 1px solid var(--steel);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .timer-fill{
+    height: 100%;
+    width: 100%;
+    background: var(--good);
+    border-radius: inherit;
+  }
+
+  .timer-num{
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--good);
+    min-width: 2.4ch;
+    text-align: right;
+  }
+
+  .beam-wrap{ width: min(100%, 360px); margin: 0 auto; display: block; }
+  .beam-wrap[hidden]{ display: none; }
+  .beam-group{
+    transform-origin: 200px 40px;
+    transition: transform 700ms cubic-bezier(.34,1.4,.4,1);
+  }
+  .beam-idle{ animation: idle-tilt 4200ms ease-in-out infinite; }
+  @keyframes idle-tilt{
+    0%, 100% { transform: rotate(-0.6deg); }
+    50% { transform: rotate(0.6deg); }
+  }
+
+  .cards{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 8px;
+  }
+  .cards[hidden]{ display: none; }
+
+  @keyframes card-in{
+    from{ opacity: 0; transform: translateY(6px) scale(0.98); }
+    to{ opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .card-enter{ animation: card-in 220ms ease-out; }
+
+  @media (max-width: 420px){
+    .cards{ grid-template-columns: 1fr; }
+  }
+
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--steel);
+    border-radius: 14px;
+    padding: 18px 12px 16px;
+    color: inherit;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: border-color 200ms, transform 150ms, background 200ms;
+    text-align: center;
+  }
+
+  .card:hover:not(:disabled){ border-color: var(--amber-dim); transform: translateY(-2px); }
+  .card:focus-visible{ outline: 2px solid var(--amber); outline-offset: 2px; }
+  .card:disabled{ cursor: default; }
+
+  .card.correct{ border-color: var(--good); background: var(--panel-hi); }
+  .card.wrong{ border-color: var(--bad); }
+
+  .card .emoji-badge{
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 35% 30%, var(--panel-hi), var(--bg-deep) 75%);
+    border: 1px solid var(--steel);
+    box-shadow: inset 0 2px 5px rgba(255,255,255,0.05), 0 6px 14px rgba(0,0,0,0.35);
+    margin-bottom: 2px;
+    transition: border-color 200ms, box-shadow 200ms, transform 200ms;
+  }
+  .card:hover:not(:disabled) .emoji-badge{ border-color: var(--amber-dim); transform: scale(1.05); }
+  .card.correct .emoji-badge{
+    border-color: var(--good);
+    box-shadow: inset 0 2px 5px rgba(255,255,255,0.05), 0 0 18px rgba(95,217,138,0.35);
+  }
+  .card.wrong .emoji-badge{
+    border-color: var(--bad);
+    box-shadow: inset 0 2px 5px rgba(255,255,255,0.05), 0 0 16px rgba(255,107,94,0.22);
+    opacity: 0.85;
+  }
+
+  .card .emoji{
+    font-size: 2.6rem;
+    line-height: 1;
+    filter: drop-shadow(0 3px 5px rgba(0,0,0,0.45));
+  }
+  .card .name{ font-weight: 600; font-size: 0.95rem; }
+
+  .card .weight{
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 0.02em;
+    min-height: 1.4em;
+  }
+
+  .card.correct .weight{ color: var(--good); text-shadow: 0 0 8px rgba(95,217,138,0.4); }
+  .card.wrong .weight{ color: var(--bad); }
+
+  .verdict{
+    min-height: 3.2em;
+    text-align: center;
+    margin-top: 16px;
+    font-size: 0.9rem;
+    color: var(--text-dim);
+  }
+
+  .verdict strong{ color: var(--text); }
+  .verdict .call{
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.15rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .verdict.is-correct .call{ color: var(--good); }
+  .verdict.is-wrong .call{ color: var(--bad); }
+
+  .pts{
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    vertical-align: middle;
+    color: #1a1305;
+    background: var(--good);
+    border-radius: 999px;
+    padding: 3px 9px;
+    margin-left: 4px;
+    text-transform: uppercase;
+  }
+  .pts-zero{ background: var(--steel); color: var(--text-dim); }
+
+  .controls{
+    display: flex;
+    justify-content: center;
+    margin-top: 14px;
+    min-height: 44px;
+  }
+
+  button.next{
+    background: var(--amber);
+    color: #1a1305;
+    border: none;
+    border-radius: 999px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 10px 26px;
+    cursor: pointer;
+    transition: transform 150ms, filter 150ms;
+  }
+  button.next:hover{ filter: brightness(1.08); transform: translateY(-1px); }
+  button.next:focus-visible{ outline: 2px solid var(--text); outline-offset: 2px; }
+  button.next:disabled{ opacity: 0.5; cursor: not-allowed; filter: none; transform: none; }
+
+  .results{
+    text-align: center;
+    padding: 20px 8px 6px;
+  }
+
+  .results-score{
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(3rem, 18vw, 4.5rem);
+    color: var(--amber);
+    text-shadow: 0 0 22px rgba(255,180,0,0.4);
+    line-height: 1;
+    letter-spacing: 0.01em;
+  }
+
+  .results-score small{
+    font-family: var(--font-mono);
+    font-size: 0.4em;
+    color: var(--text-dim);
+    text-shadow: none;
+    font-weight: 700;
+  }
+
+  .results-msg{
+    margin: 10px 0 4px;
+    font-size: 0.95rem;
+    color: var(--text);
+  }
+
+  .results-sub{
+    margin: 0 0 6px;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+
+  .leaderboard{
+    text-align: left;
+    margin-top: 20px;
+    border-top: 1px solid var(--steel);
+    padding-top: 16px;
+  }
+
+  .lb-head{
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .lb-name-row{
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .lb-name-row[hidden]{ display: none; }
+  @media (max-width: 360px){
+    .lb-name-row{ flex-direction: column; }
+    .lb-name-row button{ width: 100%; }
+  }
+  .lb-name-row input{
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-deep);
+    border: 1px solid var(--steel);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    padding: 8px 10px;
+  }
+  .lb-name-row input:focus-visible{ outline: 2px solid var(--amber); outline-offset: 1px; }
+  .lb-name-row button{
+    background: var(--amber);
+    color: #1a1305;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.8rem;
+    padding: 8px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .lb-list{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .lb-row{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--panel);
+    border: 1px solid var(--steel);
+    border-radius: 10px;
+    padding: 8px 12px;
+  }
+  .lb-row.lb-mine{ border-color: var(--amber); background: var(--panel-hi); }
+
+  .lb-rank{
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    width: 1.4em;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .lb-row:first-child .lb-rank{ color: var(--amber); }
+
+  .lb-info{ flex: 1; min-width: 0; }
+  .lb-info-name{
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lb-info-meta{
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    text-transform: capitalize;
+  }
+
+  .lb-pts{
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--amber);
+    flex-shrink: 0;
+  }
+
+  .lb-empty{
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    padding: 12px 0;
+  }
+
+  .lb-error{
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--bad);
+    margin: -4px 0 10px;
+  }
+  .lb-error[hidden]{ display: none; }
+
+  .lb-login-link{
+    display: block;
+    width: 100%;
+    text-align: center;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    text-decoration: underline;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.7rem;
+    padding: 0;
+    margin: -4px 0 12px;
+  }
+  .lb-login-link:hover{ color: var(--text); }
+  .lb-login-link[hidden]{ display: none; }
+
+  .lb-login-row{
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .lb-login-row[hidden]{ display: none; }
+  @media (max-width: 360px){
+    .lb-login-row{ flex-direction: column; }
+    .lb-login-row button{ width: 100%; }
+  }
+  .lb-login-row input{
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-deep);
+    border: 1px solid var(--steel);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    padding: 8px 10px;
+  }
+  .lb-login-row input:focus-visible{ outline: 2px solid var(--amber); outline-offset: 1px; }
+  .lb-login-row button{
+    background: none;
+    border: 1px solid var(--steel);
+    color: var(--text);
+    border-radius: 8px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.8rem;
+    padding: 8px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .lb-login-row button:hover{ border-color: var(--amber-dim); }
+
+  .lb-note{
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin: 10px 0 0;
+  }
+  .lb-note button{
+    background: none;
+    border: none;
+    color: var(--amber);
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: inherit;
+    font-family: inherit;
+    padding: 0;
+  }
+
+  .hint{
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-top: 16px;
+  }
+  .hint kbd{
+    font-family: var(--font-mono);
+    background: var(--steel-lo);
+    border: 1px solid var(--steel);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 0.7rem;
+  }
+
+  .reset{
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.72rem;
+    font-family: inherit;
+    padding: 0;
+  }
+
+  .menu-link{
+    background: none;
+    border: 1px solid var(--steel);
+    color: var(--text-dim);
+    border-radius: 999px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.75rem;
+    padding: 6px 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: border-color 150ms, color 150ms;
+  }
+  .menu-link:hover{ border-color: var(--amber-dim); color: var(--text); }
+  .menu-link:focus-visible{ outline: 2px solid var(--amber); outline-offset: 2px; }
+
+  .plate-actions{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .game-area[hidden]{ display: none; }
+
+  .mode-banner{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .mode-banner .mode-banner-icon{ font-size: 1.1rem; }
+
+  .daily-note{
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin: -8px 0 16px;
+  }
+  .daily-note[hidden]{ display: none; }
+
+  /* --- Main menu ------------------------------------------------------ */
+  .menu-screen[hidden]{ display: none; }
+
+  .menu-cards{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .menu-card{
+    position: relative;
+    background: var(--panel);
+    border: 1px solid var(--steel);
+    border-radius: 14px;
+    padding: 18px 16px;
+    color: inherit;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    text-align: left;
+    transition: border-color 200ms, transform 150ms, background 200ms;
+  }
+
+  .menu-card.is-locked{ opacity: 0.72; }
+  .menu-card.is-locked:hover{ border-color: var(--steel); background: var(--panel); }
+  .menu-card-lock-badge{
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 0.7rem;
+    line-height: 1;
+    background: var(--bg-deep);
+    border: 1px solid var(--steel);
+    border-radius: 999px;
+    padding: 3px 6px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    color: var(--amber);
+  }
+  .menu-card-lock-badge[hidden]{ display: none; }
+  .menu-card:hover{ border-color: var(--amber-dim); transform: translateY(-2px); background: var(--panel-hi); }
+  .menu-card:focus-visible{ outline: 2px solid var(--amber); outline-offset: 2px; }
+
+  .menu-card-icon{ font-size: 1.8rem; line-height: 1; }
+  .menu-card-title{
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.05rem;
+    color: var(--text);
+  }
+  .menu-card-tag{
+    font-size: 0.76rem;
+    color: var(--text-dim);
+    line-height: 1.35;
+  }
+
+  /* The main event — 10 Rounds gets top billing, everything else reads
+     as a smaller side challenge underneath it. */
+  .menu-card-featured{
+    position: relative;
+    width: 100%;
+    background: linear-gradient(135deg, var(--panel-hi), var(--panel));
+    border: 1px solid var(--amber-dim);
+    border-radius: 20px;
+    padding: 30px 26px;
+    gap: 10px;
+    margin-bottom: 24px;
+    box-shadow: 0 14px 34px rgba(255,180,0,0.1), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  .menu-card-featured:hover{
+    border-color: var(--amber);
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, var(--panel-hi), var(--panel-hi));
+  }
+  .menu-card-featured .menu-card-icon{ font-size: 2.8rem; }
+  .menu-card-featured .menu-card-title{ font-size: clamp(1.3rem, 5vw, 1.7rem); }
+  .menu-card-featured .menu-card-tag{ font-size: 0.88rem; max-width: 48ch; }
+
+  /* Daily Challenge sits right under the featured card, same full width,
+     but as a slim horizontal strip instead of a tall block. */
+  .menu-card-daily{
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    margin-bottom: 24px;
+  }
+  .menu-card-daily .menu-card-icon{ font-size: 1.6rem; flex-shrink: 0; }
+  .menu-card-daily-text{ display: flex; flex-direction: column; gap: 2px; text-align: left; }
+  .menu-card-daily .menu-card-title{ font-size: 0.95rem; }
+  .menu-card-daily .menu-card-tag{ font-size: 0.76rem; }
+
+  .menu-card-badge{
+    position: absolute;
+    top: 18px;
+    right: 20px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #1a1305;
+    background: var(--amber);
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+
+  .menu-section-label{
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin: 0 0 10px;
+  }
+
+  .menu-cards-secondary{ grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .menu-card-compact{ padding: 13px 12px; gap: 4px; }
+  .menu-card-compact .menu-card-icon{ font-size: 1.25rem; }
+  .menu-card-compact .menu-card-title{ font-size: 0.85rem; }
+  .menu-card-compact .menu-card-tag{ font-size: 0.66rem; line-height: 1.3; }
+
+  /* --- Head-to-head ----------------------------------------------------- */
+  .h2h-scoreboard{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    font-family: var(--font-mono);
+    margin-bottom: 4px;
+  }
+  .h2h-scoreboard[hidden]{ display: none; }
+  .h2h-player{
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    padding: 6px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--steel);
+    transition: border-color 150ms, color 150ms, background 150ms;
+  }
+  .h2h-player strong{ color: inherit; font-variant-numeric: tabular-nums; }
+  .h2h-player.active{
+    color: var(--amber);
+    border-color: var(--amber-dim);
+    background: var(--panel-hi);
+  }
+  .h2h-vs{ font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.1em; }
+
+  .h2h-handoff{
+    text-align: center;
+    padding: 34px 10px;
+  }
+  .h2h-handoff[hidden]{ display: none; }
+  .h2h-handoff-title{
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: var(--amber);
+    margin: 0 0 8px;
+  }
+  .h2h-handoff-sub{
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    margin: 0;
+  }
+
+  .h2h-results{
+    text-align: center;
+    padding: 24px 8px 6px;
+  }
+  .h2h-results[hidden]{ display: none; }
+  .h2h-results-title{
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(1.6rem, 8vw, 2.2rem);
+    color: var(--amber);
+    margin: 0 0 8px;
+  }
+  .h2h-results-sub{
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin: 0 0 6px;
+  }
+
+  button.next.secondary{
+    background: none;
+    border: 1px solid var(--steel);
+    color: var(--text-dim);
+  }
+  button.next.secondary:hover{ border-color: var(--amber-dim); color: var(--text); filter: none; }
+
+  .controls.controls-row{ gap: 10px; flex-wrap: wrap; }
+
+  /* --- Custom game setup ------------------------------------------------ */
+  .custom-screen[hidden]{ display: none; }
+
+  .custom-title{
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.3rem;
+    margin: 14px 0 2px;
+    color: var(--text);
+  }
+  .custom-sub{
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    margin: 0 0 18px;
+  }
+
+  .custom-checkbox{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin: -4px 0 18px;
+    cursor: pointer;
+  }
+  .custom-checkbox input{ accent-color: var(--amber); width: 16px; height: 16px; flex-shrink: 0; }
+
+  .custom-items{
+    background: var(--bg-deep);
+    border: 1px solid var(--steel);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 18px;
+  }
+
+  .custom-item-list{
+    list-style: none;
+    margin: 10px 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .custom-item-row{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--panel);
+    border: 1px solid var(--steel);
+    border-radius: 10px;
+    padding: 8px 10px;
+  }
+  .custom-item-row .custom-item-emoji{ font-size: 1.2rem; flex-shrink: 0; }
+  .custom-item-row .custom-item-name{
+    flex: 1;
+    min-width: 0;
+    font-weight: 600;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .custom-item-row .custom-item-weight{
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    flex-shrink: 0;
+  }
+  .custom-item-row .custom-item-remove{
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 2px 4px;
+    flex-shrink: 0;
+  }
+  .custom-item-row .custom-item-remove:hover{ color: var(--bad); }
+
+  .custom-empty{
+    font-size: 0.76rem;
+    color: var(--text-dim);
+    margin: 6px 0 10px;
+  }
+  .custom-empty[hidden]{ display: none; }
+
+  .custom-add-row{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .custom-add-row input,
+  .custom-add-row select{
+    background: var(--panel);
+    border: 1px solid var(--steel);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    padding: 8px 10px;
+  }
+  .custom-add-row input:focus-visible,
+  .custom-add-row select:focus-visible{ outline: 2px solid var(--amber); outline-offset: 1px; }
+  #custom-item-emoji{ width: 52px; flex-shrink: 0; text-align: center; }
+  #custom-item-name{ flex: 1 1 140px; min-width: 0; }
+  #custom-item-weight{ width: 90px; flex-shrink: 0; }
+  #custom-item-unit{ flex-shrink: 0; }
+  .custom-add-row button{
+    background: var(--amber);
+    color: #1a1305;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.82rem;
+    padding: 8px 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .custom-error{
+    font-size: 0.76rem;
+    color: var(--bad);
+    margin: 10px 0 0;
+  }
+  .custom-error[hidden]{ display: none; }
+
+  .leaderboard[hidden]{ display: none; }
+
+  /* --- Paywall ------------------------------------------------------- */
+  .paywall-screen[hidden]{ display: none; }
+  .paywall-badge{
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #1a1305;
+    background: var(--amber);
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin: 14px 0 10px;
+  }
+  .paywall-title{
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.4rem;
+    margin: 0 0 4px;
+    color: var(--text);
+  }
+  .paywall-sub{
+    font-size: 0.84rem;
+    color: var(--text-dim);
+    margin: 0 0 18px;
+  }
+  .paywall-features{
+    list-style: none;
+    margin: 0 0 18px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .paywall-features li{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--panel);
+    border: 1px solid var(--steel);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+  }
+  .paywall-features strong{ color: var(--text); }
+  .paywall-feature-icon{ font-size: 1.3rem; flex-shrink: 0; }
+  .paywall-price-row{
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .paywall-price{
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 2rem;
+    color: var(--amber);
+  }
+  .paywall-price-note{ font-size: 0.78rem; color: var(--text-dim); }
+  .paywall-demo-note{
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    opacity: 0.75;
+    margin: 12px 0 0;
+  }
+</style>
+</head>
+<body>
+
+
+<div class="console">
+  <div class="confetti-layer" id="confetti-layer" aria-hidden="true"></div>
+  <div class="plate">
+    <div class="plate-title">
+      <p class="wordmark">Counter<wbr><span>weight</span></p>
+      <p class="tagline">Guess which one tips the scale. Six ways to play, 300+ real objects.</p>
+    </div>
+    <div class="plate-actions">
+      <button class="unit-toggle" id="unit-toggle" type="button" aria-label="Switch to imperial units">kg</button>
+      <button class="sound-toggle" id="sound-toggle" type="button" aria-label="Mute sound">🔊</button>
+      <button class="menu-link" id="menu-link" type="button" hidden>☰ Menu</button>
+    </div>
+  </div>
+
+  <div class="menu-screen" id="menu-screen">
+    <button class="menu-card menu-card-featured" data-mode="classic" type="button">
+      <span class="menu-card-badge">Start here</span>
+      <span class="menu-card-icon" aria-hidden="true">🎯</span>
+      <span class="menu-card-title">10 Rounds</span>
+      <span class="menu-card-tag">The classic run — ten pairs, points for speed, then compare your score.</span>
+    </button>
+
+    <button class="menu-card menu-card-daily" data-mode="daily" type="button">
+      <span class="menu-card-icon" aria-hidden="true">📅</span>
+      <span class="menu-card-daily-text">
+        <span class="menu-card-title">Daily Challenge</span>
+        <span class="menu-card-tag">Same ten pairs as everyone, today only.</span>
+      </span>
+    </button>
+
+    <button class="menu-card menu-card-daily" data-mode="league" type="button">
+      <span class="menu-card-icon" aria-hidden="true">🏆</span>
+      <span class="menu-card-daily-text">
+        <span class="menu-card-title">League</span>
+        <span class="menu-card-tag">The competitive take on 10 Rounds — three tries, combined score counts.</span>
+      </span>
+    </button>
+
+    <p class="menu-section-label">More ways to play</p>
+    <div class="menu-cards menu-cards-secondary">
+      <button class="menu-card menu-card-compact" data-mode="endless" type="button">
+        <span class="menu-card-icon" aria-hidden="true">♾️</span>
+        <span class="menu-card-title">Endless</span>
+        <span class="menu-card-tag">Keep guessing until you miss one.</span>
+      </button>
+      <button class="menu-card menu-card-compact" data-mode="zen" type="button">
+        <span class="menu-card-icon" aria-hidden="true">🌿</span>
+        <span class="menu-card-title">Zen</span>
+        <span class="menu-card-tag">No timer, no pressure — just learn.</span>
+      </button>
+      <button class="menu-card menu-card-compact" data-mode="timeattack" type="button">
+        <span class="menu-card-lock-badge" hidden>🔒 Premium</span>
+        <span class="menu-card-icon" aria-hidden="true">⏱️</span>
+        <span class="menu-card-title">Time Attack</span>
+        <span class="menu-card-tag">60 seconds — answer as many as you can.</span>
+      </button>
+      <button class="menu-card menu-card-compact" data-mode="headtohead" type="button">
+        <span class="menu-card-lock-badge" hidden>🔒 Premium</span>
+        <span class="menu-card-icon" aria-hidden="true">🤝</span>
+        <span class="menu-card-title">Head-to-Head</span>
+        <span class="menu-card-tag">Pass the device — two players, one winner.</span>
+      </button>
+      <button class="menu-card menu-card-compact" data-mode="custom" type="button">
+        <span class="menu-card-lock-badge" hidden>🔒 Premium</span>
+        <span class="menu-card-icon" aria-hidden="true">🛠️</span>
+        <span class="menu-card-title">Custom</span>
+        <span class="menu-card-tag">Pick a mode, add your own objects to weigh.</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="custom-screen" id="custom-screen" hidden>
+    <button class="menu-link" id="custom-back-btn" type="button">← Menu</button>
+    <p class="custom-title">Custom Game</p>
+    <p class="custom-sub">Pick a mode and difficulty, then add your own objects to weigh.</p>
+
+    <div class="diff-row">
+      <span class="diff-label">Mode</span>
+      <div class="diff-buttons" role="group" aria-label="Custom mode" id="custom-mode-buttons">
+        <button class="diff-btn" data-mode="classic" type="button">10 Rounds</button>
+        <button class="diff-btn" data-mode="endless" type="button">Endless</button>
+        <button class="diff-btn" data-mode="timeattack" type="button">Time Attack</button>
+        <button class="diff-btn" data-mode="zen" type="button">Zen</button>
+        <button class="diff-btn" data-mode="headtohead" type="button">Head-to-Head</button>
+      </div>
+    </div>
+
+    <div class="diff-row">
+      <span class="diff-label">Difficulty</span>
+      <div class="diff-buttons" role="group" aria-label="Custom difficulty" id="custom-diff-buttons">
+        <button class="diff-btn" data-diff="easy" type="button">Easy</button>
+        <button class="diff-btn" data-diff="medium" type="button">Medium</button>
+        <button class="diff-btn" data-diff="hard" type="button">Hard</button>
+      </div>
+    </div>
+
+    <label class="custom-checkbox">
+      <input type="checkbox" id="custom-only-toggle">
+      Only use my objects (skip the built-in 300+ item pool)
+    </label>
+
+    <div class="custom-items">
+      <span class="diff-label">Your objects</span>
+      <ol class="custom-item-list" id="custom-item-list"></ol>
+      <p class="custom-empty" id="custom-empty-note">No custom objects yet — add at least two to play with just your own.</p>
+
+      <div class="custom-add-row">
+        <input type="text" id="custom-item-emoji" maxlength="4" placeholder="🪨" aria-label="Emoji (optional)">
+        <input type="text" id="custom-item-name" maxlength="30" placeholder="Object name" aria-label="Object name">
+        <input type="number" id="custom-item-weight" min="0" step="any" placeholder="Weight" aria-label="Weight">
+        <select id="custom-item-unit" aria-label="Unit">
+          <option value="g" selected>g</option>
+          <option value="mg">mg</option>
+          <option value="kg">kg</option>
+          <option value="t">t</option>
+        </select>
+        <button type="button" id="custom-item-add-btn">Add</button>
+      </div>
+      <p class="custom-error" id="custom-error" hidden></p>
+    </div>
+
+    <div class="controls">
+      <button class="next" id="custom-start-btn" type="button">Start Custom Game →</button>
+    </div>
+  </div>
+
+  <div class="paywall-screen" id="paywall-screen" hidden>
+    <button class="menu-link" id="paywall-back-btn" type="button">← Menu</button>
+    <div class="paywall-badge">🔒 Premium</div>
+    <p class="paywall-title">Unlock the Premium modes</p>
+    <p class="paywall-sub">One unlock, three modes — no timer on how long you keep it.</p>
+
+    <ul class="paywall-features">
+      <li><span class="paywall-feature-icon">⏱️</span><span><strong>Time Attack</strong> — 60 seconds, as many as you can.</span></li>
+      <li><span class="paywall-feature-icon">🤝</span><span><strong>Head-to-Head</strong> — pass-and-play local multiplayer.</span></li>
+      <li><span class="paywall-feature-icon">🛠️</span><span><strong>Custom</strong> — add your own objects and weigh them.</span></li>
+    </ul>
+
+    <div class="paywall-price-row">
+      <span class="paywall-price">$2.99</span>
+      <span class="paywall-price-note">one-time</span>
+    </div>
+
+    <div class="controls">
+      <button class="next" id="paywall-unlock-btn" type="button">Unlock Premium →</button>
+    </div>
+    <p class="paywall-demo-note">Demo build: this is a placeholder paywall — "unlocking" just flips a local switch on this device, no real payment is taken.</p>
+  </div>
+
+  <div class="game-area" id="game-area" hidden>
+    <div class="readout" id="readout">
+      <dl>
+        <dt id="round-label">Round</dt>
+        <dd id="stat-round">1/5</dd>
+      </dl>
+      <dl>
+        <dt>Points</dt>
+        <dd id="stat-points">0</dd>
+      </dl>
+      <dl>
+        <dt>Correct</dt>
+        <dd id="stat-correct">0</dd>
+      </dl>
+      <dl>
+        <dt>Best streak</dt>
+        <dd id="stat-best">0</dd>
+      </dl>
+    </div>
+
+    <div class="h2h-scoreboard" id="h2h-scoreboard" hidden>
+      <span class="h2h-player" id="h2h-p1">Player 1 — <strong id="h2h-p1-pts">0</strong></span>
+      <span class="h2h-vs">vs</span>
+      <span class="h2h-player" id="h2h-p2">Player 2 — <strong id="h2h-p2-pts">0</strong></span>
+    </div>
+
+    <div class="mode-banner">
+      <span class="mode-banner-icon" id="mode-banner-icon" aria-hidden="true">🎯</span>
+      <span id="mode-banner-title">10 Rounds</span>
+    </div>
+
+    <div class="diff-row" id="diff-row">
+      <span class="diff-label">Difficulty</span>
+      <div class="diff-buttons" role="group" aria-label="Difficulty">
+        <button class="diff-btn" id="diff-easy" data-diff="easy" type="button">Easy</button>
+        <button class="diff-btn" id="diff-medium" data-diff="medium" type="button">Medium</button>
+        <button class="diff-btn" id="diff-hard" data-diff="hard" type="button">Hard</button>
+      </div>
+      <p class="diff-desc" id="diff-desc"></p>
+    </div>
+    <p class="daily-note" id="daily-note" hidden>Medium difficulty, same ten pairs for everyone today.</p>
+
+    <div class="bay">
+      <div class="timer-row" id="timer-row">
+        <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+        <span class="timer-num" id="timer-num" aria-live="off">5</span>
+      </div>
+
+      <svg class="beam-wrap" id="beam-wrap" viewBox="0 0 400 140" aria-hidden="true">
+        <ellipse cx="200" cy="132" rx="72" ry="5" fill="#000" opacity="0.28"/>
+
+        <!-- pedestal (fixed, does not rotate) -->
+        <rect x="166" y="118" width="68" height="10" rx="3" fill="#5a3d1c"/>
+        <path d="M163,126 L237,126 L228,130 L172,130 Z" fill="#4a3116"/>
+        <path d="M184,118 L216,118 L206,46 L194,46 Z" fill="#8a6328"/>
+        <line x1="188" y1="94" x2="212" y2="94" stroke="#e0b263" stroke-width="1.5" opacity="0.55"/>
+        <line x1="190" y1="106" x2="210" y2="106" stroke="#e0b263" stroke-width="1.5" opacity="0.4"/>
+        <path d="M193,46 L207,46 L217,39 L183,39 Z" fill="#a9814a"/>
+
+        <g id="beamGroup" class="beam-group beam-idle">
+          <line x1="76" y1="40" x2="324" y2="40" stroke="#8a6328" stroke-width="6" stroke-linecap="round"/>
+          <line x1="83" y1="38" x2="317" y2="38" stroke="#e8c878" stroke-width="1.5" stroke-linecap="round" opacity="0.55"/>
+          <circle cx="76" cy="40" r="6.5" fill="#e8c878" stroke="#5a3d1c" stroke-width="1"/>
+          <circle cx="324" cy="40" r="6.5" fill="#e8c878" stroke="#5a3d1c" stroke-width="1"/>
+
+          <line x1="76" y1="40" x2="57" y2="75" stroke="#5a3d1c" stroke-width="1.5"/>
+          <line x1="76" y1="40" x2="95" y2="75" stroke="#5a3d1c" stroke-width="1.5"/>
+          <ellipse cx="76" cy="80" rx="24" ry="8" fill="#4a3116"/>
+          <ellipse cx="76" cy="76" rx="26" ry="7" fill="none" stroke="#e8c878" stroke-width="2.5"/>
+
+          <line x1="324" y1="40" x2="305" y2="75" stroke="#5a3d1c" stroke-width="1.5"/>
+          <line x1="324" y1="40" x2="343" y2="75" stroke="#5a3d1c" stroke-width="1.5"/>
+          <ellipse cx="324" cy="80" rx="24" ry="8" fill="#4a3116"/>
+          <ellipse cx="324" cy="76" rx="26" ry="7" fill="none" stroke="#e8c878" stroke-width="2.5"/>
+        </g>
+
+        <circle cx="200" cy="40" r="7.5" fill="#e8c878" stroke="#5a3d1c" stroke-width="1.5"/>
+        <circle cx="197.5" cy="37.5" r="2" fill="#fff" opacity="0.5"/>
+      </svg>
+
+      <div class="cards" id="cards">
+        <button class="card" id="card-0" type="button"></button>
+        <button class="card" id="card-1" type="button"></button>
+      </div>
+
+      <div class="verdict" id="verdict" aria-live="polite"></div>
+
+      <div class="controls">
+        <button class="next" id="next-btn" type="button" hidden>Next round →</button>
+      </div>
+
+      <div class="h2h-handoff" id="h2h-handoff" hidden>
+        <p class="h2h-handoff-title" id="h2h-handoff-title">Player 1's turn</p>
+        <p class="h2h-handoff-sub" id="h2h-handoff-sub">Pass the device to Player 1 to begin.</p>
+        <div class="controls">
+          <button class="next" id="h2h-ready-btn" type="button">I'm ready →</button>
+        </div>
+      </div>
+
+      <div class="h2h-handoff" id="league-handoff" hidden>
+        <p class="h2h-handoff-title" id="league-handoff-title">Try 1 of 3 complete</p>
+        <p class="h2h-handoff-sub" id="league-handoff-sub"></p>
+        <div class="controls">
+          <button class="next" id="league-next-btn" type="button">Start try 2 →</button>
+        </div>
+      </div>
+
+      <div class="h2h-results" id="h2h-results" hidden aria-live="polite">
+        <p class="h2h-results-title" id="h2h-results-title"></p>
+        <p class="h2h-results-sub" id="h2h-results-sub"></p>
+        <div class="controls controls-row">
+          <button class="next" id="h2h-rematch-btn" type="button">Rematch →</button>
+          <button class="next secondary" id="h2h-menu-btn" type="button">Back to menu</button>
+        </div>
+      </div>
+
+      <div class="results" id="results" hidden aria-live="polite">
+        <div class="results-score"><span id="results-score">0/5</span></div>
+        <p class="results-msg" id="results-msg"></p>
+        <p class="results-sub" id="results-sub"></p>
+
+        <div class="leaderboard" id="leaderboard">
+          <div class="lb-head" id="lb-head">Leaderboard</div>
+          <div class="lb-name-row" id="lb-name-row" hidden>
+            <input type="text" id="lb-name-input" maxlength="16" placeholder="Your name" autocomplete="off">
+            <button type="button" id="lb-save-btn">Save score</button>
+          </div>
+          <p class="lb-error" id="lb-error" hidden></p>
+          <button type="button" class="lb-login-link" id="lb-login-toggle" hidden>Claimed this name on another device? Log in with your code</button>
+          <div class="lb-login-row" id="lb-login-row" hidden>
+            <input type="text" id="lb-login-code" maxlength="8" placeholder="Your code" autocomplete="off">
+            <button type="button" id="lb-login-btn">Log in</button>
+          </div>
+          <ol class="lb-list" id="lb-list"></ol>
+          <p class="lb-note" id="lb-note"></p>
+        </div>
+
+        <div class="controls controls-row">
+          <button class="next" id="again-btn" type="button">Play again →</button>
+          <button class="next secondary" id="results-menu-btn" type="button">Back to menu</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="hint">Tap an item, or press <kbd>←</kbd> / <kbd>→</kbd> to guess, <kbd>Enter</kbd> to continue. &nbsp;
+      <button class="reset" id="reset-btn" type="button">Reset best streak</button>
+    </p>
+  </div>
+</div>
+
+<script>
+(function(){
+  var ROUNDS = 10;
+
+  // 67 real objects spanning a light bulb to the Statue of Liberty.
+  // Rounds never pick two items freely — pickPair() below only ever
+  // matches items whose weights are within 20% of each other, so every
+  // matchup is a genuine close call regardless of which two come up.
+  var ITEMS = [
+    {name:"Light bulb", g:50, emoji:"💡"},
+    {name:"Chicken egg", g:55, emoji:"🥚"},
+    {name:"Tennis ball", g:58, emoji:"🎾"},
+    {name:"Lemon", g:65, emoji:"🍋"},
+    {name:"Kiwifruit", g:75, emoji:"🥝"},
+
+    {name:"D battery", g:138, emoji:"🔋"},
+    {name:"Baseball", g:145, emoji:"⚾"},
+    {name:"Apple", g:170, emoji:"🍎"},
+    {name:"Smartphone", g:180, emoji:"📱"},
+    {name:"Avocado", g:200, emoji:"🥑"},
+    {name:"Navel orange", g:205, emoji:"🍊"},
+
+    {name:"Basketball", g:620, emoji:"🏀"},
+    {name:"Coconut", g:680, emoji:"🥥"},
+    {name:"Loaf of bread", g:700, emoji:"🍞"},
+    {name:"Cantaloupe", g:800, emoji:"🍈"},
+    {name:"Pineapple", g:900, emoji:"🍍"},
+
+    {name:"Acoustic guitar", g:1800, emoji:"🎸"},
+    {name:"Rabbit", g:2000, emoji:"🐇"},
+    {name:"Laptop", g:2150, emoji:"💻"},
+    {name:"Kitten", g:2200, emoji:"🐱"},
+
+    {name:"Newborn baby", g:3300, emoji:"👶"},
+    {name:"Large pineapple", g:3800, emoji:"🍍"},
+    {name:"House cat", g:4500, emoji:"🐈"},
+    {name:"Watermelon", g:5000, emoji:"🍉"},
+    {name:"French bulldog", g:5200, emoji:"🐶"},
+
+    {name:"Bowling ball", g:6800, emoji:"🎳"},
+    {name:"Whole turkey", g:7200, emoji:"🦃"},
+    {name:"Cocker spaniel", g:8500, emoji:"🐩"},
+    {name:"Beagle", g:10000, emoji:"🐕‍🦺"},
+    {name:"Car tire", g:11000, emoji:"🛞"},
+
+    {name:"Cinder block", g:16000, emoji:"🧱"},
+    {name:"Lamb", g:18000, emoji:"🐑"},
+    {name:"Border collie", g:18500, emoji:"🐕"},
+    {name:"Goat", g:22000, emoji:"🐐"},
+
+    {name:"Adult human", g:62000, emoji:"🧍"},
+    {name:"Red kangaroo", g:68000, emoji:"🦘"},
+    {name:"White-tailed deer", g:70000, emoji:"🦌"},
+    {name:"Great Dane", g:75000, emoji:"🐶"},
+    {name:"Leopard", g:80000, emoji:"🐆"},
+
+    {name:"Gorilla", g:170000, emoji:"🦍"},
+    {name:"Adult lion", g:190000, emoji:"🦁"},
+    {name:"Siberian tiger", g:200000, emoji:"🐯"},
+    {name:"Motorcycle", g:218000, emoji:"🏍️"},
+    {name:"Grand piano", g:248000, emoji:"🎹"},
+
+    {name:"Grizzly bear", g:385000, emoji:"🐻"},
+    {name:"Polar bear", g:452000, emoji:"🐻‍❄️"},
+    {name:"Racehorse", g:500000, emoji:"🐎"},
+    {name:"Moose", g:545000, emoji:"🫎"},
+
+    {name:"Dairy cow", g:700000, emoji:"🐄"},
+    {name:"American bison", g:800000, emoji:"🦬"},
+    {name:"City car", g:905000, emoji:"🚗"},
+    {name:"Giraffe", g:1000000, emoji:"🦒"},
+    {name:"Compact SUV", g:1150000, emoji:"🚙"},
+
+    {name:"Beluga whale", g:1350000, emoji:"🐳"},
+    {name:"Hippopotamus", g:1500000, emoji:"🦛"},
+
+    {name:"Walrus", g:2000000, emoji:"🦭"},
+    {name:"White rhinoceros", g:2300000, emoji:"🦏"},
+    {name:"Asian elephant (female)", g:2700000, emoji:"🐘"},
+
+    {name:"Orca", g:5500000, emoji:"🐋"},
+    {name:"African elephant", g:6000000, emoji:"🐘"},
+    {name:"T. rex (estimated)", g:6900000, emoji:"🦖"},
+
+    {name:"Gray whale", g:28000000, emoji:"🐋"},
+    {name:"Humpback whale", g:30000000, emoji:"🐳"},
+    {name:"Sperm whale", g:35000000, emoji:"🐋"},
+
+    {name:"Blue whale", g:150000000, emoji:"🐳"},
+    {name:"Boeing 747 (empty)", g:178000000, emoji:"✈️"},
+    {name:"Statue of Liberty", g:204000000, emoji:"🗽"},
+
+    // Coins & bullion
+    {name:"US nickel", g:5.0, emoji:"🪙"},
+    {name:"US quarter", g:5.67, emoji:"🪙"},
+    {name:"1 euro coin", g:7.5, emoji:"🪙"},
+    {name:"2 euro coin", g:8.5, emoji:"🪙"},
+    {name:"Gold bar (1 troy oz)", g:31.1, emoji:"🥇"},
+
+    // Produce
+    {name:"Blueberry", g:0.7, emoji:"🫐"},
+    {name:"Grape", g:5, emoji:"🍇"},
+    {name:"Olive", g:3.5, emoji:"🫒"},
+    {name:"Cherry", g:8, emoji:"🍒"},
+    {name:"Strawberry", g:12, emoji:"🍓"},
+    {name:"Peach", g:150, emoji:"🍑"},
+    {name:"Pear", g:178, emoji:"🍐"},
+    {name:"Banana", g:118, emoji:"🍌"},
+    {name:"Tomato", g:123, emoji:"🍅"},
+    {name:"Potato", g:173, emoji:"🥔"},
+    {name:"Onion", g:110, emoji:"🧅"},
+    {name:"Carrot", g:61, emoji:"🥕"},
+    {name:"Cucumber", g:300, emoji:"🥒"},
+    {name:"Corn on the cob", g:90, emoji:"🌽"},
+    {name:"Eggplant", g:500, emoji:"🍆"},
+    {name:"Bell pepper", g:120, emoji:"🫑"},
+    {name:"Garlic bulb", g:40, emoji:"🧄"},
+    {name:"Mango", g:200, emoji:"🥭"},
+    {name:"Green apple", g:149, emoji:"🍏"},
+    {name:"Cabbage", g:900, emoji:"🥬"},
+    {name:"Broccoli", g:375, emoji:"🥦"},
+
+    // Baked goods & food
+    {name:"Cookie", g:15, emoji:"🍪"},
+    {name:"Croissant", g:60, emoji:"🥐"},
+    {name:"Bagel", g:95, emoji:"🥯"},
+    {name:"Cupcake", g:65, emoji:"🧁"},
+    {name:"Glazed donut", g:60, emoji:"🍩"},
+    {name:"Baguette", g:250, emoji:"🥖"},
+    {name:"Slice of pizza", g:120, emoji:"🍕"},
+    {name:"Taco", g:170, emoji:"🌮"},
+    {name:"Hot dog with bun", g:150, emoji:"🌭"},
+    {name:"Cheeseburger", g:200, emoji:"🍔"},
+    {name:"Cheese wedge", g:30, emoji:"🧀"},
+    {name:"Bacon strip", g:8, emoji:"🥓"},
+    {name:"Chicken drumstick", g:90, emoji:"🍗"},
+    {name:"Slice of cake", g:100, emoji:"🍰"},
+    {name:"Soft pretzel", g:120, emoji:"🥨"},
+    {name:"Waffle", g:75, emoji:"🧇"},
+    {name:"Pancake", g:60, emoji:"🥞"},
+
+    // Drinks
+    {name:"Soda can, full", g:372, emoji:"🥤"},
+    {name:"Beer bottle, full", g:530, emoji:"🍺"},
+    {name:"Wine bottle, full", g:1200, emoji:"🍷"},
+    {name:"Juice box", g:210, emoji:"🧃"},
+    {name:"Milk carton (1L), full", g:1030, emoji:"🥛"},
+    {name:"Ceramic coffee mug, empty", g:300, emoji:"☕"},
+
+    // Everyday small objects
+    {name:"Ballpoint pen", g:6, emoji:"🖊️"},
+    {name:"Pencil", g:5, emoji:"✏️"},
+    {name:"Plastic ruler (30cm)", g:20, emoji:"📏"},
+    {name:"Scissors", g:70, emoji:"✂️"},
+    {name:"House key", g:7, emoji:"🔑"},
+    {name:"Sunglasses", g:25, emoji:"🕶️"},
+    {name:"Wristwatch", g:55, emoji:"⌚"},
+    {name:"Wedding ring", g:4, emoji:"💍"},
+    {name:"Eyeglasses", g:25, emoji:"👓"},
+    {name:"Baseball cap", g:90, emoji:"🧢"},
+    {name:"Pair of socks", g:50, emoji:"🧦"},
+    {name:"T-shirt", g:150, emoji:"👕"},
+    {name:"Necktie", g:90, emoji:"👔"},
+    {name:"Compact umbrella", g:300, emoji:"☂️"},
+    {name:"Paperback book", g:250, emoji:"📖"},
+    {name:"Hardcover book", g:500, emoji:"📕"},
+    {name:"Newspaper", g:200, emoji:"📰"},
+    {name:"Deck of playing cards", g:100, emoji:"🃏"},
+    {name:"Wooden chess king", g:30, emoji:"♟️"},
+    {name:"Standard die", g:4, emoji:"⚅"},
+    {name:"Puzzle cube", g:90, emoji:"🧩"},
+    {name:"Empty backpack", g:500, emoji:"🎒"},
+    {name:"Leather belt", g:200, emoji:"🪢"},
+
+    // Electronics
+    {name:"Wireless earbuds case", g:45, emoji:"🎧"},
+    {name:"Over-ear headphones", g:250, emoji:"🎧"},
+    {name:"Wireless mouse", g:90, emoji:"🖱️"},
+    {name:"Computer keyboard", g:700, emoji:"⌨️"},
+    {name:"10-inch tablet", g:480, emoji:"📱"},
+    {name:"Compact digital camera", g:195, emoji:"📷"},
+    {name:"DSLR camera with lens", g:800, emoji:"📷"},
+    {name:"Game controller", g:220, emoji:"🎮"},
+    {name:"Handheld game console", g:400, emoji:"🎮"},
+    {name:"External hard drive", g:150, emoji:"💽"},
+    {name:"Portable power bank", g:220, emoji:"🔋"},
+    {name:"Home WiFi router", g:350, emoji:"📡"},
+    {name:"TV remote control", g:105, emoji:"🎛️"},
+    {name:"Desk lamp", g:900, emoji:"💡"},
+
+    // Sports equipment
+    {name:"Soccer ball", g:430, emoji:"⚽"},
+    {name:"American football", g:420, emoji:"🏈"},
+    {name:"Rugby ball", g:460, emoji:"🏉"},
+    {name:"Softball", g:190, emoji:"🥎"},
+    {name:"Volleyball", g:270, emoji:"🏐"},
+    {name:"Hockey puck", g:170, emoji:"🏒"},
+    {name:"Ping pong paddle", g:150, emoji:"🏓"},
+    {name:"Boxing glove", g:340, emoji:"🥊"},
+    {name:"Baseball glove", g:400, emoji:"🧤"},
+    {name:"Pair of ice skates", g:900, emoji:"⛸️"},
+    {name:"Skateboard", g:3200, emoji:"🛹"},
+    {name:"Pair of roller skates", g:1500, emoji:"🛼"},
+    {name:"Ski (single)", g:1800, emoji:"🎿"},
+    {name:"5kg dumbbell", g:5000, emoji:"🏋️"},
+    {name:"Golf driver", g:300, emoji:"⛳"},
+    {name:"Tennis racket", g:300, emoji:"🎾"},
+    {name:"Badminton racket", g:95, emoji:"🏸"},
+    {name:"Cricket bat", g:1200, emoji:"🏏"},
+    {name:"Bowling pin", g:1500, emoji:"🎳"},
+
+    // Musical instruments
+    {name:"Electric guitar", g:3600, emoji:"🎸"},
+    {name:"Violin", g:400, emoji:"🎻"},
+    {name:"Trumpet", g:1200, emoji:"🎺"},
+    {name:"Alto saxophone", g:3000, emoji:"🎷"},
+    {name:"Snare drum", g:4500, emoji:"🥁"},
+    {name:"Banjo", g:1800, emoji:"🪕"},
+    {name:"Accordion", g:5000, emoji:"🪗"},
+    {name:"Handheld microphone", g:300, emoji:"🎤"},
+    {name:"Harmonica", g:100, emoji:"🎵"},
+
+    // Tools & hardware
+    {name:"Claw hammer", g:450, emoji:"🔨"},
+    {name:"Screwdriver", g:100, emoji:"🪛"},
+    {name:"Adjustable wrench", g:300, emoji:"🔧"},
+    {name:"Handsaw", g:600, emoji:"🪚"},
+    {name:"Empty metal toolbox", g:2000, emoji:"🧰"},
+    {name:"Axe", g:1400, emoji:"🪓"},
+    {name:"Spirit level", g:700, emoji:"📐"},
+    {name:"Padlock", g:60, emoji:"🔒"},
+    {name:"Horseshoe magnet", g:50, emoji:"🧲"},
+
+    // Kitchenware
+    {name:"Frying pan, empty", g:900, emoji:"🍳"},
+    {name:"Saucepan, empty", g:800, emoji:"🥘"},
+    {name:"Ceramic dinner plate", g:400, emoji:"🍽️"},
+    {name:"Metal tablespoon", g:30, emoji:"🥄"},
+    {name:"Metal dinner fork", g:40, emoji:"🍴"},
+    {name:"Chef's knife", g:200, emoji:"🔪"},
+    {name:"Mixing bowl", g:500, emoji:"🥣"},
+    {name:"Empty glass jar (500ml)", g:250, emoji:"🫙"},
+    {name:"Ceramic teapot, empty", g:600, emoji:"🫖"},
+
+    // Office supplies
+    {name:"Jumbo paperclip", g:1.5, emoji:"📎"},
+    {name:"Desktop stapler", g:200, emoji:"🗜️"},
+    {name:"Push pin", g:1, emoji:"📌"},
+    {name:"Large binder clip", g:15, emoji:"🖇️"},
+    {name:"Ream of A4 paper", g:2500, emoji:"📄"},
+    {name:"Desktop calculator", g:200, emoji:"🧮"},
+    {name:"Spiral notebook", g:250, emoji:"📓"},
+
+    // Toys
+    {name:"Medium teddy bear", g:400, emoji:"🧸"},
+    {name:"Yo-yo", g:65, emoji:"🪀"},
+    {name:"Inflated balloon", g:3, emoji:"🎈"},
+    {name:"Kite", g:200, emoji:"🪁"},
+    {name:"Rubber duck", g:40, emoji:"🦆"},
+    {name:"Small building blocks set", g:500, emoji:"🧱"},
+    {name:"Board game box", g:1100, emoji:"🎲"},
+
+    // Jewelry
+    {name:"1-carat diamond ring", g:5, emoji:"💍"},
+    {name:"Pearl necklace", g:20, emoji:"📿"},
+
+    // Clothing
+    {name:"Pair of jeans", g:600, emoji:"👖"},
+    {name:"Winter jacket", g:1200, emoji:"🧥"},
+    {name:"Summer dress", g:300, emoji:"👗"},
+    {name:"Pair of sneakers", g:800, emoji:"👟"},
+    {name:"Wool scarf", g:150, emoji:"🧣"},
+    {name:"Pair of winter gloves", g:120, emoji:"🧤"},
+    {name:"Sun hat", g:150, emoji:"👒"},
+
+    // Garden & outdoor
+    {name:"Small potted plant", g:800, emoji:"🪴"},
+    {name:"Empty 5L watering can", g:700, emoji:"🪣"},
+    {name:"Broom", g:400, emoji:"🧹"},
+    {name:"Garden rake", g:900, emoji:"🧹"},
+    {name:"Small bag of soil (5L)", g:4000, emoji:"🪴"},
+    {name:"Firewood log", g:2000, emoji:"🪵"},
+
+    // Small pets
+    {name:"Guinea pig", g:900, emoji:"🐹"},
+    {name:"Budgerigar", g:28, emoji:"🦜"},
+    {name:"Canary", g:18, emoji:"🐦"},
+    {name:"Goldfish", g:30, emoji:"🐠"},
+    {name:"Red-eared slider turtle", g:500, emoji:"🐢"},
+    {name:"Leopard gecko", g:60, emoji:"🦎"},
+    {name:"Ball python", g:1500, emoji:"🐍"},
+    {name:"African grey parrot", g:450, emoji:"🦜"},
+
+    // Farm & wild mammals
+    {name:"Pig", g:90000, emoji:"🐖"},
+    {name:"Chicken hen", g:2000, emoji:"🐔"},
+    {name:"Rooster", g:2700, emoji:"🐓"},
+    {name:"Domestic duck", g:3000, emoji:"🦆"},
+    {name:"Live turkey (tom)", g:11000, emoji:"🦃"},
+    {name:"Llama", g:130000, emoji:"🦙"},
+    {name:"Alpaca", g:70000, emoji:"🦙"},
+    {name:"Dromedary camel", g:500000, emoji:"🐪"},
+    {name:"Plains zebra", g:300000, emoji:"🦓"},
+    {name:"Wild boar", g:90000, emoji:"🐗"},
+    {name:"Water buffalo", g:900000, emoji:"🐃"},
+    {name:"Warthog", g:80000, emoji:"🐗"},
+    {name:"Reindeer", g:150000, emoji:"🦌"},
+    {name:"Blue wildebeest", g:180000, emoji:"🐃"},
+    {name:"Impala", g:55000, emoji:"🦌"},
+    {name:"Spotted hyena", g:60000, emoji:"🐕"},
+    {name:"Gray wolf", g:40000, emoji:"🐺"},
+    {name:"Coyote", g:13000, emoji:"🐺"},
+    {name:"Red fox", g:6000, emoji:"🦊"},
+    {name:"Raccoon", g:8000, emoji:"🦝"},
+    {name:"American badger", g:10000, emoji:"🦡"},
+    {name:"Striped skunk", g:3500, emoji:"🦨"},
+    {name:"River otter", g:9000, emoji:"🦦"},
+    {name:"American beaver", g:20000, emoji:"🦫"},
+    {name:"North American porcupine", g:12000, emoji:"🦔"},
+    {name:"Nine-banded armadillo", g:5000, emoji:"🦔"},
+    {name:"Three-toed sloth", g:4500, emoji:"🦥"},
+    {name:"Red squirrel", g:300, emoji:"🐿️"},
+    {name:"Eastern gray squirrel", g:500, emoji:"🐿️"},
+    {name:"European hedgehog", g:900, emoji:"🦔"},
+
+    // Birds, reptiles & amphibians
+    {name:"Bald eagle", g:4500, emoji:"🦅"},
+    {name:"Golden eagle", g:5000, emoji:"🦅"},
+    {name:"Snowy owl", g:2000, emoji:"🦉"},
+    {name:"Great horned owl", g:1400, emoji:"🦉"},
+    {name:"Peregrine falcon", g:700, emoji:"🦅"},
+    {name:"Wild mallard duck", g:1100, emoji:"🦆"},
+    {name:"Canada goose", g:4300, emoji:"🦢"},
+    {name:"Wild turkey", g:8000, emoji:"🦃"},
+    {name:"Common raven", g:1200, emoji:"🐦‍⬛"},
+    {name:"American crow", g:450, emoji:"🐦‍⬛"},
+    {name:"King penguin", g:13000, emoji:"🐧"},
+    {name:"Emperor penguin", g:23000, emoji:"🐧"},
+    {name:"Green sea turtle", g:160000, emoji:"🐢"},
+    {name:"Komodo dragon", g:70000, emoji:"🦎"},
+    {name:"American alligator", g:360000, emoji:"🐊"},
+    {name:"Saltwater crocodile", g:450000, emoji:"🐊"},
+    {name:"Green iguana", g:4000, emoji:"🦎"},
+    {name:"Bullfrog", g:500, emoji:"🐸"},
+    {name:"Poison dart frog", g:2, emoji:"🐸"},
+
+    // Vehicles & misc
+    {name:"Road bicycle", g:8000, emoji:"🚲"},
+    {name:"Kick scooter", g:5000, emoji:"🛴"},
+    {name:"Recreational kayak", g:25000, emoji:"🛶"},
+    {name:"Two-person canoe", g:32000, emoji:"🛶"},
+    {name:"Empty wheelbarrow", g:15000, emoji:"🛒"}
+  ];
+
+  // Three difficulty bands, all drawing from the same 305-item pool.
+  // Easy has the biggest weight gap of the three, but it's capped —
+  // never so far apart that the answer is obvious at a glance.
+  var DIFFICULTIES = {
+    easy:   { min: 1.60, max: 3.00, seconds: 30, pointsMult: 0.90, desc: "Biggest gap of the three — still worth a second look. 30s a round, 10% fewer points." },
+    medium: { min: 1.20, max: 1.60, seconds: 15, pointsMult: 1.00, desc: "A real but not obvious difference. 15s a round." },
+    hard:   { min: 1.01, max: 1.20, seconds: 5,  pointsMult: 1.05, desc: "Razor close — never more than 20% apart. 5s a round, 5% bonus points." }
+  };
+
+  var MODES = {
+    classic:    { icon: "🎯", title: "10 Rounds" },
+    endless:    { icon: "♾️", title: "Endless" },
+    daily:      { icon: "📅", title: "Daily Challenge" },
+    timeattack: { icon: "⏱️", title: "Time Attack" },
+    zen:        { icon: "🌿", title: "Zen" },
+    headtohead: { icon: "🤝", title: "Head-to-Head" },
+    league:     { icon: "🏆", title: "League" }
+  };
+
+  // League is the competitive take on 10 Rounds: same rules and
+  // difficulty picker, but three 10-round tries back to back whose
+  // points add up to one combined score for the leaderboard.
+  var LEAGUE_ATTEMPTS = 3;
+
+  // Points scale with how much of the round's time was left when you
+  // answered — call it fast and it's worth more than calling it slow.
+  // The difficulty's pointsMult then bumps that up or down: Hard pays a
+  // 5% bonus per answer, Easy pays 10% less, Medium is the baseline.
+  var SPEED_TIERS = [
+    { cutoff: 1/3, points: 3, label: "Fast" },
+    { cutoff: 2/3, points: 2, label: "Medium" },
+    { cutoff: 1,   points: 1, label: "Slow" }
+  ];
+  var MAX_ROUND_POINTS = 3;
+
+  function speedTier(elapsedFrac){
+    for (var i = 0; i < SPEED_TIERS.length; i++){
+      if (elapsedFrac <= SPEED_TIERS[i].cutoff) return SPEED_TIERS[i];
+    }
+    return SPEED_TIERS[SPEED_TIERS.length - 1];
+  }
+
+  function currentPointsMult(){
+    return (DIFFICULTIES[state.difficulty] || DIFFICULTIES.medium).pointsMult;
+  }
+
+  // Round to the nearest tenth so the 5%/10% adjustment shows up
+  // cleanly instead of drifting through floating-point noise.
+  function roundPts(n){
+    return Math.round(n * 10) / 10;
+  }
+
+  function formatPoints(n){
+    return Number.isInteger(n) ? String(n) : n.toFixed(1);
+  }
+
+  var UNIT_SYSTEM_KEY = 'counterweight_unit_system';
+  function getUnitSystem(){
+    try{ return localStorage.getItem(UNIT_SYSTEM_KEY) === 'imperial' ? 'imperial' : 'metric'; } catch(e){ return 'metric'; }
+  }
+  function setUnitSystem(sys){
+    try{ localStorage.setItem(UNIT_SYSTEM_KEY, sys); } catch(e){}
+  }
+
+  var OZ_IN_G = 28.349523125;
+  var LB_IN_G = 453.59237;
+  var TON_IN_G = 907184.74; // US short ton, to match the lb-based ladder below
+
+  function formatWeight(g){
+    var value, unit;
+    if (getUnitSystem() === 'imperial'){
+      var oz = g / OZ_IN_G;
+      var lb = g / LB_IN_G;
+      var ton = g / TON_IN_G;
+      if (oz < 16){ value = oz; unit = 'oz'; }
+      else if (lb < 2000){ value = lb; unit = 'lb'; }
+      else { value = ton; unit = 'ton'; }
+    } else {
+      if (g < 1){ value = g*1000; unit = 'mg'; }
+      else if (g < 1000){ value = g; unit = 'g'; }
+      else if (g < 1e6){ value = g/1000; unit = 'kg'; }
+      else { value = g/1e6; unit = 't'; }
+    }
+    var decimals = value < 10 ? 1 : 0;
+    return value.toLocaleString('en-US', {maximumFractionDigits: decimals, minimumFractionDigits: decimals}) + ' ' + unit;
+  }
+
+  function formatRatio(r){
+    if (r >= 100) return Math.round(r).toLocaleString('en-US') + '×';
+    if (r >= 10) return r.toFixed(0) + '×';
+    return r.toFixed(1) + '×';
+  }
+
+  // --- Sound ------------------------------------------------------------
+  // Everything here is synthesized with the Web Audio API — no audio
+  // files to fetch (and none would load through an artifact's CDN
+  // allowlist anyway). Every call is wrapped so a browser that blocks or
+  // lacks audio just plays nothing instead of throwing.
+  var SOUND_KEY = 'counterweight_sound_muted';
+  var audioCtx = null;
+
+  function getAudioCtx(){
+    if (audioCtx) return audioCtx;
+    try{
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      audioCtx = new Ctx();
+    } catch(e){ audioCtx = null; }
+    return audioCtx;
+  }
+
+  function isMuted(){
+    try{ return localStorage.getItem(SOUND_KEY) === '1'; } catch(e){ return false; }
+  }
+  function setMuted(m){
+    try{ localStorage.setItem(SOUND_KEY, m ? '1' : '0'); } catch(e){}
+  }
+
+  // A browser won't make sound until a real user gesture has reached it,
+  // so the context starts (or resumes) on the first click/keydown on the
+  // page rather than at load — this just gets it ready a beat earlier.
+  function primeAudio(){
+    var ctx = getAudioCtx();
+    if (ctx && ctx.state === 'suspended'){ ctx.resume().catch(function(){}); }
+  }
+  document.addEventListener('pointerdown', primeAudio, { once: true });
+  document.addEventListener('keydown', primeAudio, { once: true });
+
+  // One synthesized tone: frequency in Hz, duration in seconds, and an
+  // optional shape/volume/delay/slide so a few calls can be chained into
+  // a tiny melody (see sfx below).
+  function tone(freq, dur, opts){
+    if (isMuted()) return;
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    opts = opts || {};
+    try{
+      var startAt = ctx.currentTime + (opts.delay || 0);
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = opts.type || 'sine';
+      osc.frequency.setValueAtTime(freq, startAt);
+      if (opts.slideTo){
+        osc.frequency.exponentialRampToValueAtTime(Math.max(opts.slideTo, 1), startAt + dur);
+      }
+      var peak = opts.volume != null ? opts.volume : 0.16;
+      gain.gain.setValueAtTime(0.0001, startAt);
+      gain.gain.exponentialRampToValueAtTime(peak, startAt + Math.min(0.015, dur / 4));
+      gain.gain.exponentialRampToValueAtTime(0.0001, startAt + dur);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(startAt);
+      osc.stop(startAt + dur + 0.02);
+    } catch(e){ /* audio is a nice-to-have — never let it break the game */ }
+  }
+
+  var sfx = {
+    correct: function(){
+      tone(660, 0.09, { type: 'triangle', volume: 0.16 });
+      tone(880, 0.14, { type: 'triangle', volume: 0.16, delay: 0.07 });
+    },
+    wrong: function(){
+      tone(180, 0.22, { type: 'sawtooth', volume: 0.13, slideTo: 80 });
+    },
+    tick: function(){
+      tone(1200, 0.045, { type: 'square', volume: 0.045 });
+    },
+    click: function(){
+      tone(500, 0.04, { type: 'sine', volume: 0.05 });
+    },
+    best: function(){
+      tone(523, 0.1, { type: 'triangle', volume: 0.16 });
+      tone(659, 0.1, { type: 'triangle', volume: 0.16, delay: 0.09 });
+      tone(784, 0.18, { type: 'triangle', volume: 0.18, delay: 0.18 });
+    },
+    results: function(good){
+      if (good){
+        tone(523, 0.1, { type: 'triangle', volume: 0.15 });
+        tone(659, 0.1, { type: 'triangle', volume: 0.15, delay: 0.09 });
+        tone(784, 0.18, { type: 'triangle', volume: 0.17, delay: 0.18 });
+      } else {
+        tone(392, 0.14, { type: 'sine', volume: 0.12 });
+        tone(311, 0.2, { type: 'sine', volume: 0.12, delay: 0.11 });
+      }
+    }
+  };
+
+  var RESULT_TIERS = [
+    { frac: 1.0, msg: "Perfect weigh-in.", sub: "You called every single one." },
+    { frac: 0.8, msg: "Sharp eye.", sub: "Almost a clean sweep." },
+    { frac: 0.6, msg: "Solid instincts.", sub: "More right than wrong." },
+    { frac: 0.4, msg: "A few surprises in there.", sub: "Mass is a trickster." },
+    { frac: 0, msg: "Weights can be deceiving.", sub: "Run it back." }
+  ];
+
+  function resultTier(points, maxPoints){
+    for (var i = 0; i < RESULT_TIERS.length; i++){
+      if (points >= Math.ceil(maxPoints * RESULT_TIERS[i].frac)) return RESULT_TIERS[i];
+    }
+    return RESULT_TIERS[RESULT_TIERS.length - 1];
+  }
+
+  var ENDLESS_TIERS = [
+    { min: 20, msg: "Legendary calibration.", sub: "That's an incredible run." },
+    { min: 12, msg: "Master weigher.", sub: "Way deeper than most ever get." },
+    { min: 6,  msg: "Strong streak.", sub: "You really trust your gut." },
+    { min: 3,  msg: "Good run.", sub: "A few more reps and you'll go further." },
+    { min: 0,  msg: "Weights can be deceiving.", sub: "Run it back." }
+  ];
+
+  function endlessTier(rounds){
+    for (var i = 0; i < ENDLESS_TIERS.length; i++){
+      if (rounds >= ENDLESS_TIERS[i].min) return ENDLESS_TIERS[i];
+    }
+    return ENDLESS_TIERS[ENDLESS_TIERS.length - 1];
+  }
+
+  var TIMEATTACK_TIERS = [
+    { min: 40, msg: "Blistering pace.", sub: "That's elite-level speed." },
+    { min: 25, msg: "Fast hands.", sub: "Well above average." },
+    { min: 14, msg: "Solid clip.", sub: "A respectable run." },
+    { min: 6,  msg: "Getting warmed up.", sub: "A few more reps and you'll fly." },
+    { min: 0,  msg: "Every run starts somewhere.", sub: "Give it another go." }
+  ];
+
+  function timeAttackTier(points){
+    for (var i = 0; i < TIMEATTACK_TIERS.length; i++){
+      if (points >= TIMEATTACK_TIERS[i].min) return TIMEATTACK_TIERS[i];
+    }
+    return TIMEATTACK_TIERS[TIMEATTACK_TIERS.length - 1];
+  }
+
+  // --- Daily challenge seeding -------------------------------------------
+  // A tiny seeded PRNG so everyone gets the exact same sequence of pairs
+  // on a given day. Only used while state.mode === 'daily'; every other
+  // mode keeps using Math.random via rand() below.
+  function mulberry32(seed){
+    return function(){
+      seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+      var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function todayKey(){
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function dailySeed(){
+    var key = todayKey();
+    var h = 0;
+    for (var i = 0; i < key.length; i++){ h = (h * 31 + key.charCodeAt(i)) | 0; }
+    return h;
+  }
+
+  var dailyRng = null;
+
+  // --- League's once-a-day limit -----------------------------------------
+  // Unlike Daily Challenge (same pairs for everyone, but replayable),
+  // League only lets a full 3-try run be SUBMITTED once per local day —
+  // marked at completion, not at the start, so an abandoned or reloaded
+  // run doesn't cost you your shot; you just start over from try 1.
+  var LEAGUE_LAST_PLAYED_KEY = 'counterweight_league_last_played';
+  var LEAGUE_TAG_DEFAULT = 'The competitive take on 10 Rounds — three tries, combined score counts.';
+  var LEAGUE_TAG_DONE = "Today's League run is in — come back tomorrow for another shot.";
+
+  function hasPlayedLeagueToday(){
+    try{ return localStorage.getItem(LEAGUE_LAST_PLAYED_KEY) === todayKey(); } catch(e){ return false; }
+  }
+  function markLeaguePlayedToday(){
+    try{ localStorage.setItem(LEAGUE_LAST_PLAYED_KEY, todayKey()); } catch(e){}
+  }
+
+  function renderLeagueAvailability(){
+    var card = els.menuCards.filter(function(c){ return c.dataset.mode === 'league'; })[0];
+    if (!card) return;
+    var done = hasPlayedLeagueToday();
+    card.disabled = done;
+    card.classList.toggle('is-locked', done);
+    var tag = card.querySelector('.menu-card-tag');
+    if (tag) tag.textContent = done ? LEAGUE_TAG_DONE : LEAGUE_TAG_DEFAULT;
+  }
+  function rand(){
+    if (state.mode === 'daily' && dailyRng) return dailyRng();
+    return Math.random();
+  }
+
+  // --- Leaderboard -----------------------------------------------------
+  // Scores are shared across everyone who opens this page when the
+  // artifact's db capability is available. window.claude exists before
+  // this script runs, so it's safe to call use() immediately; it
+  // resolves null on a plain downloaded copy of this file (there's no
+  // window.claude at all there) or if the viewer never granted it —
+  // either way we fall back to a leaderboard kept in this browser only.
+  var dbPromise = (typeof window !== 'undefined' && window.claude && window.claude.use)
+    ? window.claude.use('db')
+    : Promise.resolve(null);
+
+  var LOCAL_SCORES_KEY = 'counterweight_local_scores_v1';
+  var NAME_KEY = 'counterweight_player_name';
+
+  function getSavedName(){
+    try{ return localStorage.getItem(NAME_KEY) || ''; } catch(e){ return ''; }
+  }
+  function saveName(name){
+    try{ localStorage.setItem(NAME_KEY, name); } catch(e){}
+  }
+  function clearSavedName(){
+    try{ localStorage.removeItem(NAME_KEY); } catch(e){}
+  }
+
+  // --- Lightweight name-claiming (not real accounts) --------------------
+  // There's no server here to run real auth, so this is a soft,
+  // cooperative system: each browser gets a random id, and the first
+  // device to save a given name on the shared leaderboard "claims" it
+  // (via the db capability's acquire() lease, so two people can't both
+  // grab the same name at once) and gets a short recovery code back.
+  // Anyone could still edit the page to bypass this — it stops casual
+  // name-squatting, not a determined cheater.
+  var PLAYER_ID_KEY = 'counterweight_player_id';
+
+  function getPlayerId(){
+    try{
+      var id = localStorage.getItem(PLAYER_ID_KEY);
+      if (!id){
+        id = (window.crypto && window.crypto.randomUUID)
+          ? window.crypto.randomUUID()
+          : ('p-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10));
+        localStorage.setItem(PLAYER_ID_KEY, id);
+      }
+      return id;
+    } catch(e){ return 'p-' + Math.random().toString(36).slice(2, 10); }
+  }
+  function setPlayerId(id){
+    try{ localStorage.setItem(PLAYER_ID_KEY, id); } catch(e){}
+  }
+
+  function nameKey(name){ return sanitizeName(name).toLowerCase(); }
+
+  function generateProfileCode(){
+    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O or 1/I
+    var out = '';
+    for (var i = 0; i < 6; i++) out += chars[Math.floor(Math.random() * chars.length)];
+    return out;
+  }
+
+  // Tries to claim `name` for this device's player id. Returns
+  // {ok:true, code, isNew} on success (already-yours names count as
+  // success too), or {ok:false, reason} when someone else holds it.
+  // When db isn't available there's no shared board to protect names
+  // on, so this is a no-op success.
+  async function claimName(name){
+    var db = await dbPromise;
+    if (!db) return { ok: true, code: null };
+    var playerId = getPlayerId();
+    try{
+      var ref = db.collection('players').doc(nameKey(name));
+      var lease = await ref.acquire({ holder: playerId, ttlMs: 5000 });
+      if (!lease.acquired) return { ok: false, reason: 'busy' };
+      var snap = await ref.get();
+      var data = snap.exists ? snap.data() : null;
+      if (!data || !data.playerId){
+        var code = generateProfileCode();
+        await ref.set({ name: sanitizeName(name), playerId: playerId, code: code, createdAt: Date.now() });
+        return { ok: true, code: code, isNew: true };
+      }
+      if (data.playerId === playerId) return { ok: true, code: data.code || null, isNew: false };
+      return { ok: false, reason: 'taken' };
+    } catch(e){
+      // Don't block play over a claim-system hiccup — let the score
+      // through unclaimed rather than losing it.
+      return { ok: true, code: null };
+    }
+  }
+
+  // Adopts an existing claimed name's player id onto this device, so
+  // scores here count as the same player as wherever the code came from.
+  async function loginWithCode(name, code){
+    var db = await dbPromise;
+    if (!db) return { ok: false, reason: 'no_db' };
+    try{
+      var snap = await db.collection('players').doc(nameKey(name)).get();
+      if (!snap.exists) return { ok: false, reason: 'not_found' };
+      var data = snap.data();
+      var want = String(code || '').trim().toUpperCase();
+      if (!data || !want || String(data.code || '').toUpperCase() !== want) return { ok: false, reason: 'bad_code' };
+      setPlayerId(data.playerId);
+      return { ok: true };
+    } catch(e){ return { ok: false, reason: 'error' }; }
+  }
+
+  function readLocalScores(){
+    try{
+      var raw = localStorage.getItem(LOCAL_SCORES_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch(e){ return []; }
+  }
+
+  // Submits one finished game. Returns {source: 'shared'|'local', id}.
+  async function submitScore(entry){
+    try{
+      var db = await dbPromise;
+      if (db){
+        var ref = await db.collection('scores').add(entry);
+        return { source: 'shared', id: ref.id };
+      }
+    } catch(e){ /* fall through to the local copy below */ }
+
+    try{
+      var arr = readLocalScores();
+      var id = 'local-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+      arr.push(Object.assign({}, entry, { id: id }));
+      arr.sort(function(a, b){ return b.points - a.points; });
+      localStorage.setItem(LOCAL_SCORES_KEY, JSON.stringify(arr.slice(0, 50)));
+      return { source: 'local', id: id };
+    } catch(e){ return { source: 'local', id: null }; }
+  }
+
+  // Top 10 scores for one mode. Returns {source, rows} where each row
+  // carries an id. Classic ranks by points; Endless reuses the same
+  // `points` field to mean "rounds survived" (see buildScoreEntry).
+  // Top 10 scores for one mode. `filterFn`, when given, narrows the
+  // result further in JS (used by Daily Challenge to keep only today's
+  // entries) — the shared store fetches a wider slice first so filtering
+  // afterward still leaves ten rows to show.
+  async function fetchLeaderboard(mode, filterFn){
+    try{
+      var db = await dbPromise;
+      if (db){
+        var snap = await db.collection('scores').where('mode', '==', mode).orderBy('points', 'desc').limit(filterFn ? 50 : 10).get();
+        var rows = snap.docs.map(function(d){ return Object.assign({ id: d.id }, d.data()); });
+        if (filterFn) rows = rows.filter(filterFn);
+        return { source: 'shared', rows: rows.slice(0, 10) };
+      }
+    } catch(e){ /* fall through to the local copy below */ }
+
+    var arr = readLocalScores().filter(function(e){ return (e.mode || 'classic') === mode; });
+    if (filterFn) arr = arr.filter(filterFn);
+    arr.sort(function(a, b){ return b.points - a.points; });
+    return { source: 'local', rows: arr.slice(0, 10) };
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function sanitizeName(raw){
+    var name = String(raw || '').replace(/[\r\n\t]+/g, ' ').trim().slice(0, 16);
+    return name || 'Anonymous';
+  }
+
+  function renderLeaderboard(rows, mineId){
+    if (!rows.length){
+      els.lbList.innerHTML = '';
+      var empty = document.createElement('li');
+      empty.className = 'lb-empty';
+      empty.textContent = 'No scores yet — be the first on the board.';
+      els.lbList.appendChild(empty);
+      return;
+    }
+    // Scores may come from other viewers' documents — treat every
+    // field as untrusted data, never as markup or instructions.
+    var myPlayerId = getPlayerId();
+    els.lbList.innerHTML = rows.map(function(row, i){
+      var name = escapeHtml(sanitizeName(row.name));
+      var metaText;
+      if (row.mode === 'endless') metaText = (row.difficulty || 'medium') + ' · survived ' + row.rounds;
+      else if (row.mode === 'timeattack') metaText = (row.difficulty || 'medium') + ' · ' + (row.correct != null ? row.correct + ' correct' : '');
+      else metaText = (row.difficulty || 'medium') + ' · ' + (row.correct != null ? row.correct + '/' + row.rounds + ' correct' : '');
+      var meta = escapeHtml(metaText);
+      var isMine = row.id === mineId || (row.playerId && row.playerId === myPlayerId);
+      return '<li class="lb-row' + (isMine ? ' lb-mine' : '') + '">' +
+        '<span class="lb-rank">' + (i + 1) + '</span>' +
+        '<span class="lb-info"><span class="lb-info-name">' + name + '</span>' +
+        '<span class="lb-info-meta">' + meta + '</span></span>' +
+        '<span class="lb-pts">' + formatPoints(row.points) + '</span>' +
+        '</li>';
+    }).join('');
+  }
+
+  var els = {
+    round: document.getElementById('stat-round'),
+    roundLabel: document.getElementById('round-label'),
+    points: document.getElementById('stat-points'),
+    correct: document.getElementById('stat-correct'),
+    best: document.getElementById('stat-best'),
+    readout: document.getElementById('readout'),
+    cards: [document.getElementById('card-0'), document.getElementById('card-1')],
+    cardsWrap: document.getElementById('cards'),
+    beamWrap: document.getElementById('beam-wrap'),
+    verdict: document.getElementById('verdict'),
+    next: document.getElementById('next-btn'),
+    beam: document.getElementById('beamGroup'),
+    reset: document.getElementById('reset-btn'),
+    results: document.getElementById('results'),
+    resultsScore: document.getElementById('results-score'),
+    resultsMsg: document.getElementById('results-msg'),
+    resultsSub: document.getElementById('results-sub'),
+    resultsMenuBtn: document.getElementById('results-menu-btn'),
+    again: document.getElementById('again-btn'),
+    diffRow: document.getElementById('diff-row'),
+    diffBtns: [document.getElementById('diff-easy'), document.getElementById('diff-medium'), document.getElementById('diff-hard')],
+    diffDesc: document.getElementById('diff-desc'),
+    dailyNote: document.getElementById('daily-note'),
+    modeBannerIcon: document.getElementById('mode-banner-icon'),
+    modeBannerTitle: document.getElementById('mode-banner-title'),
+    soundToggle: document.getElementById('sound-toggle'),
+    unitToggle: document.getElementById('unit-toggle'),
+    confetti: document.getElementById('confetti-layer'),
+    lbHead: document.getElementById('lb-head'),
+    lbNameRow: document.getElementById('lb-name-row'),
+    lbNameInput: document.getElementById('lb-name-input'),
+    lbSaveBtn: document.getElementById('lb-save-btn'),
+    lbList: document.getElementById('lb-list'),
+    lbNote: document.getElementById('lb-note'),
+    lbError: document.getElementById('lb-error'),
+    lbLoginToggle: document.getElementById('lb-login-toggle'),
+    lbLoginRow: document.getElementById('lb-login-row'),
+    lbLoginCode: document.getElementById('lb-login-code'),
+    lbLoginBtn: document.getElementById('lb-login-btn'),
+    timerRow: document.getElementById('timer-row'),
+    timerFill: document.getElementById('timer-fill'),
+    timerNum: document.getElementById('timer-num'),
+    menuScreen: document.getElementById('menu-screen'),
+    gameArea: document.getElementById('game-area'),
+    menuLink: document.getElementById('menu-link'),
+    menuCards: Array.prototype.slice.call(document.querySelectorAll('.menu-card')),
+    h2hScoreboard: document.getElementById('h2h-scoreboard'),
+    h2hP1: document.getElementById('h2h-p1'),
+    h2hP2: document.getElementById('h2h-p2'),
+    h2hP1Pts: document.getElementById('h2h-p1-pts'),
+    h2hP2Pts: document.getElementById('h2h-p2-pts'),
+    h2hHandoff: document.getElementById('h2h-handoff'),
+    h2hHandoffTitle: document.getElementById('h2h-handoff-title'),
+    h2hHandoffSub: document.getElementById('h2h-handoff-sub'),
+    leagueHandoff: document.getElementById('league-handoff'),
+    leagueHandoffTitle: document.getElementById('league-handoff-title'),
+    leagueHandoffSub: document.getElementById('league-handoff-sub'),
+    leagueNextBtn: document.getElementById('league-next-btn'),
+    h2hReadyBtn: document.getElementById('h2h-ready-btn'),
+    h2hResults: document.getElementById('h2h-results'),
+    h2hResultsTitle: document.getElementById('h2h-results-title'),
+    h2hResultsSub: document.getElementById('h2h-results-sub'),
+    h2hRematchBtn: document.getElementById('h2h-rematch-btn'),
+    h2hMenuBtn: document.getElementById('h2h-menu-btn'),
+    leaderboard: document.getElementById('leaderboard'),
+    customScreen: document.getElementById('custom-screen'),
+    customBackBtn: document.getElementById('custom-back-btn'),
+    customModeBtns: Array.prototype.slice.call(document.querySelectorAll('#custom-mode-buttons .diff-btn')),
+    customDiffBtns: Array.prototype.slice.call(document.querySelectorAll('#custom-diff-buttons .diff-btn')),
+    customOnlyToggle: document.getElementById('custom-only-toggle'),
+    customItemList: document.getElementById('custom-item-list'),
+    customEmptyNote: document.getElementById('custom-empty-note'),
+    customItemEmoji: document.getElementById('custom-item-emoji'),
+    customItemName: document.getElementById('custom-item-name'),
+    customItemWeight: document.getElementById('custom-item-weight'),
+    customItemUnit: document.getElementById('custom-item-unit'),
+    customItemAddBtn: document.getElementById('custom-item-add-btn'),
+    customError: document.getElementById('custom-error'),
+    customStartBtn: document.getElementById('custom-start-btn'),
+    menuLockBadges: Array.prototype.slice.call(document.querySelectorAll('.menu-card-lock-badge')),
+    paywallScreen: document.getElementById('paywall-screen'),
+    paywallBackBtn: document.getElementById('paywall-back-btn'),
+    paywallUnlockBtn: document.getElementById('paywall-unlock-btn')
+  };
+
+  var CONFETTI_COLORS = ['#ffb400', '#5fd98a', '#ff6b5e', '#8ec9ff', '#e8c878'];
+  function burstConfetti(){
+    if (!els.confetti) return;
+    var frag = document.createDocumentFragment();
+    for (var i = 0; i < 14; i++){
+      var piece = document.createElement('span');
+      piece.className = 'confetti-piece';
+      piece.style.left = (Math.random() * 96) + '%';
+      piece.style.background = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
+      piece.style.animationDelay = Math.floor(Math.random() * 120) + 'ms';
+      piece.style.transform = 'rotate(' + Math.floor(Math.random() * 360) + 'deg)';
+      frag.appendChild(piece);
+    }
+    els.confetti.innerHTML = '';
+    els.confetti.appendChild(frag);
+    clearTimeout(els.confetti._clearTimer);
+    els.confetti._clearTimer = setTimeout(function(){ els.confetti.innerHTML = ''; }, 1300);
+  }
+
+  var STORAGE_KEY = 'counterweight_stats_v1';
+  var state;
+
+  function loadStats(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch(e){}
+    return { best: 0 };
+  }
+
+  function saveStats(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.stats)); } catch(e){}
+  }
+
+  // --- Custom objects ----------------------------------------------------
+  // Player-added items, kept in this browser only. `activeItems()` is what
+  // pickPair() actually draws from: the built-in pool plus these, unless
+  // "only my objects" is on, in which case it's just these.
+  var CUSTOM_ITEMS_KEY = 'counterweight_custom_items_v1';
+
+  function loadCustomItems(){
+    try{
+      var raw = localStorage.getItem(CUSTOM_ITEMS_KEY);
+      var arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch(e){ return []; }
+  }
+
+  function saveCustomItems(){
+    try{ localStorage.setItem(CUSTOM_ITEMS_KEY, JSON.stringify(customItems)); } catch(e){}
+  }
+
+  var customItems = loadCustomItems();
+
+  function activeItems(){
+    return state.customOnly ? customItems : ITEMS.concat(customItems);
+  }
+
+  var UNIT_TO_GRAMS = { mg: 0.001, g: 1, kg: 1000, t: 1e6 };
+  function unitToGrams(value, unit){
+    return value * (UNIT_TO_GRAMS[unit] || 1);
+  }
+
+  // bypassBand/alreadyReset are only ever set by pickPair's own retries —
+  // never pass them in from outside.
+  function pickPair(bypassBand, alreadyReset){
+    var pool = activeItems();
+    var band = DIFFICULTIES[state.difficulty] || DIFFICULTIES.medium;
+    // Try random anchors until one has an unused partner in this band.
+    // Uses rand() rather than Math.random() directly so Daily Challenge
+    // can substitute a seeded generator and get the same sequence for
+    // everyone playing that day.
+    for (var attempt = 0; attempt < 300; attempt++){
+      var i = Math.floor(rand() * pool.length);
+      var anchor = pool[i];
+      var candidates = [];
+      for (var j = 0; j < pool.length; j++){
+        if (j === i) continue;
+        var other = pool[j];
+        var ratio = Math.max(anchor.g, other.g) / Math.min(anchor.g, other.g);
+        var fits = bypassBand || (ratio <= band.max && ratio >= band.min);
+        if (fits){
+          var key = i < j ? i + '_' + j : j + '_' + i;
+          if (state.usedPairs.indexOf(key) === -1) candidates.push({ item: other, key: key });
+        }
+      }
+      if (candidates.length){
+        var pick = candidates[Math.floor(rand() * candidates.length)];
+        state.usedPairs.push(pick.key);
+        var pair = [anchor, pick.item];
+        if (rand() < 0.5) pair.reverse();
+        return pair;
+      }
+    }
+    // Nothing found in 300 attempts. The built-in pool never gets this far,
+    // but a small or oddly-proportioned custom set can — these retries are
+    // capped so a bad custom set never locks the page up.
+    if (!alreadyReset){
+      // Maybe we've just used up every pair we haven't shown yet — clear
+      // the dedupe list and try again within the same band.
+      state.usedPairs = [];
+      return pickPair(bypassBand, true);
+    }
+    if (!bypassBand){
+      // Still nothing with a clean dedupe list — no pair in this pool
+      // fits the band at all. Drop the band restriction and try again.
+      state.usedPairs = [];
+      return pickPair(true, false);
+    }
+    // Even ignoring the band and every used pair, we're out of options —
+    // just grab any two distinct items so play never locks up.
+    state.usedPairs = [];
+    if (pool.length < 2) return [pool[0], pool[0]];
+    var a = Math.floor(rand() * pool.length);
+    var b = (a + 1 + Math.floor(rand() * (pool.length - 1))) % pool.length;
+    return rand() < 0.5 ? [pool[a], pool[b]] : [pool[b], pool[a]];
+  }
+
+  function renderStats(){
+    if (state.mode === 'headtohead'){
+      els.h2hP1Pts.textContent = formatPoints(state.p1Points);
+      els.h2hP2Pts.textContent = formatPoints(state.p2Points);
+      els.h2hP1.classList.toggle('active', state.activePlayer === 1);
+      els.h2hP2.classList.toggle('active', state.activePlayer === 2);
+      return;
+    }
+    if (state.mode === 'zen'){
+      els.roundLabel.textContent = 'Seen';
+      els.round.textContent = state.round;
+    } else if (state.mode === 'endless' || state.mode === 'timeattack'){
+      els.roundLabel.textContent = state.mode === 'endless' ? 'Streak' : 'Round';
+      els.round.textContent = state.round;
+    } else if (state.mode === 'league'){
+      els.roundLabel.textContent = 'Try ' + state.leagueAttempt + '/' + LEAGUE_ATTEMPTS + ' · Round';
+      els.round.textContent = state.round + '/' + ROUNDS;
+    } else {
+      els.roundLabel.textContent = 'Round';
+      els.round.textContent = state.round + '/' + ROUNDS;
+    }
+    els.points.textContent = formatPoints(state.points);
+    els.correct.textContent = state.sessionCorrect;
+    els.best.textContent = state.stats.best;
+  }
+
+  // Shows the readout that fits the current mode: the normal four-stat
+  // strip for everything except Head-to-Head, which gets its own
+  // two-player scoreboard instead.
+  function updateScoreboardVisibility(){
+    var isH2H = state.mode === 'headtohead';
+    if (els.readout) els.readout.hidden = isH2H;
+    if (els.h2hScoreboard) els.h2hScoreboard.hidden = !isH2H;
+  }
+
+  // The `hidden` IDL property doesn't reflect to the content attribute on
+  // SVGElement in every browser, so [hidden]{display:none} never kicks in
+  // for the beam SVG. Toggle the attribute directly to make it reliable.
+  function setHidden(el, val){
+    if (val){ el.setAttribute('hidden', ''); }
+    else { el.removeAttribute('hidden'); }
+  }
+
+  function showBay(){
+    setHidden(els.beamWrap, false);
+    els.cardsWrap.hidden = false;
+    els.verdict.hidden = false;
+    els.results.hidden = true;
+    els.h2hHandoff.hidden = true;
+    els.h2hResults.hidden = true;
+    if (els.leagueHandoff) els.leagueHandoff.hidden = true;
+  }
+
+  function newRound(){
+    showBay();
+    state.busy = false;
+    state.pair = pickPair();
+    state.answered = false;
+    els.verdict.textContent = '';
+    els.verdict.className = 'verdict';
+    els.next.hidden = true;
+    els.beam.style.transform = '';
+    els.beam.classList.add('beam-idle');
+    renderStats();
+
+    state.pair.forEach(function(item, i){
+      var card = els.cards[i];
+      card.disabled = false;
+      card.className = 'card card-enter';
+      // item.emoji/item.name may be a player-typed custom object — escape
+      // before it goes into innerHTML.
+      card.innerHTML =
+        '<span class="emoji-badge"><span class="emoji" aria-hidden="true">' + escapeHtml(item.emoji) + '</span></span>' +
+        '<span class="name">' + escapeHtml(item.name) + '</span>' +
+        '<span class="weight">— ? —</span>';
+    });
+
+    if (state.mode === 'timeattack'){
+      // The global 60s clock (see startGlobalTimer) is already running
+      // and owns the visible timer bar — a round here has no timeout of
+      // its own, just a start mark so the speed-tier bonus still applies.
+      state.roundStartTime = performance.now();
+      state.roundDurationMs = 6000;
+    } else if (state.mode === 'zen'){
+      els.timerRow.hidden = true;
+    } else {
+      startTimer();
+    }
+  }
+
+  // Bar/number colors, matching --good and --bad — interpolated by hand
+  // in JS below so the fade doesn't depend on the browser animating a
+  // CSS custom property correctly.
+  var TIMER_GOOD = [95, 217, 138];
+  var TIMER_BAD = [255, 107, 94];
+
+  function clearTimer(){
+    if (state.timerId){
+      cancelAnimationFrame(state.timerId);
+      state.timerId = null;
+    }
+  }
+
+  function startTimer(){
+    clearTimer();
+    var seconds = (DIFFICULTIES[state.difficulty] || DIFFICULTIES.medium).seconds;
+    var totalMs = seconds * 1000;
+    var startTime = performance.now();
+    state.timeLeft = seconds;
+    state.roundStartTime = startTime;
+    state.roundDurationMs = totalMs;
+
+    els.timerRow.hidden = false;
+    els.timerNum.textContent = seconds;
+    els.timerFill.style.width = '100%';
+    els.timerFill.style.backgroundColor = 'rgb(' + TIMER_GOOD.join(',') + ')';
+    els.timerNum.style.color = 'rgb(' + TIMER_GOOD.join(',') + ')';
+
+    function tick(now){
+      var elapsedMs = now - startTime;
+      var frac = elapsedMs / totalMs;
+      if (frac >= 1) frac = 1;
+
+      els.timerFill.style.width = ((1 - frac) * 100) + '%';
+      var r = Math.round(TIMER_GOOD[0] + (TIMER_BAD[0] - TIMER_GOOD[0]) * frac);
+      var g = Math.round(TIMER_GOOD[1] + (TIMER_BAD[1] - TIMER_GOOD[1]) * frac);
+      var b = Math.round(TIMER_GOOD[2] + (TIMER_BAD[2] - TIMER_GOOD[2]) * frac);
+      var color = 'rgb(' + r + ',' + g + ',' + b + ')';
+      els.timerFill.style.backgroundColor = color;
+      els.timerNum.style.color = color;
+
+      var secondsLeft = Math.max(Math.ceil(seconds - elapsedMs / 1000), 0);
+      if (secondsLeft !== state.timeLeft){
+        state.timeLeft = secondsLeft;
+        els.timerNum.textContent = secondsLeft;
+        if (secondsLeft > 0 && secondsLeft <= 3) sfx.tick();
+      }
+
+      if (frac >= 1){
+        state.timerId = null;
+        finishRound(null);
+        return;
+      }
+      state.timerId = requestAnimationFrame(tick);
+    }
+
+    state.timerId = requestAnimationFrame(tick);
+  }
+
+  function stopTimer(){
+    clearTimer();
+    // Time Attack's bar shows the global 60s clock (see startGlobalTimer),
+    // which keeps running through the reveal — don't hide it here.
+    if (state.mode !== 'timeattack') els.timerRow.hidden = true;
+  }
+
+  // --- Time Attack's global clock ---------------------------------------
+  // A second, independent countdown for Time Attack: it runs across the
+  // whole session rather than resetting each round, and ending it ends
+  // the game outright instead of just failing one round.
+  var TIME_ATTACK_MS = 60000;
+
+  function clearGlobalTimer(){
+    if (state.globalTimerId){
+      cancelAnimationFrame(state.globalTimerId);
+      state.globalTimerId = null;
+    }
+  }
+
+  function stopGlobalTimer(){
+    clearGlobalTimer();
+  }
+
+  function startGlobalTimer(){
+    clearGlobalTimer();
+    var totalMs = TIME_ATTACK_MS;
+    var startTime = performance.now();
+    state.globalTimeLeft = Math.ceil(totalMs / 1000);
+
+    els.timerRow.hidden = false;
+    els.timerNum.textContent = state.globalTimeLeft;
+    els.timerFill.style.width = '100%';
+    els.timerFill.style.backgroundColor = 'rgb(' + TIMER_GOOD.join(',') + ')';
+    els.timerNum.style.color = 'rgb(' + TIMER_GOOD.join(',') + ')';
+
+    function tick(now){
+      var elapsedMs = now - startTime;
+      var frac = Math.min(elapsedMs / totalMs, 1);
+
+      els.timerFill.style.width = ((1 - frac) * 100) + '%';
+      var r = Math.round(TIMER_GOOD[0] + (TIMER_BAD[0] - TIMER_GOOD[0]) * frac);
+      var g = Math.round(TIMER_GOOD[1] + (TIMER_BAD[1] - TIMER_GOOD[1]) * frac);
+      var b = Math.round(TIMER_GOOD[2] + (TIMER_BAD[2] - TIMER_GOOD[2]) * frac);
+      var color = 'rgb(' + r + ',' + g + ',' + b + ')';
+      els.timerFill.style.backgroundColor = color;
+      els.timerNum.style.color = color;
+
+      var secondsLeft = Math.max(Math.ceil((totalMs - elapsedMs) / 1000), 0);
+      if (secondsLeft !== state.globalTimeLeft){
+        state.globalTimeLeft = secondsLeft;
+        els.timerNum.textContent = secondsLeft;
+        if (secondsLeft > 0 && secondsLeft <= 5) sfx.tick();
+      }
+
+      if (frac >= 1){
+        state.globalTimerId = null;
+        endTimeAttack();
+        return;
+      }
+      state.globalTimerId = requestAnimationFrame(tick);
+    }
+
+    state.globalTimerId = requestAnimationFrame(tick);
+  }
+
+  function endTimeAttack(){
+    stopGlobalTimer();
+    clearTimer();
+    showResults();
+  }
+
+  function newGame(){
+    state.round = 1;
+    state.points = 0;
+    state.sessionCorrect = 0;
+    state.streak = 0;
+    state.usedPairs = [];
+    stopGlobalTimer();
+    if (state.mode === 'league'){ state.leagueAttempt = 1; state.leagueTotal = 0; state.leagueCorrectTotal = 0; }
+    if (state.mode === 'daily') dailyRng = mulberry32(dailySeed());
+    if (state.mode === 'timeattack') startGlobalTimer();
+    newRound();
+  }
+
+  // Starts try 2 or 3 of a League run without resetting the combined
+  // total that's already been earned — a fresh newGame() would zero
+  // leagueAttempt back to 1, so "Play again" and "next try" stay distinct.
+  function startNextLeagueAttempt(){
+    state.leagueAttempt++;
+    state.round = 1;
+    state.points = 0;
+    state.sessionCorrect = 0;
+    state.streak = 0;
+    state.usedPairs = [];
+    if (els.leagueHandoff) els.leagueHandoff.hidden = true;
+    newRound();
+  }
+
+  function showLeagueAttemptComplete(){
+    stopTimer();
+    setHidden(els.beamWrap, true);
+    els.cardsWrap.hidden = true;
+    els.verdict.hidden = true;
+    els.next.hidden = true;
+    els.results.hidden = true;
+    state.busy = false;
+    if (!els.leagueHandoff) return;
+    els.leagueHandoff.hidden = false;
+    var maxPoints = roundPts(ROUNDS * MAX_ROUND_POINTS * currentPointsMult());
+    if (els.leagueHandoffTitle) els.leagueHandoffTitle.textContent = 'Try ' + state.leagueAttempt + ' of ' + LEAGUE_ATTEMPTS + ' complete';
+    if (els.leagueHandoffSub){
+      els.leagueHandoffSub.textContent =
+        formatPoints(state.points) + ' / ' + formatPoints(maxPoints) + ' pts this try · ' +
+        formatPoints(state.leagueTotal) + ' pts combined so far';
+    }
+    if (els.leagueNextBtn){
+      els.leagueNextBtn.textContent = 'Start try ' + (state.leagueAttempt + 1) + ' →';
+      els.leagueNextBtn.focus();
+    }
+  }
+
+  function renderDifficulty(){
+    els.diffBtns.forEach(function(btn){
+      btn.classList.toggle('active', btn.dataset.diff === state.difficulty);
+    });
+    els.diffDesc.textContent = (DIFFICULTIES[state.difficulty] || DIFFICULTIES.medium).desc;
+  }
+
+  function setDifficulty(diff){
+    if (diff === state.difficulty) return;
+    sfx.click();
+    state.difficulty = diff;
+    renderDifficulty();
+    newGame();
+  }
+
+  // Updates the small mode badge above the difficulty row, and shows/hides
+  // the difficulty picker itself — Daily Challenge locks difficulty to
+  // Medium for everyone, so its row is replaced with a plain note instead.
+  function renderMode(){
+    var m = MODES[state.mode] || MODES.classic;
+    if (els.modeBannerIcon) els.modeBannerIcon.textContent = m.icon;
+    if (els.modeBannerTitle) els.modeBannerTitle.textContent = m.title;
+    var isDaily = state.mode === 'daily';
+    if (els.diffRow) els.diffRow.hidden = isDaily;
+    if (els.dailyNote) els.dailyNote.hidden = !isDaily;
+  }
+
+  // Switches to a freshly chosen mode from the main menu and starts it.
+  function selectMode(mode){
+    sfx.click();
+    state.mode = mode;
+    state.customOnly = false;
+    if (mode === 'daily') state.difficulty = 'medium';
+    renderMode();
+    renderDifficulty();
+    updateScoreboardVisibility();
+    closeMenuUI();
+    if (mode === 'headtohead') startHeadToHead();
+    else newGame();
+  }
+
+  function openMenu(){
+    stopTimer();
+    stopGlobalTimer();
+    els.menuScreen.hidden = false;
+    els.gameArea.hidden = true;
+    if (els.customScreen) els.customScreen.hidden = true;
+    if (els.paywallScreen) els.paywallScreen.hidden = true;
+    if (els.menuLink) els.menuLink.hidden = true;
+    renderLeagueAvailability();
+  }
+
+  // --- Premium paywall (demo) -----------------------------------------
+  // Time Attack, Head-to-Head, and Custom are gated behind a single local
+  // "unlock" flag. This is a client-side demo only: there is no server or
+  // payment processor here, so "purchasing" just flips a localStorage
+  // switch on this device rather than verifying a real transaction.
+  var PREMIUM_KEY = 'counterweight_premium_unlocked';
+  var PREMIUM_MODES = { timeattack: true, headtohead: true, custom: true };
+  var pendingUnlockMode = null;
+
+  function isPremiumUnlocked(){
+    try{ return localStorage.getItem(PREMIUM_KEY) === '1'; } catch(e){ return false; }
+  }
+  function setPremiumUnlocked(v){
+    try{ localStorage.setItem(PREMIUM_KEY, v ? '1' : '0'); } catch(e){}
+  }
+
+  function renderMenuLocks(){
+    var unlocked = isPremiumUnlocked();
+    els.menuCards.forEach(function(card){
+      var locked = !!PREMIUM_MODES[card.dataset.mode] && !unlocked;
+      card.classList.toggle('is-locked', locked);
+    });
+    if (els.menuLockBadges){
+      els.menuLockBadges.forEach(function(badge){ badge.hidden = unlocked; });
+    }
+  }
+
+  function launchMode(mode){
+    if (mode === 'custom') openCustomSetup();
+    else selectMode(mode);
+  }
+
+  function openPaywall(mode){
+    sfx.click();
+    pendingUnlockMode = mode;
+    els.menuScreen.hidden = true;
+    if (els.customScreen) els.customScreen.hidden = true;
+    if (els.paywallScreen) els.paywallScreen.hidden = false;
+    if (els.menuLink) els.menuLink.hidden = true;
+  }
+
+  function closePaywall(){
+    pendingUnlockMode = null;
+    if (els.paywallScreen) els.paywallScreen.hidden = true;
+    openMenu();
+  }
+
+  function unlockPremium(){
+    sfx.click();
+    setPremiumUnlocked(true);
+    renderMenuLocks();
+    if (els.paywallScreen) els.paywallScreen.hidden = true;
+    burstConfetti();
+    var mode = pendingUnlockMode;
+    pendingUnlockMode = null;
+    if (mode) launchMode(mode);
+    else openMenu();
+  }
+
+  function closeMenuUI(){
+    els.menuScreen.hidden = true;
+    els.gameArea.hidden = false;
+    if (els.menuLink) els.menuLink.hidden = false;
+  }
+
+  // --- Custom Game setup screen -------------------------------------
+  // The Custom screen is a config layer, not a 7th mode: it just lets the
+  // player pick one of the existing modes/difficulties and swap in their
+  // own objects via customItems/state.customOnly before handing off to
+  // the normal selectMode()/newGame() flow.
+  var customDraft = { mode: 'classic', difficulty: 'medium' };
+
+  var CUSTOM_MODE_TITLES = { classic: '10 Rounds', endless: 'Endless', timeattack: 'Time Attack', zen: 'Zen', headtohead: 'Head-to-Head' };
+
+  function renderCustomModeButtons(){
+    if (!els.customModeBtns) return;
+    els.customModeBtns.forEach(function(btn){
+      btn.classList.toggle('active', btn.dataset.mode === customDraft.mode);
+    });
+  }
+
+  function renderCustomDiffButtons(){
+    if (!els.customDiffBtns) return;
+    els.customDiffBtns.forEach(function(btn){
+      btn.classList.toggle('active', btn.dataset.diff === customDraft.difficulty);
+    });
+  }
+
+  function renderCustomItemList(){
+    if (!els.customItemList) return;
+    els.customItemList.innerHTML = customItems.map(function(item, i){
+      return '<li class="custom-item-row">' +
+        '<span class="custom-item-emoji">' + escapeHtml(item.emoji || '📦') + '</span>' +
+        '<span class="custom-item-name">' + escapeHtml(item.name) + '</span>' +
+        '<span class="custom-item-weight">' + formatWeight(item.g) + '</span>' +
+        '<button type="button" class="custom-item-remove" data-index="' + i + '" aria-label="Remove ' + escapeHtml(item.name) + '">✕</button>' +
+        '</li>';
+    }).join('');
+    if (els.customEmptyNote) els.customEmptyNote.hidden = customItems.length > 0;
+    if (els.customStartBtn){
+      var needTwo = els.customOnlyToggle && els.customOnlyToggle.checked;
+      els.customStartBtn.disabled = !!(needTwo && customItems.length < 2);
+    }
+  }
+
+  function showCustomError(msg){
+    if (!els.customError) return;
+    els.customError.textContent = msg;
+    els.customError.hidden = !msg;
+  }
+
+  function addCustomItem(){
+    var name = (els.customItemName.value || '').trim();
+    var weightRaw = parseFloat(els.customItemWeight.value);
+    var unit = els.customItemUnit.value || 'g';
+    var emoji = (els.customItemEmoji.value || '').trim() || '📦';
+
+    if (!name){ showCustomError('Give your object a name.'); els.customItemName.focus(); return; }
+    if (!isFinite(weightRaw) || weightRaw <= 0){ showCustomError('Enter a weight greater than zero.'); els.customItemWeight.focus(); return; }
+
+    var grams = unitToGrams(weightRaw, unit);
+    customItems.push({ name: name.slice(0, 30), g: grams, emoji: emoji.slice(0, 4) });
+    saveCustomItems();
+    showCustomError('');
+    els.customItemEmoji.value = '';
+    els.customItemName.value = '';
+    els.customItemWeight.value = '';
+    renderCustomItemList();
+    els.customItemName.focus();
+  }
+
+  function removeCustomItem(index){
+    customItems.splice(index, 1);
+    saveCustomItems();
+    renderCustomItemList();
+  }
+
+  function openCustomSetup(){
+    sfx.click();
+    els.menuScreen.hidden = true;
+    if (els.customScreen) els.customScreen.hidden = false;
+    if (els.menuLink) els.menuLink.hidden = true;
+    renderCustomModeButtons();
+    renderCustomDiffButtons();
+    if (els.customOnlyToggle) els.customOnlyToggle.checked = false;
+    showCustomError('');
+    renderCustomItemList();
+  }
+
+  function closeCustomSetup(){
+    if (els.customScreen) els.customScreen.hidden = true;
+    openMenu();
+  }
+
+  function startCustomGame(){
+    var onlyMine = !!(els.customOnlyToggle && els.customOnlyToggle.checked);
+    if (onlyMine && customItems.length < 2){
+      showCustomError('Add at least two objects to play with just your own.');
+      return;
+    }
+    showCustomError('');
+    sfx.click();
+    state.mode = customDraft.mode;
+    state.customOnly = onlyMine;
+    state.difficulty = customDraft.difficulty;
+    renderMode();
+    renderDifficulty();
+    updateScoreboardVisibility();
+    if (els.customScreen) els.customScreen.hidden = true;
+    els.menuScreen.hidden = true;
+    els.gameArea.hidden = false;
+    if (els.menuLink) els.menuLink.hidden = false;
+    if (customDraft.mode === 'headtohead') startHeadToHead();
+    else newGame();
+  }
+
+  function renderSoundToggle(){
+    if (!els.soundToggle) return;
+    var muted = isMuted();
+    els.soundToggle.textContent = muted ? '🔇' : '🔊';
+    els.soundToggle.setAttribute('aria-label', muted ? 'Unmute sound' : 'Mute sound');
+    els.soundToggle.classList.toggle('is-muted', muted);
+  }
+
+  function renderUnitToggle(){
+    if (!els.unitToggle) return;
+    var imperial = getUnitSystem() === 'imperial';
+    els.unitToggle.textContent = imperial ? 'lb' : 'kg';
+    els.unitToggle.setAttribute('aria-label', imperial ? 'Switch to metric units' : 'Switch to imperial units');
+  }
+
+  // Any weight already on screen (a revealed pair, the custom-objects
+  // list) needs to be re-rendered in the new unit immediately, rather
+  // than waiting for the next round to pick it up.
+  function refreshVisibleWeights(){
+    if (state.pair && state.answered){
+      state.pair.forEach(function(item, idx){
+        var card = els.cards[idx];
+        var weightEl = card && card.querySelector('.weight');
+        if (weightEl) weightEl.textContent = formatWeight(item.g);
+      });
+    }
+    if (els.customScreen && !els.customScreen.hidden) renderCustomItemList();
+  }
+
+  function answer(i){
+    finishRound(i);
+  }
+
+  // chosenIndex is 0 or 1 for a tapped/keyed guess, or null when the
+  // clock ran out before the player picked a side. Scoring and streaks
+  // are skipped in Zen (no pressure, no score) and tracked per-player
+  // instead of on `state` directly in Head-to-Head.
+  function finishRound(chosenIndex){
+    if (state.answered) return;
+    state.answered = true;
+    stopTimer();
+    els.beam.classList.remove('beam-idle');
+
+    var a = state.pair[0], b = state.pair[1];
+    var heavierIndex = a.g >= b.g ? 0 : 1;
+    var timedOut = chosenIndex === null;
+    var correct = !timedOut && (chosenIndex === heavierIndex);
+    var tier = null;
+    var earned = 0;
+    var isNewBest = false;
+    state.lastCorrect = correct;
+
+    var scoring = state.mode !== 'zen';
+    var tracksStreak = state.mode !== 'zen' && state.mode !== 'headtohead';
+
+    if (correct){
+      if (scoring){
+        var budgetMs = state.mode === 'timeattack' ? 6000 : state.roundDurationMs;
+        var elapsedFrac = Math.min((performance.now() - state.roundStartTime) / budgetMs, 1);
+        tier = speedTier(elapsedFrac);
+        earned = roundPts(tier.points * currentPointsMult());
+        if (state.mode === 'headtohead'){
+          var pKey = 'p' + state.activePlayer;
+          state[pKey + 'Points'] = roundPts(state[pKey + 'Points'] + earned);
+          state[pKey + 'Correct']++;
+        } else {
+          state.points = roundPts(state.points + earned);
+          state.sessionCorrect++;
+        }
+      }
+      if (tracksStreak){
+        state.streak++;
+        if (state.streak > state.stats.best){
+          state.stats.best = state.streak;
+          isNewBest = state.streak >= 3;
+        }
+      }
+      sfx.correct();
+    } else {
+      if (tracksStreak) state.streak = 0;
+      sfx.wrong();
+    }
+    if (tracksStreak) saveStats();
+    renderStats();
+    if (isNewBest){
+      burstConfetti();
+      sfx.best();
+    }
+
+    state.pair.forEach(function(item, idx){
+      var card = els.cards[idx];
+      card.disabled = true;
+      card.querySelector('.weight').textContent = formatWeight(item.g);
+      if (idx === heavierIndex) card.classList.add('correct');
+      else if (idx === chosenIndex) card.classList.add('wrong');
+    });
+
+    var deg = heavierIndex === 1 ? 8 : -8;
+    els.beam.style.transform = 'rotate(' + deg + 'deg)';
+
+    var heavier = state.pair[heavierIndex];
+    var lighter = state.pair[1 - heavierIndex];
+    var ratio = heavier.g / lighter.g;
+    var callText = correct ? 'Correct' : (timedOut ? "Time's up" : 'Not quite');
+    var ptsTag = '';
+    if (scoring){
+      ptsTag = correct
+        ? ' <span class="pts">' + tier.label + ' +' + formatPoints(earned) + '</span>'
+        : ' <span class="pts pts-zero">+0</span>';
+    }
+
+    els.verdict.classList.add(correct ? 'is-correct' : 'is-wrong');
+    els.verdict.innerHTML =
+      '<div class="call">' + callText + ptsTag + '</div>' +
+      '<div>' + escapeHtml(heavier.emoji) + ' <strong>' + escapeHtml(heavier.name) + '</strong> is ' +
+      formatRatio(ratio) + ' heavier than ' + escapeHtml(lighter.emoji) + ' <strong>' + escapeHtml(lighter.name) + '</strong>.</div>';
+
+    var hasNext;
+    if (state.mode === 'endless') hasNext = correct;
+    else if (state.mode === 'timeattack' || state.mode === 'zen') hasNext = true;
+    else hasNext = state.round < ROUNDS; // classic, daily, headtohead
+    els.next.textContent = hasNext ? 'Next round →' : 'See results →';
+    els.next.hidden = false;
+    els.next.focus();
+  }
+
+  function advance(){
+    if (!state.answered || state.busy) return;
+    state.busy = true;
+
+    if (state.mode === 'endless'){
+      if (state.lastCorrect){ state.round++; newRound(); }
+      else { showResults(); }
+      return;
+    }
+    if (state.mode === 'zen' || state.mode === 'timeattack'){
+      state.round++;
+      newRound();
+      return;
+    }
+    if (state.mode === 'headtohead'){
+      if (state.round < ROUNDS){
+        state.round++;
+        state.activePlayer = state.activePlayer === 1 ? 2 : 1;
+        showHandoff(state.activePlayer);
+      } else {
+        showH2HResults();
+      }
+      return;
+    }
+    if (state.mode === 'league'){
+      if (state.round < ROUNDS){
+        state.round++;
+        newRound();
+      } else {
+        state.leagueTotal += state.points;
+        state.leagueCorrectTotal += state.sessionCorrect;
+        if (state.leagueAttempt < LEAGUE_ATTEMPTS) showLeagueAttemptComplete();
+        else showResults();
+      }
+      return;
+    }
+    // classic & daily: a fixed run of ROUNDS rounds
+    if (state.round < ROUNDS){
+      state.round++;
+      newRound();
+    } else {
+      showResults();
+    }
+  }
+
+  // Attaches the "change name" link inside the just-rendered lb-note.
+  function attachChangeNameHandler(){
+    var btn = document.getElementById('lb-change-btn');
+    if (!btn) return;
+    btn.addEventListener('click', function(){
+      clearSavedName();
+      showNameEntryUI();
+      els.lbNameInput.value = '';
+      els.lbNameInput.focus();
+      els.lbNote.textContent = '';
+    });
+  }
+
+  function noteSaved(name, code){
+    var codeHtml = code
+      ? ' · your code: <strong>' + escapeHtml(code) + '</strong> (save it to use this name on another device)'
+      : '';
+    els.lbNote.innerHTML = 'Saved as <strong>' + escapeHtml(name) + '</strong>' + codeHtml + ' · <button type="button" id="lb-change-btn">change name</button>';
+    attachChangeNameHandler();
+  }
+
+  // Submits one game's result, then re-renders the board with that
+  // entry highlighted. A results-screen token guards every await here:
+  // if the player already started a new game by the time a call
+  // resolves, this bails instead of overwriting the newer screen.
+  // `newCode` is passed the first time a name gets freshly claimed, so
+  // the player can be shown their recovery code exactly once.
+  async function submitAndRefresh(entry, newCode){
+    var myToken = state.resultsToken;
+    els.lbNameRow.hidden = true;
+    hideLbLogin();
+    var result = await submitScore(entry);
+    if (myToken !== state.resultsToken) return;
+    noteSaved(entry.name, newCode);
+    var filterFn = entry.mode === 'daily' ? function(r){ return r.dateKey === entry.dateKey; } : null;
+    var board = await fetchLeaderboard(entry.mode, filterFn);
+    if (myToken !== state.resultsToken) return;
+    var rows = board.rows;
+    if (result.id && !rows.some(function(r){ return r.id === result.id; })){
+      // Didn't land in the top 10 (or the read raced the write) —
+      // show it anyway so saving never looks like a no-op.
+      rows = rows.concat([Object.assign({ id: result.id }, entry)]);
+    }
+    renderLeaderboard(rows, result.id);
+  }
+
+  async function refreshLeaderboardOnly(){
+    var myToken = state.resultsToken;
+    var filterFn = state.mode === 'daily' ? function(r){ return r.dateKey === todayKey(); } : null;
+    var board = await fetchLeaderboard(state.mode, filterFn);
+    if (myToken !== state.resultsToken) return;
+    renderLeaderboard(board.rows, null);
+  }
+
+  // Builds the entry that gets saved to the leaderboard. Classic and Daily
+  // rank by points scored; Endless reuses the same `points` field to mean
+  // "rounds survived" so every board can share one sort/query shape. Zen
+  // and Head-to-Head never call this — neither has a shared leaderboard.
+  function buildScoreEntry(name){
+    var entry;
+    if (state.mode === 'endless'){
+      var survived = state.round - 1;
+      entry = {
+        name: name,
+        points: survived,
+        rounds: survived,
+        difficulty: state.difficulty,
+        mode: 'endless',
+        ts: Date.now()
+      };
+    } else if (state.mode === 'timeattack'){
+      entry = {
+        name: name,
+        points: state.points,
+        correct: state.sessionCorrect,
+        difficulty: state.difficulty,
+        mode: 'timeattack',
+        ts: Date.now()
+      };
+    } else if (state.mode === 'daily'){
+      entry = {
+        name: name,
+        points: state.points,
+        correct: state.sessionCorrect,
+        rounds: ROUNDS,
+        difficulty: 'medium',
+        mode: 'daily',
+        dateKey: todayKey(),
+        ts: Date.now()
+      };
+    } else if (state.mode === 'league'){
+      entry = {
+        name: name,
+        points: state.leagueTotal,
+        correct: state.leagueCorrectTotal,
+        rounds: ROUNDS * LEAGUE_ATTEMPTS,
+        difficulty: state.difficulty,
+        mode: 'league',
+        ts: Date.now()
+      };
+    } else {
+      entry = {
+        name: name,
+        points: state.points,
+        correct: state.sessionCorrect,
+        rounds: ROUNDS,
+        difficulty: state.difficulty,
+        mode: 'classic',
+        ts: Date.now()
+      };
+    }
+    entry.playerId = getPlayerId();
+    return entry;
+  }
+
+  function showLbError(msg){
+    if (!els.lbError) return;
+    els.lbError.textContent = msg || '';
+    els.lbError.hidden = !msg;
+  }
+
+  function hideLbLogin(){
+    if (els.lbLoginRow) els.lbLoginRow.hidden = true;
+    if (els.lbLoginToggle) els.lbLoginToggle.hidden = true;
+    if (els.lbLoginCode) els.lbLoginCode.value = '';
+  }
+
+  // Shows the name-entry UI (fresh results screen, or "change name").
+  function showNameEntryUI(){
+    els.lbNameRow.hidden = false;
+    showLbError('');
+    if (els.lbLoginToggle) els.lbLoginToggle.hidden = false;
+    if (els.lbLoginRow) els.lbLoginRow.hidden = true;
+  }
+
+  async function handleSaveScore(){
+    var name = sanitizeName(els.lbNameInput.value);
+    showLbError('');
+    els.lbSaveBtn.disabled = true;
+    var claim = await claimName(name);
+    els.lbSaveBtn.disabled = false;
+    if (!claim.ok){
+      if (claim.reason === 'taken'){
+        showLbError('That name is already claimed on this leaderboard — try another, or log in with your code below.');
+        if (els.lbLoginToggle) els.lbLoginToggle.hidden = false;
+      } else {
+        showLbError('Someone else just claimed that name — try again in a moment.');
+      }
+      return;
+    }
+    saveName(name);
+    submitAndRefresh(buildScoreEntry(name), claim.isNew ? claim.code : null);
+  }
+
+  async function handleLbLogin(){
+    var name = sanitizeName(els.lbNameInput.value);
+    var code = els.lbLoginCode ? els.lbLoginCode.value : '';
+    if (!code || !code.trim()){
+      showLbError('Enter the code you got when you first saved this name.');
+      return;
+    }
+    showLbError('');
+    els.lbLoginBtn.disabled = true;
+    var res = await loginWithCode(name, code);
+    els.lbLoginBtn.disabled = false;
+    if (!res.ok){
+      if (res.reason === 'no_db') showLbError("There's no shared leaderboard available on this copy of the game to log in to.");
+      else if (res.reason === 'not_found') showLbError("That name hasn't been claimed yet — just save your score to claim it.");
+      else if (res.reason === 'bad_code') showLbError("That code doesn't match this name.");
+      else showLbError('Could not verify right now — try again in a moment.');
+      return;
+    }
+    saveName(name);
+    submitAndRefresh(buildScoreEntry(name));
+  }
+
+  function showResults(){
+    stopTimer();
+    stopGlobalTimer();
+    setHidden(els.beamWrap, true);
+    els.cardsWrap.hidden = true;
+    els.verdict.hidden = true;
+    els.next.hidden = true;
+    els.results.hidden = false;
+    state.busy = false;
+
+    if (state.mode === 'endless'){
+      var survived = state.round - 1;
+      var eTier = endlessTier(survived);
+      els.resultsScore.innerHTML = survived + '<small> round' + (survived === 1 ? '' : 's') + ' survived</small>';
+      els.resultsMsg.textContent = eTier.msg;
+      els.resultsSub.textContent = eTier.sub;
+      if (els.lbHead) els.lbHead.textContent = 'Endless leaderboard';
+      sfx.results(survived >= 3);
+    } else if (state.mode === 'timeattack'){
+      var taTier = timeAttackTier(state.points);
+      els.resultsScore.innerHTML = formatPoints(state.points) + '<small> pts</small>';
+      els.resultsMsg.textContent = taTier.msg;
+      els.resultsSub.textContent = taTier.sub + ' (' + state.sessionCorrect + ' correct)';
+      if (els.lbHead) els.lbHead.textContent = 'Time Attack leaderboard';
+      sfx.results(state.points >= 14);
+    } else if (state.mode === 'league'){
+      // Three 10-round tries add up to one combined score. A run only
+      // costs you today's League slot once it's actually finished, so
+      // mark that here rather than when the run started.
+      markLeaguePlayedToday();
+      renderLeagueAvailability();
+      var leagueRounds = ROUNDS * LEAGUE_ATTEMPTS;
+      var leagueMax = roundPts(leagueRounds * MAX_ROUND_POINTS * currentPointsMult());
+      var leagueTier = resultTier(state.leagueTotal, leagueMax);
+      els.resultsScore.innerHTML = formatPoints(state.leagueTotal) + '<small> / ' + formatPoints(leagueMax) + ' pts</small>';
+      els.resultsMsg.textContent = leagueTier.msg;
+      els.resultsSub.textContent = leagueTier.sub + ' (' + state.leagueCorrectTotal + '/' + leagueRounds + ' correct across 3 tries) · back tomorrow for another run.';
+      if (els.lbHead) els.lbHead.textContent = 'League leaderboard';
+      sfx.results(state.leagueCorrectTotal / leagueRounds >= 0.6);
+    } else {
+      // classic & daily share the fixed-round scoring path
+      var maxPoints = roundPts(ROUNDS * MAX_ROUND_POINTS * currentPointsMult());
+      var tier = resultTier(state.points, maxPoints);
+      els.resultsScore.innerHTML = formatPoints(state.points) + '<small> / ' + formatPoints(maxPoints) + ' pts</small>';
+      els.resultsMsg.textContent = tier.msg;
+      els.resultsSub.textContent = tier.sub + ' (' + state.sessionCorrect + '/' + ROUNDS + ' correct)';
+      if (els.lbHead) els.lbHead.textContent = state.mode === 'daily' ? "Today's leaderboard" : 'Leaderboard';
+      sfx.results(state.sessionCorrect / ROUNDS >= 0.6);
+    }
+    // League is a once-a-day submission — no replaying into a second
+    // run today, so "Play again" is swapped out for "Back to menu".
+    els.again.hidden = state.mode === 'league';
+    (state.mode === 'league' ? els.resultsMenuBtn : els.again).focus();
+
+    if (state.customOnly){
+      // Scores from a fully custom item pool aren't comparable to the
+      // standard leaderboard, so skip it entirely for this run.
+      if (els.leaderboard) els.leaderboard.hidden = true;
+      return;
+    }
+    if (els.leaderboard) els.leaderboard.hidden = false;
+
+    state.resultsToken++;
+    els.lbNote.textContent = '';
+    els.lbList.innerHTML = '<li class="lb-empty">Loading leaderboard…</li>';
+
+    var savedName = getSavedName();
+    if (savedName){
+      els.lbNameRow.hidden = true;
+      hideLbLogin();
+      submitAndRefresh(buildScoreEntry(sanitizeName(savedName)));
+    } else {
+      showNameEntryUI();
+      els.lbNameInput.value = '';
+      refreshLeaderboardOnly();
+    }
+  }
+
+  // --- Head-to-head (local pass-and-play) -------------------------------
+  function startHeadToHead(){
+    state.round = 1;
+    state.p1Points = 0; state.p1Correct = 0;
+    state.p2Points = 0; state.p2Correct = 0;
+    state.activePlayer = 1;
+    state.usedPairs = [];
+    renderStats();
+    showHandoff(1);
+  }
+
+  function showHandoff(player){
+    stopTimer();
+    setHidden(els.beamWrap, true);
+    els.cardsWrap.hidden = true;
+    els.verdict.hidden = true;
+    els.next.hidden = true;
+    els.results.hidden = true;
+    els.h2hResults.hidden = true;
+    els.h2hHandoff.hidden = false;
+
+    els.h2hHandoffTitle.textContent = "Player " + player + "'s turn";
+    if (state.round === 1){
+      els.h2hHandoffSub.textContent = 'Pass the device to Player 1 to begin.';
+    } else {
+      var other = player === 1 ? 2 : 1;
+      els.h2hHandoffSub.textContent = 'Pass the device to Player ' + player + '. (Player ' + other + ': ' +
+        formatPoints(state['p' + other + 'Points']) + ' pts so far)';
+    }
+    els.h2hReadyBtn.focus();
+  }
+
+  function beginH2HRound(){
+    els.h2hHandoff.hidden = true;
+    newRound();
+  }
+
+  function showH2HResults(){
+    stopTimer();
+    setHidden(els.beamWrap, true);
+    els.cardsWrap.hidden = true;
+    els.verdict.hidden = true;
+    els.next.hidden = true;
+    els.h2hHandoff.hidden = true;
+    els.h2hResults.hidden = false;
+    state.busy = false;
+
+    var p1 = state.p1Points, p2 = state.p2Points;
+    var winnerText;
+    if (p1 > p2) winnerText = 'Player 1 wins!';
+    else if (p2 > p1) winnerText = 'Player 2 wins!';
+    else winnerText = "It's a tie!";
+    els.h2hResultsTitle.textContent = winnerText;
+    els.h2hResultsSub.textContent =
+      'Player 1: ' + formatPoints(p1) + ' pts (' + state.p1Correct + ' correct) · ' +
+      'Player 2: ' + formatPoints(p2) + ' pts (' + state.p2Correct + ' correct)';
+    sfx.results(true);
+    els.h2hRematchBtn.focus();
+  }
+
+  function bindEvents(){
+    els.cards.forEach(function(card, i){
+      card.addEventListener('click', function(){ answer(i); });
+    });
+    els.next.addEventListener('click', advance);
+    els.again.addEventListener('click', newGame);
+    els.diffBtns.forEach(function(btn){
+      btn.addEventListener('click', function(){ setDifficulty(btn.dataset.diff); });
+    });
+    els.menuCards.forEach(function(card){
+      card.addEventListener('click', function(){
+        var mode = card.dataset.mode;
+        if (PREMIUM_MODES[mode] && !isPremiumUnlocked()) openPaywall(mode);
+        else launchMode(mode);
+      });
+    });
+    if (els.menuLink) els.menuLink.addEventListener('click', openMenu);
+    if (els.paywallBackBtn) els.paywallBackBtn.addEventListener('click', closePaywall);
+    if (els.paywallUnlockBtn) els.paywallUnlockBtn.addEventListener('click', unlockPremium);
+    if (els.customBackBtn) els.customBackBtn.addEventListener('click', closeCustomSetup);
+    if (els.customModeBtns){
+      els.customModeBtns.forEach(function(btn){
+        btn.addEventListener('click', function(){
+          sfx.click();
+          customDraft.mode = btn.dataset.mode;
+          renderCustomModeButtons();
+        });
+      });
+    }
+    if (els.customDiffBtns){
+      els.customDiffBtns.forEach(function(btn){
+        btn.addEventListener('click', function(){
+          sfx.click();
+          customDraft.difficulty = btn.dataset.diff;
+          renderCustomDiffButtons();
+        });
+      });
+    }
+    if (els.customOnlyToggle) els.customOnlyToggle.addEventListener('change', renderCustomItemList);
+    if (els.customItemAddBtn) els.customItemAddBtn.addEventListener('click', addCustomItem);
+    if (els.customItemWeight){
+      els.customItemWeight.addEventListener('keydown', function(e){
+        if (e.key === 'Enter'){ e.preventDefault(); addCustomItem(); }
+      });
+    }
+    if (els.customItemName){
+      els.customItemName.addEventListener('keydown', function(e){
+        if (e.key === 'Enter'){ e.preventDefault(); addCustomItem(); }
+      });
+    }
+    if (els.customItemList){
+      els.customItemList.addEventListener('click', function(e){
+        var btn = e.target.closest ? e.target.closest('.custom-item-remove') : null;
+        if (!btn) return;
+        var idx = parseInt(btn.dataset.index, 10);
+        if (!isNaN(idx)) removeCustomItem(idx);
+      });
+    }
+    if (els.customStartBtn) els.customStartBtn.addEventListener('click', startCustomGame);
+    if (els.resultsMenuBtn) els.resultsMenuBtn.addEventListener('click', openMenu);
+    if (els.h2hReadyBtn) els.h2hReadyBtn.addEventListener('click', beginH2HRound);
+    if (els.h2hRematchBtn) els.h2hRematchBtn.addEventListener('click', startHeadToHead);
+    if (els.h2hMenuBtn) els.h2hMenuBtn.addEventListener('click', openMenu);
+    if (els.soundToggle){
+      els.soundToggle.addEventListener('click', function(){
+        var wasMuted = isMuted();
+        setMuted(!wasMuted);
+        renderSoundToggle();
+        if (wasMuted) sfx.click();
+      });
+    }
+    if (els.unitToggle){
+      els.unitToggle.addEventListener('click', function(){
+        sfx.click();
+        setUnitSystem(getUnitSystem() === 'imperial' ? 'metric' : 'imperial');
+        renderUnitToggle();
+        refreshVisibleWeights();
+      });
+    }
+    els.reset.addEventListener('click', function(){
+      state.stats = { best: 0 };
+      saveStats();
+      renderStats();
+    });
+    els.lbSaveBtn.addEventListener('click', handleSaveScore);
+    els.lbNameInput.addEventListener('keydown', function(e){
+      if (e.key === 'Enter'){ e.preventDefault(); handleSaveScore(); }
+    });
+    if (els.lbLoginToggle){
+      els.lbLoginToggle.addEventListener('click', function(){
+        els.lbLoginRow.hidden = false;
+        els.lbLoginToggle.hidden = true;
+        showLbError('');
+        if (els.lbLoginCode) els.lbLoginCode.focus();
+      });
+    }
+    if (els.lbLoginBtn) els.lbLoginBtn.addEventListener('click', handleLbLogin);
+    if (els.lbLoginCode){
+      els.lbLoginCode.addEventListener('keydown', function(e){
+        if (e.key === 'Enter'){ e.preventDefault(); handleLbLogin(); }
+      });
+    }
+    if (els.leagueNextBtn) els.leagueNextBtn.addEventListener('click', startNextLeagueAttempt);
+    document.addEventListener('keydown', function(e){
+      if (!els.menuScreen.hidden) return;
+      if (!els.h2hHandoff.hidden){
+        if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); beginH2HRound(); }
+        return;
+      }
+      if (els.leagueHandoff && !els.leagueHandoff.hidden){
+        if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); startNextLeagueAttempt(); }
+        return;
+      }
+      if (!els.h2hResults.hidden){
+        if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); startHeadToHead(); }
+        return;
+      }
+      if (!els.results.hidden){
+        if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); newGame(); }
+        return;
+      }
+      if (!state.answered){
+        if (e.key === 'ArrowLeft' || e.key === '1'){ answer(0); }
+        else if (e.key === 'ArrowRight' || e.key === '2'){ answer(1); }
+      } else if (e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        advance();
+      }
+    });
+  }
+
+  function start(saved){
+    state = {
+      stats: (saved && saved.stats) || loadStats(),
+      round: (saved && saved.round) || 1,
+      points: (saved && saved.points) || 0,
+      sessionCorrect: (saved && saved.sessionCorrect) || 0,
+      streak: (saved && saved.streak) || 0,
+      usedPairs: (saved && saved.usedPairs) || [],
+      difficulty: (saved && saved.difficulty) || 'medium',
+      mode: (saved && saved.mode) || 'classic',
+      customOnly: false,
+      leagueAttempt: 1,
+      leagueTotal: 0,
+      leagueCorrectTotal: 0,
+      p1Points: 0, p1Correct: 0,
+      p2Points: 0, p2Correct: 0,
+      activePlayer: 1,
+      pair: null,
+      answered: false,
+      lastCorrect: false,
+      busy: false,
+      globalTimerId: null,
+      globalTimeLeft: 0,
+      resultsToken: 0
+    };
+    bindEvents();
+    renderDifficulty();
+    renderMode();
+    renderSoundToggle();
+    renderUnitToggle();
+    renderMenuLocks();
+    updateScoreboardVisibility();
+    renderStats();
+    openMenu();
+
+    try{
+      window.claude && window.claude.hot && window.claude.hot.snapshot && window.claude.hot.snapshot(function(){
+        return { stats: state.stats, round: state.round, points: state.points, sessionCorrect: state.sessionCorrect, streak: state.streak, usedPairs: state.usedPairs, difficulty: state.difficulty, mode: state.mode };
+      });
+    } catch(e){}
+  }
+
+  try{
+    if (window.claude && window.claude.hot && window.claude.hot.ready){
+      window.claude.hot.ready(start);
+    } else {
+      start((window.claude && window.claude.hot && window.claude.hot.data) || {});
+    }
+  } catch(e){
+    start({});
+  }
+})();
+</script>
+
+</body>
+</html>
