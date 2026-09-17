@@ -1520,6 +1520,57 @@
     font-weight: 800;
     color: var(--amber);
   }
+  #google-signin-btn{
+    display: flex;
+    justify-content: center;
+    /* Google renders its own button into this div once accounts.google.com's
+       script loads; kept a bit short so an unloaded/empty state (e.g. this
+       Artifact preview, where that script is off the allowed list) doesn't
+       leave a tall empty gap. */
+    min-height: 2px;
+  }
+  #google-signin-btn[hidden]{ display: none; }
+  .account-unavailable-note{
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    text-align: center;
+    margin: 0;
+  }
+  .account-unavailable-note[hidden]{ display: none; }
+  .account-profile{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .account-profile[hidden]{ display: none; }
+  .account-avatar{
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    flex: none;
+    background: var(--steel-lo);
+    border: 1px solid var(--steel);
+  }
+  .account-name{
+    font-size: 0.78rem;
+    color: var(--text);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+  }
+  .account-signout{
+    flex: none;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 0.7rem;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 2px;
+  }
+  .account-signout:hover{ color: var(--text); }
   .achievements-grid{
     display: flex;
     flex-wrap: wrap;
@@ -2044,6 +2095,16 @@
 
       <aside class="game-info-sidebar" id="game-info-sidebar">
         <div class="game-info-section">
+          <div class="game-info-head">👤 Account</div>
+          <div id="google-signin-btn"></div>
+          <p class="account-unavailable-note" id="account-unavailable-note" hidden>Sign-in isn't available in this preview.</p>
+          <div class="account-profile" id="account-profile" hidden>
+            <img class="account-avatar" id="account-avatar" alt="" referrerpolicy="no-referrer">
+            <span class="account-name" id="account-name"></span>
+            <button class="account-signout" id="account-signout-btn" type="button">Sign out</button>
+          </div>
+        </div>
+        <div class="game-info-section">
           <div class="game-info-head">📖 How to Play</div>
           <p class="game-info-text">Tap the item you think is heavier (or use ← / →). Faster correct answers score more. Six ways to play: Classic, Daily, Endless, Time Attack, Head-to-Head, and Custom.</p>
         </div>
@@ -2136,6 +2197,14 @@
   <span>Join our Discord — your feedback helps shape the game</span>
 </a>
 
+<!-- Sign In With Google (Google Identity Services). Loaded from
+     accounts.google.com — this only actually reaches Google on a real
+     deployment (e.g. counterweightgame.com); when this page is previewed
+     as a Claude Artifact, external scripts are restricted to an allowlist
+     that doesn't include accounts.google.com, so this tag simply fails to
+     load there and the game degrades gracefully (see waitForGoogleAndInit
+     below) rather than erroring. -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 (function(){
   var ROUNDS = 5;
@@ -3285,6 +3354,12 @@
     achievementToastIcon: document.getElementById('achievement-toast-icon'),
     achvTooltip: document.getElementById('achv-tooltip'),
     achievementBadges: Array.prototype.slice.call(document.querySelectorAll('.achievement-badge')),
+    googleSigninBtn: document.getElementById('google-signin-btn'),
+    accountUnavailableNote: document.getElementById('account-unavailable-note'),
+    accountProfile: document.getElementById('account-profile'),
+    accountAvatar: document.getElementById('account-avatar'),
+    accountName: document.getElementById('account-name'),
+    accountSignoutBtn: document.getElementById('account-signout-btn'),
     lbHead: document.getElementById('lb-head'),
     lbNameRow: document.getElementById('lb-name-row'),
     lbNameInput: document.getElementById('lb-name-input'),
@@ -3886,6 +3961,92 @@
   }
   function setPremiumUnlocked(v){
     try{ localStorage.setItem(PREMIUM_KEY, v ? '1' : '0'); } catch(e){}
+  }
+
+  // --- Sign In With Google ------------------------------------------
+  // Identity only, for now: shows who's signed in on this device. It does
+  // NOT touch Premium (still the local flag above) or prove a real
+  // purchase — the ID token below is decoded client-side purely to read
+  // the signed-in person's own name/photo for display, not verified
+  // against Google, since there's no backend here to verify it against.
+  // Tying Premium to this identity for real (so it follows an account
+  // instead of a browser) would need a server to check tokens/webhooks.
+  var GOOGLE_CLIENT_ID = '801058853820-kqo4nemhg1hvamid9hcdj59ifk5tcc0d.apps.googleusercontent.com';
+  var GOOGLE_PROFILE_KEY = 'counterweight_google_profile';
+
+  function getSavedGoogleProfile(){
+    try{ return JSON.parse(localStorage.getItem(GOOGLE_PROFILE_KEY) || 'null'); } catch(e){ return null; }
+  }
+  function saveGoogleProfile(p){
+    try{ localStorage.setItem(GOOGLE_PROFILE_KEY, JSON.stringify(p)); } catch(e){}
+  }
+  function clearGoogleProfile(){
+    try{ localStorage.removeItem(GOOGLE_PROFILE_KEY); } catch(e){}
+  }
+
+  // Reads the (unverified) payload out of the JWT Google hands back. Safe
+  // to do purely for display purposes since nothing security-sensitive is
+  // gated on it here; a real server-side check would verify the signature
+  // instead of just decoding it like this.
+  function decodeJwtPayload(token){
+    try{
+      var base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      var json = decodeURIComponent(atob(base64).split('').map(function(c){
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(json);
+    } catch(e){ return null; }
+  }
+
+  function handleGoogleCredential(response){
+    var payload = response && decodeJwtPayload(response.credential);
+    if (!payload) return;
+    saveGoogleProfile({ name: payload.name, email: payload.email, picture: payload.picture });
+    renderAccount();
+  }
+
+  function renderAccount(){
+    var profile = getSavedGoogleProfile();
+    if (els.accountProfile) els.accountProfile.hidden = !profile;
+    if (els.googleSigninBtn) els.googleSigninBtn.hidden = !!profile;
+    if (profile){
+      if (els.accountAvatar) els.accountAvatar.src = profile.picture || '';
+      if (els.accountName) els.accountName.textContent = profile.name || profile.email || 'Signed in';
+    }
+  }
+
+  function signOutOfGoogle(){
+    sfx.click();
+    clearGoogleProfile();
+    renderAccount();
+    try{ if (window.google && google.accounts && google.accounts.id) google.accounts.id.disableAutoSelect(); } catch(e){}
+  }
+
+  function initGoogleSignIn(){
+    if (!els.googleSigninBtn) return;
+    try{
+      google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleCredential });
+      google.accounts.id.renderButton(els.googleSigninBtn, { theme: 'filled_black', size: 'medium', shape: 'pill', text: 'signin_with' });
+    } catch(e){}
+  }
+
+  // The GIS script loads async and may not be ready the instant start()
+  // runs, and on this Artifact preview it never loads at all (see the
+  // <script> tag's comment) — so poll briefly, then give up quietly and
+  // let the "isn't available in this preview" note show instead of an
+  // empty button-shaped gap.
+  function waitForGoogleAndInit(attemptsLeft){
+    if (getSavedGoogleProfile()) return; // already signed in on this device, no need to render the button
+    if (window.google && google.accounts && google.accounts.id){
+      initGoogleSignIn();
+      return;
+    }
+    if (attemptsLeft <= 0){
+      if (els.googleSigninBtn) els.googleSigninBtn.hidden = true;
+      if (els.accountUnavailableNote) els.accountUnavailableNote.hidden = false;
+      return;
+    }
+    setTimeout(function(){ waitForGoogleAndInit(attemptsLeft - 1); }, 200);
   }
 
   // Retractable left sidebar (League board + Game Info): a plain
@@ -4845,6 +5006,7 @@
       });
     }
     if (els.leagueNextBtn) els.leagueNextBtn.addEventListener('click', startNextLeagueAttempt);
+    if (els.accountSignoutBtn) els.accountSignoutBtn.addEventListener('click', signOutOfGoogle);
     els.achievementBadges.forEach(function(badge){
       badge.addEventListener('mouseenter', function(){ showAchvTooltip(badge); });
       badge.addEventListener('mouseleave', hideAchvTooltip);
@@ -4916,6 +5078,8 @@
     renderMenuCardStates();
     updateScoreboardVisibility();
     renderStats();
+    renderAccount();
+    waitForGoogleAndInit(25);
     openMenu();
 
     // Live countdown on any locked menu card, and auto-unlocks the moment
