@@ -2019,7 +2019,7 @@
     <div class="abandon-overlay" id="abandon-overlay" hidden>
       <div class="abandon-box">
         <p class="abandon-title">Leave the game?</p>
-        <p class="abandon-desc">Leaving counts as a loss — you won't be able to continue this round.</p>
+        <p class="abandon-desc" id="abandon-desc">Leaving counts as a loss — you won't be able to continue this round.</p>
         <div class="controls controls-row">
           <button class="next" id="abandon-stay-btn" type="button">Stay and play</button>
           <button class="next secondary" id="abandon-leave-btn" type="button">Leave anyway</button>
@@ -2759,24 +2759,25 @@
   var dailyRng = null;
 
   // --- Global daily lock (one try per gamemode, resets at local 00:00) ---
-  // Classic, Daily Challenge, Endless and League each get exactly one try
-  // per local day, spent when a run is actually FINISHED (marked from
-  // showResults), so an abandoned or reloaded run doesn't cost you your
-  // shot. Zen is deliberately left out of this — "no timer, no pressure"
-  // is the whole point of the mode, so it stays unlimited. Games launched
-  // through the Custom builder (state.viaCustom) never touch these locks
-  // either way; that's a separate sandbox from the "real" daily modes.
-  // Premium unlocks unlimited plays across every mode: a run still gets
-  // marked as played (so the lock is there the moment Premium is turned
-  // back off via the demo reset link), but enforcement of that lock -
-  // disabling the menu card, swapping "Play again" for "Back to menu" -
-  // is skipped entirely while isPremiumUnlocked() is true.
+  // Classic, Daily Challenge, Endless, League and Zen each get exactly one
+  // try per local day, spent the moment a run is actually FINISHED — either
+  // by reaching showResults() normally, or by bailing out early via the
+  // "☰ Menu" abandon confirm (see abandonGame()), which costs the same shot
+  // reaching results would. Games launched through the Custom builder
+  // (state.viaCustom) never touch these locks either way; that's a separate
+  // sandbox from the "real" daily modes. Premium unlocks unlimited plays
+  // across every mode: a run still gets marked as played (so the lock is
+  // there the moment Premium is turned back off via the demo reset link),
+  // but enforcement of that lock - disabling the menu card, swapping "Play
+  // again" for "Back to menu" - is skipped entirely while
+  // isPremiumUnlocked() is true.
   var LEAGUE_LAST_PLAYED_KEY = 'counterweight_league_last_played';
   var DAILY_LOCK_INFO = {
     classic:  { key: 'counterweight_lock_classic',  tag: 'The classic run — five pairs, points for speed, then compare your score.' },
     daily:    { key: 'counterweight_lock_daily',    tag: 'Same five pairs as everyone, today only.' },
     endless:  { key: 'counterweight_lock_endless',  tag: 'Keep guessing until you miss one.' },
-    league:   { key: LEAGUE_LAST_PLAYED_KEY,        tag: 'The competitive take on 5 Rounds — one run, once a day.' }
+    league:   { key: LEAGUE_LAST_PLAYED_KEY,        tag: 'The competitive take on 5 Rounds — one run, once a day.' },
+    zen:      { key: 'counterweight_lock_zen',      tag: 'No timer, no pressure — just learn.' }
   };
 
   function hasPlayedModeToday(mode){
@@ -3359,6 +3360,7 @@
     leftPanelsToggleLabel: document.getElementById('left-panels-toggle-label'),
     leftPanelsContent: document.getElementById('left-panels-content'),
     abandonOverlay: document.getElementById('abandon-overlay'),
+    abandonDesc: document.getElementById('abandon-desc'),
     abandonStayBtn: document.getElementById('abandon-stay-btn'),
     abandonLeaveBtn: document.getElementById('abandon-leave-btn')
   };
@@ -4007,13 +4009,12 @@
 
   // The "☰ Menu" escape hatch is available in every mode. Bailing back to
   // the menu mid-round is how someone would dodge a bad pairing or skip
-  // their one daily try's real cost, so for every mode except Zen it goes
-  // through a confirm step first (see openAbandonConfirm/abandonGame)
-  // rather than leaving straight away. Zen has no results screen of its
-  // own to finish into, no timer, and nothing riding on a run, so it skips
-  // the confirm and just opens the menu directly.
+  // their one daily try's real cost, so it goes through a confirm step
+  // first (see openAbandonConfirm/abandonGame) rather than leaving
+  // straight away — Zen included, now that it also spends a daily try the
+  // moment you leave it (see DAILY_LOCK_INFO).
   function modeHasAbandonWarning(){
-    return state.mode !== 'zen';
+    return true;
   }
 
   function closeMenuUI(){
@@ -4026,6 +4027,14 @@
 
   function openAbandonConfirm(){
     sfx.click();
+    // Zen has no score or streak to lose, so "counts as a loss" doesn't
+    // apply — but it now spends the same one-per-day try every other
+    // locked mode does, so the warning should say that instead.
+    if (els.abandonDesc){
+      els.abandonDesc.textContent = state.mode === 'zen'
+        ? "Leaving uses up today's Zen session — come back tomorrow for another."
+        : "Leaving counts as a loss — you won't be able to continue this round.";
+    }
     if (els.abandonOverlay) els.abandonOverlay.hidden = false;
   }
 
@@ -4039,8 +4048,8 @@
   }
 
   // Bailing out mid-round costs exactly what finishing would: a native
-  // daily-locked mode (Classic/Daily/Endless — League can't be reached at
-  // all right now) spends today's one shot immediately, just like
+  // daily-locked mode (Classic/Daily/Endless/Zen — League can't be reached
+  // at all right now) spends today's one shot immediately, just like
   // reaching the results screen normally would, and any in-progress
   // streak resets to 0 as a loss. Custom-builder runs never touch the
   // real daily lock, same as everywhere else that checks state.viaCustom.
