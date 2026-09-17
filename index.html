@@ -634,39 +634,19 @@
     margin-bottom: 10px;
   }
 
-  .lb-name-row{
+  .lb-signin-row{
     display: flex;
+    flex-direction: column;
+    align-items: center;
     gap: 8px;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
   }
-  .lb-name-row[hidden]{ display: none; }
-  @media (max-width: 360px){
-    .lb-name-row{ flex-direction: column; }
-    .lb-name-row button{ width: 100%; }
-  }
-  .lb-name-row input{
-    flex: 1;
-    min-width: 0;
-    background: var(--bg-deep);
-    border: 1px solid var(--steel);
-    border-radius: 8px;
-    color: var(--text);
-    font-family: var(--font-body);
-    font-size: 0.85rem;
-    padding: 8px 10px;
-  }
-  .lb-name-row input:focus-visible{ outline: 2px solid var(--amber); outline-offset: 1px; }
-  .lb-name-row button{
-    background: var(--amber);
-    color: #1a1305;
-    border: none;
-    border-radius: 8px;
-    font-family: var(--font-body);
-    font-weight: 600;
-    font-size: 0.8rem;
-    padding: 8px 14px;
-    cursor: pointer;
-    white-space: nowrap;
+  .lb-signin-row[hidden]{ display: none; }
+  .lb-signin-text{
+    margin: 0;
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--text-dim);
   }
 
   .lb-list{
@@ -739,58 +719,13 @@
   }
   .lb-error[hidden]{ display: none; }
 
-  .lb-login-link{
-    display: block;
-    width: 100%;
-    text-align: center;
-    background: none;
-    border: none;
+  .lb-signin-unavailable{
+    font-size: 0.72rem;
     color: var(--text-dim);
-    text-decoration: underline;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 0.7rem;
-    padding: 0;
-    margin: -4px 0 12px;
+    text-align: center;
+    margin: 0 0 14px;
   }
-  .lb-login-link:hover{ color: var(--text); }
-  .lb-login-link[hidden]{ display: none; }
-
-  .lb-login-row{
-    display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-  .lb-login-row[hidden]{ display: none; }
-  @media (max-width: 360px){
-    .lb-login-row{ flex-direction: column; }
-    .lb-login-row button{ width: 100%; }
-  }
-  .lb-login-row input{
-    flex: 1;
-    min-width: 0;
-    background: var(--bg-deep);
-    border: 1px solid var(--steel);
-    border-radius: 8px;
-    color: var(--text);
-    font-family: var(--font-body);
-    font-size: 0.85rem;
-    padding: 8px 10px;
-  }
-  .lb-login-row input:focus-visible{ outline: 2px solid var(--amber); outline-offset: 1px; }
-  .lb-login-row button{
-    background: none;
-    border: 1px solid var(--steel);
-    color: var(--text);
-    border-radius: 8px;
-    font-family: var(--font-body);
-    font-weight: 600;
-    font-size: 0.8rem;
-    padding: 8px 14px;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-  .lb-login-row button:hover{ border-color: var(--amber-dim); }
+  .lb-signin-unavailable[hidden]{ display: none; }
 
   .lb-note{
     text-align: center;
@@ -1658,10 +1593,22 @@
     pointer-events: none;
   }
   .achv-tooltip[hidden]{ display: none; }
-  .premium-sidebar{
+  /* Premium and Account used to each center themselves independently
+     (margin: auto) as the lone occupant of the right column; now that
+     Account sits below Premium, .right-panels owns that centering/gap and
+     both cards are plain full-width flex children with no margin of
+     their own — same relationship .left-panels has with the league and
+     game-info cards it stacks. */
+  .right-panels{
     width: 100%;
     max-width: 360px;
-    margin: 16px auto 0;
+    margin: 18px auto 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .premium-sidebar{
+    width: 100%;
     background: var(--panel);
     border: 1px solid var(--amber-dim);
     border-radius: 16px;
@@ -1669,6 +1616,15 @@
     box-shadow: 0 24px 50px -24px rgba(0,0,0,0.55);
   }
   .premium-sidebar[hidden]{ display: none; }
+  .account-sidebar{
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--steel);
+    border-radius: 16px;
+    padding: 14px 14px 12px;
+    box-shadow: 0 24px 50px -24px rgba(0,0,0,0.55);
+  }
+  .account-sidebar[hidden]{ display: none; }
   .premium-sidebar-badge{
     display: inline-flex;
     align-items: center;
@@ -1725,7 +1681,7 @@
       width: 220px;
       max-width: 220px;
     }
-    .premium-sidebar{
+    .right-panels{
       position: absolute;
       top: 0;
       left: 100%;
@@ -2042,16 +1998,12 @@
 
         <div class="leaderboard" id="leaderboard">
           <div class="lb-head" id="lb-head">Leaderboard</div>
-          <div class="lb-name-row" id="lb-name-row" hidden>
-            <input type="text" id="lb-name-input" maxlength="16" placeholder="Your name" autocomplete="off">
-            <button type="button" id="lb-save-btn">Save score</button>
+          <div class="lb-signin-row" id="lb-signin-row" hidden>
+            <p class="lb-signin-text">Sign in with Google to add your score to the public leaderboard.</p>
+            <div id="lb-signin-btn"></div>
           </div>
+          <p class="lb-signin-unavailable" id="lb-signin-unavailable" hidden>Public leaderboards aren't available in this preview — they work on the live site.</p>
           <p class="lb-error" id="lb-error" hidden></p>
-          <button type="button" class="lb-login-link" id="lb-login-toggle" hidden>Claimed this name on another device? Log in with your code</button>
-          <div class="lb-login-row" id="lb-login-row" hidden>
-            <input type="text" id="lb-login-code" maxlength="8" placeholder="Your code" autocomplete="off">
-            <button type="button" id="lb-login-btn">Log in</button>
-          </div>
           <ol class="lb-list" id="lb-list"></ol>
           <p class="lb-note" id="lb-note"></p>
         </div>
@@ -2094,16 +2046,6 @@
       </aside>
 
       <aside class="game-info-sidebar" id="game-info-sidebar">
-        <div class="game-info-section">
-          <div class="game-info-head">👤 Account</div>
-          <div id="google-signin-btn"></div>
-          <p class="account-unavailable-note" id="account-unavailable-note" hidden>Sign-in isn't available in this preview.</p>
-          <div class="account-profile" id="account-profile" hidden>
-            <img class="account-avatar" id="account-avatar" alt="" referrerpolicy="no-referrer">
-            <span class="account-name" id="account-name"></span>
-            <button class="account-signout" id="account-signout-btn" type="button">Sign out</button>
-          </div>
-        </div>
         <div class="game-info-section">
           <div class="game-info-head">📖 How to Play</div>
           <p class="game-info-text">Tap the item you think is heavier (or use ← / →). Faster correct answers score more. Six ways to play: Classic, Daily, Endless, Time Attack, Head-to-Head, and Custom.</p>
@@ -2179,17 +2121,30 @@
     </div>
   </div>
 
-  <aside class="premium-sidebar" id="premium-sidebar" hidden>
-    <div class="premium-sidebar-badge">✨ Go Premium</div>
-    <p class="premium-sidebar-title">Unlock everything</p>
-    <p class="premium-sidebar-desc">⏱️🤝🛠️🏆 four extra modes, plus unlimited plays everywhere.</p>
-    <div class="premium-sidebar-price-row">
-      <span class="premium-sidebar-price">€1.99</span>
-      <span class="premium-sidebar-price-note">/mo</span>
-    </div>
-    <p class="premium-sidebar-price-alt">or €12.99/yr — save 46%</p>
-    <button class="next premium-sidebar-btn" id="premium-sidebar-btn" type="button">Get Premium →</button>
-  </aside>
+  <div class="right-panels" id="right-panels" hidden>
+    <aside class="premium-sidebar" id="premium-sidebar" hidden>
+      <div class="premium-sidebar-badge">✨ Go Premium</div>
+      <p class="premium-sidebar-title">Unlock everything</p>
+      <p class="premium-sidebar-desc">⏱️🤝🛠️🏆 four extra modes, plus unlimited plays everywhere.</p>
+      <div class="premium-sidebar-price-row">
+        <span class="premium-sidebar-price">€1.99</span>
+        <span class="premium-sidebar-price-note">/mo</span>
+      </div>
+      <p class="premium-sidebar-price-alt">or €12.99/yr — save 46%</p>
+      <button class="next premium-sidebar-btn" id="premium-sidebar-btn" type="button">Get Premium →</button>
+    </aside>
+
+    <aside class="account-sidebar" id="account-sidebar">
+      <div class="game-info-head">👤 Account</div>
+      <div id="google-signin-btn"></div>
+      <p class="account-unavailable-note" id="account-unavailable-note" hidden>Sign-in isn't available in this preview.</p>
+      <div class="account-profile" id="account-profile" hidden>
+        <img class="account-avatar" id="account-avatar" alt="" referrerpolicy="no-referrer">
+        <span class="account-name" id="account-name"></span>
+        <button class="account-signout" id="account-signout-btn" type="button">Sign out</button>
+      </div>
+    </aside>
+  </div>
 </div>
 
 <a class="discord-footer" href="https://discord.gg/rxqTdc49s" target="_blank" rel="noopener noreferrer">
@@ -2205,6 +2160,15 @@
      load there and the game degrades gracefully (see waitForGoogleAndInit
      below) rather than erroring. -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<!-- Firebase (backs the public, cross-device leaderboards). Loaded from
+     Google's own CDN, so — same as the script above — it only actually
+     reaches anything on a real deployment; a Claude Artifact preview's
+     script allowlist blocks it too, and the game falls back to this
+     browser's local-only scores there (see firebaseAppPromise below). -->
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
 <script>
 (function(){
   var ROUNDS = 5;
@@ -2924,6 +2888,12 @@
     // expanded state (left-panels-toggle) is independent of this and
     // survives a menu round-trip — see renderLeftPanelsToggle().
     if (els.leftPanels) els.leftPanels.hidden = els.menuScreen.hidden;
+    // The right-panels wrapper (Premium card + Account/Sign-in) also just
+    // tracks "is the menu screen up" — Account has no unlock gate either,
+    // so it stays visible even once Premium is unlocked and the Premium
+    // card above has hidden itself, same relationship left-panels has
+    // with League/Game Info.
+    if (els.rightPanels) els.rightPanels.hidden = els.menuScreen.hidden;
   }
   function rand(){
     if (state.mode === 'daily' && dailyRng) return dailyRng();
@@ -2931,108 +2901,41 @@
   }
 
   // --- Leaderboard -----------------------------------------------------
-  // Scores are shared across everyone who opens this page when the
-  // artifact's db capability is available. window.claude exists before
-  // this script runs, so it's safe to call use() immediately; it
-  // resolves null on a plain downloaded copy of this file (there's no
-  // window.claude at all there) or if the viewer never granted it —
-  // either way we fall back to a leaderboard kept in this browser only.
-  var dbPromise = (typeof window !== 'undefined' && window.claude && window.claude.use)
-    ? window.claude.use('db')
-    : Promise.resolve(null);
+  // Scores are public and shared across everyone, backed by Firestore,
+  // and require Google sign-in to submit (see the Sign In With Google
+  // section below) — the same sign-in used for the Account sidebar also
+  // signs into Firebase, and that verified identity is what Firestore's
+  // security rules check before accepting a score, so nobody can post
+  // under someone else's name. Firebase only actually reaches Google's
+  // servers on a real deployment (e.g. counterweightgame.com) — same as
+  // the accounts.google.com script (see the <script> tags' comment) —
+  // so on a Claude Artifact preview firebaseAppPromise resolves null and
+  // everything below falls back to a leaderboard kept in this browser
+  // only, with submission simply unavailable (see
+  // renderLeaderboardSignInPrompt).
+  var FIREBASE_CONFIG = {
+    apiKey: "AIzaSyCEfxZLYBHmkI2QN6NcRLf9433L6e5lRn4",
+    authDomain: "counterweight-71a74.firebaseapp.com",
+    projectId: "counterweight-71a74",
+    storageBucket: "counterweight-71a74.firebasestorage.app",
+    messagingSenderId: "179623965736",
+    appId: "1:179623965736:web:afb91906b3ee87b972f11d",
+    measurementId: "G-W4WWYHEYY0"
+  };
+
+  var firebaseAppPromise = new Promise(function(resolve){
+    if (typeof firebase === 'undefined' || !firebase.initializeApp){ resolve(null); return; }
+    try{
+      firebase.initializeApp(FIREBASE_CONFIG);
+      resolve(firebase);
+    } catch(e){ resolve(null); }
+  });
+
+  // Firestore instance used by submitScore/fetchLeaderboard below (null
+  // when Firebase didn't load — see comment above).
+  var dbPromise = firebaseAppPromise.then(function(fb){ return fb ? fb.firestore() : null; });
 
   var LOCAL_SCORES_KEY = 'counterweight_local_scores_v1';
-  var NAME_KEY = 'counterweight_player_name';
-
-  function getSavedName(){
-    try{ return localStorage.getItem(NAME_KEY) || ''; } catch(e){ return ''; }
-  }
-  function saveName(name){
-    try{ localStorage.setItem(NAME_KEY, name); } catch(e){}
-  }
-  function clearSavedName(){
-    try{ localStorage.removeItem(NAME_KEY); } catch(e){}
-  }
-
-  // --- Lightweight name-claiming (not real accounts) --------------------
-  // There's no server here to run real auth, so this is a soft,
-  // cooperative system: each browser gets a random id, and the first
-  // device to save a given name on the shared leaderboard "claims" it
-  // (via the db capability's acquire() lease, so two people can't both
-  // grab the same name at once) and gets a short recovery code back.
-  // Anyone could still edit the page to bypass this — it stops casual
-  // name-squatting, not a determined cheater.
-  var PLAYER_ID_KEY = 'counterweight_player_id';
-
-  function getPlayerId(){
-    try{
-      var id = localStorage.getItem(PLAYER_ID_KEY);
-      if (!id){
-        id = (window.crypto && window.crypto.randomUUID)
-          ? window.crypto.randomUUID()
-          : ('p-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10));
-        localStorage.setItem(PLAYER_ID_KEY, id);
-      }
-      return id;
-    } catch(e){ return 'p-' + Math.random().toString(36).slice(2, 10); }
-  }
-  function setPlayerId(id){
-    try{ localStorage.setItem(PLAYER_ID_KEY, id); } catch(e){}
-  }
-
-  function nameKey(name){ return sanitizeName(name).toLowerCase(); }
-
-  function generateProfileCode(){
-    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O or 1/I
-    var out = '';
-    for (var i = 0; i < 6; i++) out += chars[Math.floor(Math.random() * chars.length)];
-    return out;
-  }
-
-  // Tries to claim `name` for this device's player id. Returns
-  // {ok:true, code, isNew} on success (already-yours names count as
-  // success too), or {ok:false, reason} when someone else holds it.
-  // When db isn't available there's no shared board to protect names
-  // on, so this is a no-op success.
-  async function claimName(name){
-    var db = await dbPromise;
-    if (!db) return { ok: true, code: null };
-    var playerId = getPlayerId();
-    try{
-      var ref = db.collection('players').doc(nameKey(name));
-      var lease = await ref.acquire({ holder: playerId, ttlMs: 5000 });
-      if (!lease.acquired) return { ok: false, reason: 'busy' };
-      var snap = await ref.get();
-      var data = snap.exists ? snap.data() : null;
-      if (!data || !data.playerId){
-        var code = generateProfileCode();
-        await ref.set({ name: sanitizeName(name), playerId: playerId, code: code, createdAt: Date.now() });
-        return { ok: true, code: code, isNew: true };
-      }
-      if (data.playerId === playerId) return { ok: true, code: data.code || null, isNew: false };
-      return { ok: false, reason: 'taken' };
-    } catch(e){
-      // Don't block play over a claim-system hiccup — let the score
-      // through unclaimed rather than losing it.
-      return { ok: true, code: null };
-    }
-  }
-
-  // Adopts an existing claimed name's player id onto this device, so
-  // scores here count as the same player as wherever the code came from.
-  async function loginWithCode(name, code){
-    var db = await dbPromise;
-    if (!db) return { ok: false, reason: 'no_db' };
-    try{
-      var snap = await db.collection('players').doc(nameKey(name)).get();
-      if (!snap.exists) return { ok: false, reason: 'not_found' };
-      var data = snap.data();
-      var want = String(code || '').trim().toUpperCase();
-      if (!data || !want || String(data.code || '').toUpperCase() !== want) return { ok: false, reason: 'bad_code' };
-      setPlayerId(data.playerId);
-      return { ok: true };
-    } catch(e){ return { ok: false, reason: 'error' }; }
-  }
 
   function readLocalScores(){
     try{
@@ -3041,7 +2944,11 @@
     } catch(e){ return []; }
   }
 
-  // Submits one finished game. Returns {source: 'shared'|'local', id}.
+  // Submits one finished game. Requires a signed-in Firebase user —
+  // submitAndRefresh attaches `uid`/`name` from state.firebaseUser onto
+  // `entry` right before calling this, and Firestore's security rules
+  // reject a write whose `uid` doesn't match the caller's own auth uid.
+  // Returns {source: 'shared'|'local', id}.
   async function submitScore(entry){
     try{
       var db = await dbPromise;
@@ -3112,7 +3019,7 @@
     }
     // Scores may come from other viewers' documents — treat every
     // field as untrusted data, never as markup or instructions.
-    var myPlayerId = getPlayerId();
+    var myUid = state.firebaseUser ? state.firebaseUser.uid : null;
     listEl.innerHTML = rows.map(function(row, i){
       var name = escapeHtml(sanitizeName(row.name));
       var metaText;
@@ -3120,7 +3027,7 @@
       else if (row.mode === 'timeattack') metaText = (row.difficulty || 'medium') + ' · ' + (row.correct != null ? row.correct + ' correct' : '');
       else metaText = (row.difficulty || 'medium') + ' · ' + (row.correct != null ? row.correct + '/' + row.rounds + ' correct' : '');
       var meta = escapeHtml(metaText);
-      var isMine = row.id === mineId || (row.playerId && row.playerId === myPlayerId);
+      var isMine = row.id === mineId || (myUid && row.uid === myUid);
       return '<li class="lb-row' + (isMine ? ' lb-mine' : '') + '">' +
         '<span class="lb-rank">' + (i + 1) + '</span>' +
         '<span class="lb-info"><span class="lb-info-name">' + name + '</span>' +
@@ -3361,16 +3268,12 @@
     accountName: document.getElementById('account-name'),
     accountSignoutBtn: document.getElementById('account-signout-btn'),
     lbHead: document.getElementById('lb-head'),
-    lbNameRow: document.getElementById('lb-name-row'),
-    lbNameInput: document.getElementById('lb-name-input'),
-    lbSaveBtn: document.getElementById('lb-save-btn'),
+    lbSigninRow: document.getElementById('lb-signin-row'),
+    lbSigninBtn: document.getElementById('lb-signin-btn'),
+    lbSigninUnavailable: document.getElementById('lb-signin-unavailable'),
     lbList: document.getElementById('lb-list'),
     lbNote: document.getElementById('lb-note'),
     lbError: document.getElementById('lb-error'),
-    lbLoginToggle: document.getElementById('lb-login-toggle'),
-    lbLoginRow: document.getElementById('lb-login-row'),
-    lbLoginCode: document.getElementById('lb-login-code'),
-    lbLoginBtn: document.getElementById('lb-login-btn'),
     timerRow: document.getElementById('timer-row'),
     timerFill: document.getElementById('timer-fill'),
     timerBonusMark: document.getElementById('timer-bonus-mark'),
@@ -3427,6 +3330,7 @@
     pregamePlayBtn: document.getElementById('pregame-play-btn'),
     resetPremiumLink: document.getElementById('reset-premium-link'),
     premiumSidebar: document.getElementById('premium-sidebar'),
+    rightPanels: document.getElementById('right-panels'),
     premiumSidebarBtn: document.getElementById('premium-sidebar-btn'),
     leagueLbList: document.getElementById('league-lb-list'),
     gameInfoBest: document.getElementById('game-info-best'),
@@ -3964,15 +3868,22 @@
   }
 
   // --- Sign In With Google ------------------------------------------
-  // Identity only, for now: shows who's signed in on this device. It does
+  // Shows who's signed in on this device in the Account sidebar, and
+  // (see the Leaderboard section above) also signs the same credential
+  // into Firebase so scores can be posted under a verified identity. The
+  // Account sidebar display itself stays exactly as before: the ID token
+  // is decoded client-side purely to read the signed-in person's own
+  // name/photo, not verified against Google — that's fine for display,
+  // since nothing security-sensitive is gated on it directly. It does
   // NOT touch Premium (still the local flag above) or prove a real
-  // purchase — the ID token below is decoded client-side purely to read
-  // the signed-in person's own name/photo for display, not verified
-  // against Google, since there's no backend here to verify it against.
-  // Tying Premium to this identity for real (so it follows an account
-  // instead of a browser) would need a server to check tokens/webhooks.
+  // purchase.
   var GOOGLE_CLIENT_ID = '801058853820-kqo4nemhg1hvamid9hcdj59ifk5tcc0d.apps.googleusercontent.com';
   var GOOGLE_PROFILE_KEY = 'counterweight_google_profile';
+
+  // Set once waitForGoogleAndInit gives up waiting for the GIS script —
+  // read by renderLeaderboardSignInPrompt to show "not available in this
+  // preview" instead of a sign-in button that will never do anything.
+  var googleSignInUnavailable = false;
 
   function getSavedGoogleProfile(){
     try{ return JSON.parse(localStorage.getItem(GOOGLE_PROFILE_KEY) || 'null'); } catch(e){ return null; }
@@ -3986,8 +3897,8 @@
 
   // Reads the (unverified) payload out of the JWT Google hands back. Safe
   // to do purely for display purposes since nothing security-sensitive is
-  // gated on it here; a real server-side check would verify the signature
-  // instead of just decoding it like this.
+  // gated on it here — the actual leaderboard write is gated on the
+  // verified Firebase sign-in triggered alongside it below, not on this.
   function decodeJwtPayload(token){
     try{
       var base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
@@ -4003,6 +3914,19 @@
     if (!payload) return;
     saveGoogleProfile({ name: payload.name, email: payload.email, picture: payload.picture });
     renderAccount();
+
+    // Also sign this same Google credential into Firebase, so Firestore's
+    // security rules have a real, server-verified identity to check score
+    // writes against. state.firebaseUser itself is only ever set from the
+    // onAuthStateChanged listener below (see start()), which is the
+    // single source of truth once this resolves.
+    firebaseAppPromise.then(function(fb){
+      if (!fb) return;
+      try{
+        var cred = fb.auth.GoogleAuthProvider.credential(response.credential);
+        fb.auth().signInWithCredential(cred).catch(function(){});
+      } catch(e){}
+    });
   }
 
   function renderAccount(){
@@ -4020,30 +3944,43 @@
     clearGoogleProfile();
     renderAccount();
     try{ if (window.google && google.accounts && google.accounts.id) google.accounts.id.disableAutoSelect(); } catch(e){}
+    firebaseAppPromise.then(function(fb){ if (fb) fb.auth().signOut().catch(function(){}); });
+  }
+
+  // Renders one GIS button into `container` (the Account sidebar's own
+  // button, and/or the results-screen leaderboard's) — both share the
+  // one initialize() call below, so either one signs the whole page in.
+  function renderGoogleButton(container){
+    if (!container) return;
+    try{ google.accounts.id.renderButton(container, { theme: 'filled_black', size: 'medium', shape: 'pill', text: 'signin_with' }); } catch(e){}
   }
 
   function initGoogleSignIn(){
-    if (!els.googleSigninBtn) return;
     try{
       google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleCredential });
-      google.accounts.id.renderButton(els.googleSigninBtn, { theme: 'filled_black', size: 'medium', shape: 'pill', text: 'signin_with' });
-    } catch(e){}
+    } catch(e){ return; }
+    renderGoogleButton(els.googleSigninBtn);
+    renderGoogleButton(els.lbSigninBtn);
   }
 
   // The GIS script loads async and may not be ready the instant start()
   // runs, and on this Artifact preview it never loads at all (see the
   // <script> tag's comment) — so poll briefly, then give up quietly and
-  // let the "isn't available in this preview" note show instead of an
-  // empty button-shaped gap.
+  // let the "isn't available in this preview" notes show instead of an
+  // empty button-shaped gap. This always runs (even if a profile's
+  // already saved on this device) so the leaderboard's own sign-in
+  // button gets rendered too — renderAccount()/renderLeaderboardSignInPrompt()
+  // each independently decide whether their own button ends up visible.
   function waitForGoogleAndInit(attemptsLeft){
-    if (getSavedGoogleProfile()) return; // already signed in on this device, no need to render the button
     if (window.google && google.accounts && google.accounts.id){
       initGoogleSignIn();
       return;
     }
     if (attemptsLeft <= 0){
+      googleSignInUnavailable = true;
       if (els.googleSigninBtn) els.googleSigninBtn.hidden = true;
-      if (els.accountUnavailableNote) els.accountUnavailableNote.hidden = false;
+      if (els.accountUnavailableNote) els.accountUnavailableNote.hidden = !!getSavedGoogleProfile();
+      renderLeaderboardSignInPrompt();
       return;
     }
     setTimeout(function(){ waitForGoogleAndInit(attemptsLeft - 1); }, 200);
@@ -4120,6 +4057,7 @@
     if (els.menuLink) els.menuLink.hidden = true;
     if (els.premiumSidebar) els.premiumSidebar.hidden = true;
     if (els.leftPanels) els.leftPanels.hidden = true;
+    if (els.rightPanels) els.rightPanels.hidden = true;
   }
 
   function closePregame(){
@@ -4148,6 +4086,7 @@
     if (els.menuLink) els.menuLink.hidden = true;
     if (els.premiumSidebar) els.premiumSidebar.hidden = true;
     if (els.leftPanels) els.leftPanels.hidden = true;
+    if (els.rightPanels) els.rightPanels.hidden = true;
   }
 
   function closePaywall(){
@@ -4184,6 +4123,7 @@
     if (els.menuLink) els.menuLink.hidden = false;
     if (els.premiumSidebar) els.premiumSidebar.hidden = true;
     if (els.leftPanels) els.leftPanels.hidden = true;
+    if (els.rightPanels) els.rightPanels.hidden = true;
   }
 
   function openAbandonConfirm(){
@@ -4305,6 +4245,7 @@
     if (els.menuLink) els.menuLink.hidden = true;
     if (els.premiumSidebar) els.premiumSidebar.hidden = true;
     if (els.leftPanels) els.leftPanels.hidden = true;
+    if (els.rightPanels) els.rightPanels.hidden = true;
     renderCustomModeButtons();
     renderCustomDiffButtons();
     if (els.customOnlyToggle) els.customOnlyToggle.checked = false;
@@ -4341,6 +4282,7 @@
     if (els.menuLink) els.menuLink.hidden = false;
     if (els.premiumSidebar) els.premiumSidebar.hidden = true;
     if (els.leftPanels) els.leftPanels.hidden = true;
+    if (els.rightPanels) els.rightPanels.hidden = true;
     if (customDraft.mode === 'headtohead') startHeadToHead();
     else newGame();
   }
@@ -4547,40 +4489,37 @@
     }
   }
 
-  // Attaches the "change name" link inside the just-rendered lb-note.
-  function attachChangeNameHandler(){
-    var btn = document.getElementById('lb-change-btn');
-    if (!btn) return;
-    btn.addEventListener('click', function(){
-      clearSavedName();
-      showNameEntryUI();
-      els.lbNameInput.value = '';
-      els.lbNameInput.focus();
-      els.lbNote.textContent = '';
-    });
+  function noteSaved(name){
+    // No trailing period: some Google display names end in one themselves
+    // ("Jaka V."), which would otherwise double up.
+    els.lbNote.textContent = 'Saved as ' + name;
   }
 
-  function noteSaved(name, code){
-    var codeHtml = code
-      ? ' · your code: <strong>' + escapeHtml(code) + '</strong> (save it to use this name on another device)'
-      : '';
-    els.lbNote.innerHTML = 'Saved as <strong>' + escapeHtml(name) + '</strong>' + codeHtml + ' · <button type="button" id="lb-change-btn">change name</button>';
-    attachChangeNameHandler();
+  // The Google display name/email of whoever's currently signed into
+  // Firebase, or null when nobody is — used both for the leaderboard
+  // entry's `name` field and anywhere else that needs to show it.
+  function firebaseDisplayName(){
+    var user = state.firebaseUser;
+    return user ? sanitizeName(user.displayName || user.email || 'Player') : null;
   }
 
-  // Submits one game's result, then re-renders the board with that
-  // entry highlighted. A results-screen token guards every await here:
-  // if the player already started a new game by the time a call
-  // resolves, this bails instead of overwriting the newer screen.
-  // `newCode` is passed the first time a name gets freshly claimed, so
-  // the player can be shown their recovery code exactly once.
-  async function submitAndRefresh(entry, newCode){
+  // Submits one game's result, then re-renders the board with that entry
+  // highlighted. Requires state.firebaseUser (callers check this before
+  // calling, or via the pendingScoreEntry/pendingScoreToken hand-off in
+  // showResults/the onAuthStateChanged listener below). A results-screen
+  // token guards every await here: if the player already started a new
+  // game by the time a call resolves, this bails instead of overwriting
+  // the newer screen.
+  async function submitAndRefresh(entry){
     var myToken = state.resultsToken;
-    els.lbNameRow.hidden = true;
-    hideLbLogin();
+    var name = firebaseDisplayName();
+    if (!name) return; // signed out again before this ran — nothing to attribute the score to
+    entry.name = name;
+    entry.uid = state.firebaseUser.uid;
+    if (els.lbSigninRow) els.lbSigninRow.hidden = true;
     var result = await submitScore(entry);
     if (myToken !== state.resultsToken) return;
-    noteSaved(entry.name, newCode);
+    noteSaved(entry.name);
     var filterFn = entry.mode === 'daily' ? function(r){ return r.dateKey === entry.dateKey; } : null;
     var board = await fetchLeaderboard(entry.mode, filterFn);
     if (myToken !== state.resultsToken) return;
@@ -4601,16 +4540,18 @@
     renderLeaderboard(board.rows, null);
   }
 
-  // Builds the entry that gets saved to the leaderboard. Classic and Daily
-  // rank by points scored; Endless reuses the same `points` field to mean
-  // "rounds survived" so every board can share one sort/query shape. Zen
-  // and Head-to-Head never call this — neither has a shared leaderboard.
-  function buildScoreEntry(name){
+  // Builds the entry that gets saved to the leaderboard, everything
+  // except the identity fields (name/uid) — those get attached in
+  // submitAndRefresh right before saving, once we know who's signed in.
+  // Classic and Daily rank by points scored; Endless reuses the same
+  // `points` field to mean "rounds survived" so every board can share
+  // one sort/query shape. Zen and Head-to-Head never call this — neither
+  // has a shared leaderboard.
+  function buildScoreEntry(){
     var entry;
     if (state.mode === 'endless'){
       var survived = state.round - 1;
       entry = {
-        name: name,
         points: survived,
         rounds: survived,
         difficulty: state.difficulty,
@@ -4619,7 +4560,6 @@
       };
     } else if (state.mode === 'timeattack'){
       entry = {
-        name: name,
         points: state.points,
         correct: state.sessionCorrect,
         difficulty: state.difficulty,
@@ -4628,7 +4568,6 @@
       };
     } else if (state.mode === 'daily'){
       entry = {
-        name: name,
         points: state.points,
         correct: state.sessionCorrect,
         rounds: ROUNDS,
@@ -4639,7 +4578,6 @@
       };
     } else if (state.mode === 'league'){
       entry = {
-        name: name,
         points: state.leagueTotal,
         correct: state.leagueCorrectTotal,
         rounds: ROUNDS * LEAGUE_ATTEMPTS,
@@ -4649,7 +4587,6 @@
       };
     } else {
       entry = {
-        name: name,
         points: state.points,
         correct: state.sessionCorrect,
         rounds: ROUNDS,
@@ -4658,7 +4595,6 @@
         ts: Date.now()
       };
     }
-    entry.playerId = getPlayerId();
     return entry;
   }
 
@@ -4668,59 +4604,17 @@
     els.lbError.hidden = !msg;
   }
 
-  function hideLbLogin(){
-    if (els.lbLoginRow) els.lbLoginRow.hidden = true;
-    if (els.lbLoginToggle) els.lbLoginToggle.hidden = true;
-    if (els.lbLoginCode) els.lbLoginCode.value = '';
-  }
-
-  // Shows the name-entry UI (fresh results screen, or "change name").
-  function showNameEntryUI(){
-    els.lbNameRow.hidden = false;
-    showLbError('');
-    if (els.lbLoginToggle) els.lbLoginToggle.hidden = false;
-    if (els.lbLoginRow) els.lbLoginRow.hidden = true;
-  }
-
-  async function handleSaveScore(){
-    var name = sanitizeName(els.lbNameInput.value);
-    showLbError('');
-    els.lbSaveBtn.disabled = true;
-    var claim = await claimName(name);
-    els.lbSaveBtn.disabled = false;
-    if (!claim.ok){
-      if (claim.reason === 'taken'){
-        showLbError('That name is already claimed on this leaderboard — try another, or log in with your code below.');
-        if (els.lbLoginToggle) els.lbLoginToggle.hidden = false;
-      } else {
-        showLbError('Someone else just claimed that name — try again in a moment.');
-      }
-      return;
-    }
-    saveName(name);
-    submitAndRefresh(buildScoreEntry(name), claim.isNew ? claim.code : null);
-  }
-
-  async function handleLbLogin(){
-    var name = sanitizeName(els.lbNameInput.value);
-    var code = els.lbLoginCode ? els.lbLoginCode.value : '';
-    if (!code || !code.trim()){
-      showLbError('Enter the code you got when you first saved this name.');
-      return;
-    }
-    showLbError('');
-    els.lbLoginBtn.disabled = true;
-    var res = await loginWithCode(name, code);
-    els.lbLoginBtn.disabled = false;
-    if (!res.ok){
-      if (res.reason === 'no_db') showLbError("There's no shared leaderboard available on this copy of the game to log in to.");
-      else if (res.reason === 'not_found') showLbError("That name hasn't been claimed yet — just save your score to claim it.");
-      else if (res.reason === 'bad_code') showLbError("That code doesn't match this name.");
-      else showLbError('Could not verify right now — try again in a moment.');
-      return;
-    }
-    saveName(name);
-    submitAndRefresh(buildScoreEntry(name));
+  // Governs the results-screen leaderboard's sign-in prompt: shows the
+  // "sign in to submit" row when nobody's signed in and Google Sign-In
+  // actually loaded, shows the "not available in this preview" note
+  // when it never loaded at all (see googleSignInUnavailable below), and
+  // shows neither once someone's signed in (submitAndRefresh hides the
+  // row itself the moment a submission starts, but this also covers
+  // arriving at a fresh results screen while already signed in).
+  function renderLeaderboardSignInPrompt(){
+    var signedIn = !!state.firebaseUser;
+    if (els.lbSigninRow) els.lbSigninRow.hidden = signedIn || googleSignInUnavailable;
+    if (els.lbSigninUnavailable) els.lbSigninUnavailable.hidden = signedIn || !googleSignInUnavailable;
   }
 
   function showResults(){
@@ -4800,16 +4694,21 @@
 
     state.resultsToken++;
     els.lbNote.textContent = '';
+    showLbError('');
     els.lbList.innerHTML = '<li class="lb-empty">Loading leaderboard…</li>';
+    renderLeaderboardSignInPrompt();
 
-    var savedName = getSavedName();
-    if (savedName){
-      els.lbNameRow.hidden = true;
-      hideLbLogin();
-      submitAndRefresh(buildScoreEntry(sanitizeName(savedName)));
+    if (state.firebaseUser){
+      state.pendingScoreEntry = null;
+      submitAndRefresh(buildScoreEntry());
     } else {
-      showNameEntryUI();
-      els.lbNameInput.value = '';
+      // Not signed in: still show the public board (read-only) below,
+      // and hold onto this run's entry — if the player signs in from the
+      // button right here before leaving, onAuthStateChanged's listener
+      // (see start()) submits it the moment sign-in completes, so a
+      // score already earned is never lost to a slow click.
+      state.pendingScoreEntry = buildScoreEntry();
+      state.pendingScoreToken = state.resultsToken;
       refreshLeaderboardOnly();
     }
   }
@@ -4987,24 +4886,6 @@
       saveStats();
       renderStats();
     });
-    els.lbSaveBtn.addEventListener('click', handleSaveScore);
-    els.lbNameInput.addEventListener('keydown', function(e){
-      if (e.key === 'Enter'){ e.preventDefault(); handleSaveScore(); }
-    });
-    if (els.lbLoginToggle){
-      els.lbLoginToggle.addEventListener('click', function(){
-        els.lbLoginRow.hidden = false;
-        els.lbLoginToggle.hidden = true;
-        showLbError('');
-        if (els.lbLoginCode) els.lbLoginCode.focus();
-      });
-    }
-    if (els.lbLoginBtn) els.lbLoginBtn.addEventListener('click', handleLbLogin);
-    if (els.lbLoginCode){
-      els.lbLoginCode.addEventListener('keydown', function(e){
-        if (e.key === 'Enter'){ e.preventDefault(); handleLbLogin(); }
-      });
-    }
     if (els.leagueNextBtn) els.leagueNextBtn.addEventListener('click', startNextLeagueAttempt);
     if (els.accountSignoutBtn) els.accountSignoutBtn.addEventListener('click', signOutOfGoogle);
     els.achievementBadges.forEach(function(badge){
@@ -5067,7 +4948,10 @@
       globalTimerId: null,
       globalTimeLeft: 0,
       resultsToken: 0,
-      menuLbToken: 0
+      menuLbToken: 0,
+      firebaseUser: null,
+      pendingScoreEntry: null,
+      pendingScoreToken: 0
     };
     bindEvents();
     renderDifficulty();
@@ -5080,6 +4964,25 @@
     renderStats();
     renderAccount();
     waitForGoogleAndInit(25);
+
+    // Single source of truth for state.firebaseUser: fires immediately
+    // with any session Firebase already persisted (so a returning signed-
+    // in player never has to click anything again), and again whenever
+    // sign-in/sign-out completes. When it flips to signed-in while a
+    // finished-but-unsubmitted run is waiting (see showResults), submit
+    // it now rather than losing it to a slow sign-in click.
+    firebaseAppPromise.then(function(fb){
+      if (!fb) { renderLeaderboardSignInPrompt(); return; }
+      fb.auth().onAuthStateChanged(function(user){
+        state.firebaseUser = user;
+        renderLeaderboardSignInPrompt();
+        if (user && state.pendingScoreEntry && state.pendingScoreToken === state.resultsToken){
+          var entry = state.pendingScoreEntry;
+          state.pendingScoreEntry = null;
+          submitAndRefresh(entry);
+        }
+      });
+    });
     openMenu();
 
     // Live countdown on any locked menu card, and auto-unlocks the moment
