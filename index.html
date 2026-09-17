@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Counterweight</title>
+</head>
+<body>
 <title>Counterweight</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,6 +38,8 @@
     margin: 0;
     padding: 32px 16px 48px;
     display: flex;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
     background-image:
       linear-gradient(var(--steel-lo) 1px, transparent 1px),
@@ -61,6 +65,38 @@
       inset 0 1px 0 rgba(255,255,255,0.04);
     position: relative;
   }
+
+  /* Sits below the console on every screen (menu, pregame, in-round,
+     results, custom, paywall) since it's a sibling of .console rather
+     than something nested inside one particular screen. */
+  .discord-footer{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 9px;
+    width: 100%;
+    max-width: 640px;
+    margin-top: 18px;
+    padding: 13px 18px;
+    border-radius: 14px;
+    border: 1px solid var(--steel);
+    background: var(--panel);
+    color: var(--text-dim);
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: border-color 200ms, color 200ms, background 200ms, transform 150ms;
+  }
+  .discord-footer:hover{
+    border-color: #5865f2;
+    color: var(--text);
+    background: var(--panel-hi);
+    transform: translateY(-1px);
+  }
+  .discord-footer:focus-visible{ outline: 2px solid #5865f2; outline-offset: 2px; }
+  .discord-footer-icon{ width: 20px; height: 20px; flex-shrink: 0; fill: #5865f2; }
 
   @media (max-width: 380px){
     body{ padding: 20px 8px 32px; }
@@ -88,6 +124,30 @@
   }
   @keyframes confetti-fall{
     to{ transform: translateY(200px) rotate(280deg); opacity: 0; }
+  }
+
+  .achievement-toast{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--panel-hi);
+    border: 1px solid var(--amber-dim);
+    border-radius: 14px;
+    padding: 10px 16px;
+    margin: 0 0 20px;
+    box-shadow: 0 20px 40px -16px rgba(0,0,0,0.6);
+  }
+  .achievement-toast[hidden]{ display: none; }
+  .achievement-toast-icon{ font-size: 1.4rem; flex-shrink: 0; }
+  .achievement-toast-title{
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 0.85rem;
+    color: var(--amber);
+  }
+  .achievement-toast-desc{
+    font-size: 0.76rem;
+    color: var(--text-dim);
   }
 
   .plate{
@@ -270,6 +330,7 @@
     border: 1px solid var(--steel);
     border-radius: 999px;
     overflow: hidden;
+    position: relative;
   }
 
   .timer-fill{
@@ -278,6 +339,25 @@
     background: var(--good);
     border-radius: inherit;
   }
+
+  /* Fixed marker showing where the fastest speed tier (max round-point
+     bonus) ends — see SPEED_TIERS. Its position is a constant fraction of
+     the bar regardless of difficulty (the tiers are time-fraction cutoffs,
+     not fixed seconds), so it's only ever repositioned defensively, never
+     animated with the fill. Only meaningful on the real per-round timer
+     (startTimer()) — Time Attack's visible bar is a separate 60s global
+     clock that doesn't line up with its hidden per-answer bonus window,
+     so it's hidden there. */
+  .timer-bonus-mark{
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: rgba(255, 255, 255, 0.65);
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+  .timer-bonus-mark[hidden]{ display: none; }
 
   .timer-num{
     font-family: var(--font-mono);
@@ -372,6 +452,63 @@
     filter: drop-shadow(0 3px 5px rgba(0,0,0,0.45));
   }
   .card .name{ font-weight: 600; font-size: 0.95rem; }
+
+  /* --- Rare-item badge ("Your mama"): a hexagon instead of the usual
+     circle, with a rich gold background, a pulsing gold glow, and a moving
+     holo-foil shine sweep to mark it as special. Reused for both the
+     in-round card badge and the Achievements sidebar icon. */
+  .emoji-badge.is-rare, .achievement-icon.is-rare{
+    position: relative;
+    border-radius: 0;
+    clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0% 50%);
+    background: linear-gradient(160deg, #a8730f, #5c3d0a 75%);
+    border: none;
+    overflow: hidden;
+  }
+  .card .emoji-badge.is-rare{
+    animation: rare-glow-pulse 2.1s ease-in-out infinite;
+  }
+  .card:hover:not(:disabled) .emoji-badge.is-rare{ transform: scale(1.05); }
+  @keyframes rare-glow-pulse{
+    0%, 100%{ box-shadow: 0 0 0 2px #ffd76a, 0 0 16px rgba(255,193,7,0.55); }
+    50%{ box-shadow: 0 0 0 2px #ffedb0, 0 0 32px rgba(255,193,7,0.95); }
+  }
+  .achievement-icon.is-rare{ background: linear-gradient(160deg, #a8730f, #5c3d0a 75%); }
+  /* The generic .achievement-badge.is-unlocked .achievement-icon rule
+     (further down) sets a plain panel background for every other
+     achievement's icon — this rule needs to out-specificity it so the
+     rare item's gold background survives unlocking instead of flattening
+     back to gray-panel-with-color, i.e. actually "fully coloured". */
+  .achievement-badge.is-unlocked .achievement-icon.is-rare{
+    background: linear-gradient(160deg, #ffce54, #a8730f 75%);
+    border-color: transparent;
+    animation: rare-glow-pulse-sm 2.1s ease-in-out infinite;
+  }
+  @keyframes rare-glow-pulse-sm{
+    0%, 100%{ box-shadow: 0 0 0 1px #ffd76a, 0 0 8px rgba(255,193,7,0.5); }
+    50%{ box-shadow: 0 0 0 1px #ffedb0, 0 0 16px rgba(255,193,7,0.9); }
+  }
+  .emoji-badge.is-rare::before, .achievement-icon.is-rare::before{
+    content: '';
+    position: absolute;
+    inset: -60%;
+    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.95) 48%, rgba(255,215,120,0.6) 53%, transparent 68%);
+    background-size: 220% 220%;
+    animation: rare-shine 2.2s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes rare-shine{
+    0%{ background-position: -80% -80%; }
+    100%{ background-position: 180% 180%; }
+  }
+  .rare-figure{
+    position: relative;
+    z-index: 1;
+    width: 66%;
+    height: 66%;
+    filter: drop-shadow(0 0 5px rgba(255,193,7,0.65)) drop-shadow(0 2px 3px rgba(0,0,0,0.4));
+  }
+  .achievement-icon.is-rare .rare-figure{ width: 62%; height: 62%; }
 
   .card .weight{
     font-family: var(--font-mono);
@@ -801,7 +938,7 @@
     line-height: 1.35;
   }
 
-  /* The main event — 10 Rounds gets top billing, everything else reads
+  /* The main event — 5 Rounds gets top billing, everything else reads
      as a smaller side challenge underneath it. */
   .menu-card-featured{
     position: relative;
@@ -861,6 +998,27 @@
   }
 
   .menu-cards-secondary{ grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+
+  /* Only ever shown once the demo "Unlock Premium" flag is set on this
+     device — gives testers (and anyone who tapped it out of curiosity) an
+     easy way to flip Premium back to locked without clearing site data. */
+  .reset-premium-link{
+    display: block;
+    width: 100%;
+    background: none;
+    border: none;
+    margin: 16px 0 0;
+    padding: 0;
+    font-family: inherit;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    text-align: center;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+  }
+  .reset-premium-link:hover{ color: var(--text); }
+  .reset-premium-link[hidden]{ display: none; }
   .menu-card-compact{ padding: 13px 12px; gap: 4px; }
   .menu-card-compact .menu-card-icon{ font-size: 1.25rem; }
   .menu-card-compact .menu-card-title{ font-size: 0.85rem; }
@@ -952,6 +1110,17 @@
     color: var(--text-dim);
     margin: 0 0 18px;
   }
+
+  /* --- Pregame confirm screen (mode picked, not started yet) ----------- */
+  .pregame-screen[hidden]{ display: none; }
+  .pregame-banner{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+  }
+  .pregame-banner .custom-title{ margin: 0; }
+  .pregame-icon{ font-size: 2.4rem; line-height: 1; }
 
   .custom-checkbox{
     display: flex;
@@ -1068,6 +1237,51 @@
 
   .leaderboard[hidden]{ display: none; }
 
+  /* --- Abandon-round confirm --------------------------------------------
+     A small modal that sits on top of the in-progress round (nested inside
+     .game-area, so it can only ever show while a round is actually up, and
+     disappears for free the moment .game-area itself gets hidden). Only
+     shown for modes where leaving mid-round actually costs something —
+     see modeHasAbandonWarning() in the script; Zen skips straight to
+     openMenu() instead since it has no results screen and nothing to
+     lose. */
+  .abandon-overlay{
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(10,12,16,0.72);
+    border-radius: 24px;
+  }
+  .abandon-overlay[hidden]{ display: none; }
+  .abandon-box{
+    width: 100%;
+    max-width: 320px;
+    background: var(--panel);
+    border: 1px solid var(--steel);
+    border-radius: 16px;
+    padding: 20px 20px 18px;
+    box-shadow: 0 24px 50px -20px rgba(0,0,0,0.6);
+    text-align: center;
+  }
+  .abandon-title{
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.1rem;
+    margin: 0 0 8px;
+    color: var(--text);
+  }
+  .abandon-desc{
+    font-size: 0.84rem;
+    line-height: 1.4;
+    color: var(--text-dim);
+    margin: 0 0 16px;
+  }
+  .abandon-box .controls-row{ justify-content: center; }
+
   /* --- Paywall ------------------------------------------------------- */
   .paywall-screen[hidden]{ display: none; }
   .paywall-badge{
@@ -1130,17 +1344,348 @@
     color: var(--amber);
   }
   .paywall-price-note{ font-size: 0.78rem; color: var(--text-dim); }
+  .paywall-plan-toggle{
+    display: flex;
+    gap: 6px;
+    background: var(--bg-deep);
+    border: 1px solid var(--steel);
+    border-radius: 999px;
+    padding: 3px;
+    margin-bottom: 14px;
+  }
+  .paywall-plan-btn{
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    background: transparent;
+    border: none;
+    border-radius: 999px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: background 150ms, color 150ms;
+  }
+  .paywall-plan-btn:hover:not(.active){ color: var(--text); }
+  .paywall-plan-btn:focus-visible{ outline: 2px solid var(--amber); outline-offset: 2px; }
+  .paywall-plan-btn.active{ background: var(--amber); color: #1a1305; }
+  .paywall-plan-save{
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: var(--good);
+    color: #0c2015;
+  }
+  .paywall-plan-btn.active .paywall-plan-save{ background: #0c2015; color: var(--good); }
   .paywall-demo-note{
     font-size: 0.7rem;
     color: var(--text-dim);
     opacity: 0.75;
     margin: 12px 0 0;
   }
+
+  /* --- Side panels (League leaderboard + Game Info + Premium ad) -------
+     League leaderboard and Game Info stack together in .left-panels, on
+     the left of .console; Premium is its own independent panel on the
+     right. All three are only ever shown while the actual menu screen is
+     up — see renderMenuCardStates() and the menu-screen transition points
+     in the script — with Premium additionally hidden once Premium is
+     unlocked (League and Game Info have no such gate). Kept deliberately
+     narrow and short so each side still fits beside the console on most
+     window sizes.
+
+     The game stays dead-center on the page at every width: .app-shell
+     hugs .console's own max-width (rather than the combined width of
+     console+side panels), so centering it — which body already does via
+     its flex align-items:center — centers the console itself. Below
+     1160px there's no room to dock the panels beside that centered
+     console without either shifting the console off-center or running
+     off the edge of the screen, so they drop into normal flow and stack
+     below instead (League board, then Game Info, then Premium); at
+     1160px+ .left-panels and .premium-sidebar are pulled out of flow and
+     docked to OPPOSITE sides of the console via absolute positioning —
+     League+Game Info on the left, Premium on the right — which is what
+     lets the console keep its exact center regardless of what's beside
+     it. */
+  .app-shell{
+    position: relative;
+    width: 100%;
+    max-width: 640px;
+  }
+  .left-panels{
+    width: 100%;
+    max-width: 360px;
+    margin: 18px auto 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .left-panels[hidden]{ display: none; }
+  .left-panels-toggle{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 14px;
+    background: var(--panel);
+    border: 1px solid var(--steel);
+    border-radius: 999px;
+    color: var(--text-dim);
+    font-family: var(--font-body);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .left-panels-toggle:hover{ color: var(--text); border-color: var(--amber-dim); }
+  .left-panels-toggle-icon{
+    display: inline-block;
+    transition: transform 0.2s ease;
+    font-size: 0.7rem;
+  }
+  .left-panels.is-collapsed .left-panels-toggle-icon{ transform: rotate(-90deg); }
+  .left-panels-content{
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .left-panels-content[hidden]{ display: none; }
+  .league-lb-sidebar{
+    background: var(--panel);
+    border: 1px solid var(--steel);
+    border-radius: 16px;
+    padding: 14px 14px 12px;
+    box-shadow: 0 24px 50px -24px rgba(0,0,0,0.55);
+  }
+  .league-lb-sidebar[hidden]{ display: none; }
+  .league-lb-head{
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.02rem;
+    margin: 0 0 10px;
+    color: var(--text);
+  }
+  .league-lb-sidebar .lb-list{ gap: 6px; }
+  .league-lb-sidebar .lb-row{ padding: 6px 10px; }
+  .league-lb-sidebar .lb-info-name{ font-size: 0.8rem; }
+  .league-lb-sidebar .lb-info-meta{ font-size: 0.64rem; }
+  .league-lb-sidebar .lb-empty{
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    text-align: center;
+    padding: 4px 0;
+  }
+  .game-info-sidebar{
+    background: var(--panel);
+    border: 1px solid var(--steel);
+    border-radius: 16px;
+    padding: 14px 14px 12px;
+    box-shadow: 0 24px 50px -24px rgba(0,0,0,0.55);
+  }
+  .game-info-sidebar[hidden]{ display: none; }
+  .game-info-section + .game-info-section{
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--steel);
+  }
+  .game-info-head{
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 0.9rem;
+    margin: 0 0 8px;
+    color: var(--text);
+  }
+  .game-info-text{
+    font-size: 0.76rem;
+    line-height: 1.42;
+    color: var(--text-dim);
+    margin: 0;
+  }
+  .game-info-stat-row{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    font-size: 0.8rem;
+  }
+  .game-info-stat-label{ color: var(--text-dim); }
+  .game-info-stat-value{
+    font-family: var(--font-display);
+    font-weight: 800;
+    color: var(--amber);
+  }
+  .achievements-grid{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .achievement-badge{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 62px;
+    text-align: center;
+    cursor: help;
+  }
+  .achievement-badge:focus-visible{
+    outline: 2px solid var(--amber);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+  .achievement-icon{
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--steel-lo);
+    border: 1px solid var(--steel);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    filter: grayscale(1);
+    opacity: 0.4;
+    transition: filter 0.3s ease, opacity 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+  }
+  .achievement-badge.is-unlocked .achievement-icon{
+    filter: grayscale(0);
+    opacity: 1;
+    background: var(--panel-hi);
+    border-color: var(--amber-dim);
+    box-shadow: 0 0 0 2px rgba(255,180,0,0.15);
+  }
+  /* Streak medals (bronze/silver/gold) — same locked/unlocked mechanics as
+     any other achievement, just tinted to their medal's own metal once
+     unlocked instead of the generic amber ring. */
+  .achievement-badge.is-unlocked .medal-bronze{
+    background: linear-gradient(160deg, #e0a06a, #8a5228 75%);
+    border-color: #c97b3d;
+    box-shadow: 0 0 0 2px rgba(205,127,50,0.35), 0 0 10px rgba(205,127,50,0.4);
+  }
+  .achievement-badge.is-unlocked .medal-silver{
+    background: linear-gradient(160deg, #e7edf2, #9aa7b0 75%);
+    border-color: #c6d0d6;
+    box-shadow: 0 0 0 2px rgba(200,210,217,0.4), 0 0 10px rgba(200,210,217,0.45);
+  }
+  .achievement-badge.is-unlocked .medal-gold{
+    background: linear-gradient(160deg, #ffe081, #c99a1e 75%);
+    border-color: #ffd76a;
+    box-shadow: 0 0 0 2px rgba(255,193,7,0.45), 0 0 12px rgba(255,193,7,0.55);
+  }
+  .achievement-name{
+    font-size: 0.64rem;
+    color: var(--text-dim);
+    line-height: 1.2;
+  }
+  .achievement-badge.is-unlocked .achievement-name{
+    color: var(--text);
+    font-weight: 600;
+  }
+  /* Hover/focus tooltip explaining how to earn an achievement. A single
+     shared element, positioned in JS (not pure CSS ::after) so its
+     placement can be clamped to the viewport on every hover — a fixed
+     centered-under-badge tooltip would otherwise poke past the edge of
+     this narrow sidebar and cause horizontal overflow on small screens. */
+  .achv-tooltip{
+    position: fixed;
+    z-index: 60;
+    max-width: 190px;
+    background: var(--panel-hi);
+    color: var(--text);
+    border: 1px solid var(--steel);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 0.7rem;
+    line-height: 1.35;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+    pointer-events: none;
+  }
+  .achv-tooltip[hidden]{ display: none; }
+  .premium-sidebar{
+    width: 100%;
+    max-width: 360px;
+    margin: 16px auto 0;
+    background: var(--panel);
+    border: 1px solid var(--amber-dim);
+    border-radius: 16px;
+    padding: 14px 14px 12px;
+    box-shadow: 0 24px 50px -24px rgba(0,0,0,0.55);
+  }
+  .premium-sidebar[hidden]{ display: none; }
+  .premium-sidebar-badge{
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #1a1305;
+    background: var(--amber);
+    padding: 3px 9px;
+    border-radius: 999px;
+    margin: 0 0 8px;
+  }
+  .premium-sidebar-title{
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.02rem;
+    margin: 0 0 6px;
+    color: var(--text);
+  }
+  .premium-sidebar-desc{
+    font-size: 0.76rem;
+    line-height: 1.35;
+    color: var(--text-dim);
+    margin: 0 0 10px;
+  }
+  .premium-sidebar-price-row{
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    margin-bottom: 2px;
+  }
+  .premium-sidebar-price{
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.15rem;
+    color: var(--amber);
+  }
+  .premium-sidebar-price-note{ font-size: 0.7rem; color: var(--text-dim); }
+  .premium-sidebar-price-alt{
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    margin: 0 0 10px;
+  }
+  .premium-sidebar-btn{ width: 100%; padding: 8px 14px; font-size: 0.82rem; }
+
+  @media (min-width: 1160px){
+    .left-panels{
+      position: absolute;
+      top: 0;
+      right: 100%;
+      margin: 0 16px 0 0;
+      width: 220px;
+      max-width: 220px;
+    }
+    .premium-sidebar{
+      position: absolute;
+      top: 0;
+      left: 100%;
+      margin: 0 0 0 16px;
+      width: 220px;
+      max-width: 220px;
+    }
+  }
 </style>
-</head>
-<body>
 
-
+<div class="app-shell">
 <div class="console">
   <div class="confetti-layer" id="confetti-layer" aria-hidden="true"></div>
   <div class="plate">
@@ -1155,27 +1700,38 @@
     </div>
   </div>
 
+  <div class="achievement-toast" id="achievement-toast" hidden aria-live="polite">
+    <span class="achievement-toast-icon" id="achievement-toast-icon" aria-hidden="true">🏅</span>
+    <div>
+      <div class="achievement-toast-title" id="achievement-toast-title">Achievement unlocked!</div>
+      <div class="achievement-toast-desc" id="achievement-toast-desc"></div>
+    </div>
+  </div>
+
+  <div class="achv-tooltip" id="achv-tooltip" role="tooltip" hidden></div>
+
   <div class="menu-screen" id="menu-screen">
     <button class="menu-card menu-card-featured" data-mode="classic" type="button">
       <span class="menu-card-badge">Start here</span>
       <span class="menu-card-icon" aria-hidden="true">🎯</span>
-      <span class="menu-card-title">10 Rounds</span>
-      <span class="menu-card-tag">The classic run — ten pairs, points for speed, then compare your score.</span>
+      <span class="menu-card-title">5 Rounds</span>
+      <span class="menu-card-tag">The classic run — five pairs, points for speed, then compare your score.</span>
     </button>
 
     <button class="menu-card menu-card-daily" data-mode="daily" type="button">
       <span class="menu-card-icon" aria-hidden="true">📅</span>
       <span class="menu-card-daily-text">
         <span class="menu-card-title">Daily Challenge</span>
-        <span class="menu-card-tag">Same ten pairs as everyone, today only.</span>
+        <span class="menu-card-tag">Same five pairs as everyone, today only.</span>
       </span>
     </button>
 
     <button class="menu-card menu-card-daily" data-mode="league" type="button">
+      <span class="menu-card-lock-badge" hidden>🔜 Coming soon</span>
       <span class="menu-card-icon" aria-hidden="true">🏆</span>
       <span class="menu-card-daily-text">
         <span class="menu-card-title">League</span>
-        <span class="menu-card-tag">The competitive take on 10 Rounds — three tries, combined score counts.</span>
+        <span class="menu-card-tag">The competitive take on 5 Rounds — one run, once a day.</span>
       </span>
     </button>
 
@@ -1210,6 +1766,8 @@
         <span class="menu-card-tag">Pick a mode, add your own objects to weigh.</span>
       </button>
     </div>
+
+    <button class="reset-premium-link" id="reset-premium-link" type="button" hidden>Demo build: Premium is unlocked on this device — reset it</button>
   </div>
 
   <div class="custom-screen" id="custom-screen" hidden>
@@ -1220,7 +1778,7 @@
     <div class="diff-row">
       <span class="diff-label">Mode</span>
       <div class="diff-buttons" role="group" aria-label="Custom mode" id="custom-mode-buttons">
-        <button class="diff-btn" data-mode="classic" type="button">10 Rounds</button>
+        <button class="diff-btn" data-mode="classic" type="button">5 Rounds</button>
         <button class="diff-btn" data-mode="endless" type="button">Endless</button>
         <button class="diff-btn" data-mode="timeattack" type="button">Time Attack</button>
         <button class="diff-btn" data-mode="zen" type="button">Zen</button>
@@ -1267,21 +1825,52 @@
     </div>
   </div>
 
+  <div class="pregame-screen" id="pregame-screen" hidden>
+    <button class="menu-link" id="pregame-back-btn" type="button">← Menu</button>
+    <div class="pregame-banner">
+      <span class="pregame-icon" id="pregame-icon" aria-hidden="true">🎯</span>
+      <p class="custom-title" id="pregame-title">5 Rounds</p>
+    </div>
+    <p class="custom-sub" id="pregame-tag">The classic run — five pairs, points for speed, then compare your score.</p>
+
+    <div class="diff-row" id="diff-row">
+      <span class="diff-label">Difficulty</span>
+      <div class="diff-buttons" role="group" aria-label="Difficulty">
+        <button class="diff-btn" id="diff-easy" data-diff="easy" type="button">Easy</button>
+        <button class="diff-btn" id="diff-medium" data-diff="medium" type="button">Medium</button>
+        <button class="diff-btn" id="diff-hard" data-diff="hard" type="button">Hard</button>
+      </div>
+      <p class="diff-desc" id="diff-desc"></p>
+    </div>
+    <p class="daily-note" id="daily-note" hidden>Medium difficulty, same five pairs for everyone today.</p>
+
+    <div class="controls">
+      <button class="next" id="pregame-play-btn" type="button">▶ Play</button>
+    </div>
+  </div>
+
   <div class="paywall-screen" id="paywall-screen" hidden>
     <button class="menu-link" id="paywall-back-btn" type="button">← Menu</button>
     <div class="paywall-badge">🔒 Premium</div>
     <p class="paywall-title">Unlock the Premium modes</p>
-    <p class="paywall-sub">One unlock, three modes — no timer on how long you keep it.</p>
+    <p class="paywall-sub">Four extra modes, unlimited plays everywhere — cancel anytime.</p>
 
     <ul class="paywall-features">
       <li><span class="paywall-feature-icon">⏱️</span><span><strong>Time Attack</strong> — 60 seconds, as many as you can.</span></li>
       <li><span class="paywall-feature-icon">🤝</span><span><strong>Head-to-Head</strong> — pass-and-play local multiplayer.</span></li>
       <li><span class="paywall-feature-icon">🛠️</span><span><strong>Custom</strong> — add your own objects and weigh them.</span></li>
+      <li><span class="paywall-feature-icon">🏆</span><span><strong>League</strong> — one competitive run, once a day.</span></li>
+      <li><span class="paywall-feature-icon">♾️</span><span><strong>Unlimited plays</strong> — every mode, no daily limit.</span></li>
     </ul>
 
+    <div class="paywall-plan-toggle" id="paywall-plan-toggle" role="group" aria-label="Billing period">
+      <button class="paywall-plan-btn" data-plan="monthly" type="button">Monthly</button>
+      <button class="paywall-plan-btn active" data-plan="yearly" type="button">Yearly <span class="paywall-plan-save">Save 46%</span></button>
+    </div>
+
     <div class="paywall-price-row">
-      <span class="paywall-price">$2.99</span>
-      <span class="paywall-price-note">one-time</span>
+      <span class="paywall-price" id="paywall-price">€12.99</span>
+      <span class="paywall-price-note" id="paywall-price-note">per year</span>
     </div>
 
     <div class="controls">
@@ -1318,23 +1907,12 @@
 
     <div class="mode-banner">
       <span class="mode-banner-icon" id="mode-banner-icon" aria-hidden="true">🎯</span>
-      <span id="mode-banner-title">10 Rounds</span>
+      <span id="mode-banner-title">5 Rounds</span>
     </div>
-
-    <div class="diff-row" id="diff-row">
-      <span class="diff-label">Difficulty</span>
-      <div class="diff-buttons" role="group" aria-label="Difficulty">
-        <button class="diff-btn" id="diff-easy" data-diff="easy" type="button">Easy</button>
-        <button class="diff-btn" id="diff-medium" data-diff="medium" type="button">Medium</button>
-        <button class="diff-btn" id="diff-hard" data-diff="hard" type="button">Hard</button>
-      </div>
-      <p class="diff-desc" id="diff-desc"></p>
-    </div>
-    <p class="daily-note" id="daily-note" hidden>Medium difficulty, same ten pairs for everyone today.</p>
 
     <div class="bay">
       <div class="timer-row" id="timer-row">
-        <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+        <div class="timer-track"><div class="timer-fill" id="timer-fill"></div><div class="timer-bonus-mark" id="timer-bonus-mark" hidden></div></div>
         <span class="timer-num" id="timer-num" aria-live="off">5</span>
       </div>
 
@@ -1437,12 +2015,106 @@
     <p class="hint">Tap an item, or press <kbd>←</kbd> / <kbd>→</kbd> to guess, <kbd>Enter</kbd> to continue. &nbsp;
       <button class="reset" id="reset-btn" type="button">Reset best streak</button>
     </p>
+
+    <div class="abandon-overlay" id="abandon-overlay" hidden>
+      <div class="abandon-box">
+        <p class="abandon-title">Leave the game?</p>
+        <p class="abandon-desc">Leaving counts as a loss — you won't be able to continue this round.</p>
+        <div class="controls controls-row">
+          <button class="next" id="abandon-stay-btn" type="button">Stay and play</button>
+          <button class="next secondary" id="abandon-leave-btn" type="button">Leave anyway</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
+  <div class="left-panels" id="left-panels" hidden>
+    <button class="left-panels-toggle" id="left-panels-toggle" type="button" aria-expanded="true" aria-controls="left-panels-content">
+      <span class="left-panels-toggle-icon" aria-hidden="true">▾</span>
+      <span class="left-panels-toggle-label" id="left-panels-toggle-label">Hide sidebar</span>
+    </button>
+    <div class="left-panels-content" id="left-panels-content">
+      <aside class="league-lb-sidebar" id="league-lb-sidebar">
+        <div class="league-lb-head">🏆 League Leaderboard</div>
+        <ol class="lb-list" id="league-lb-list">
+          <li class="lb-empty">Loading leaderboard…</li>
+        </ol>
+      </aside>
+
+      <aside class="game-info-sidebar" id="game-info-sidebar">
+        <div class="game-info-section">
+          <div class="game-info-head">📖 How to Play</div>
+          <p class="game-info-text">Tap the item you think is heavier (or use ← / →). Faster correct answers score more. Six ways to play: Classic, Daily, Endless, Time Attack, Head-to-Head, and Custom.</p>
+        </div>
+        <div class="game-info-section">
+          <div class="game-info-head">📈 Your Stats</div>
+          <div class="game-info-stat-row">
+            <span class="game-info-stat-label">Best streak</span>
+            <span class="game-info-stat-value" id="game-info-best">0</span>
+          </div>
+        </div>
+        <div class="game-info-section">
+          <div class="game-info-head">🏅 Achievements</div>
+          <div class="achievements-grid" id="achievements-grid">
+            <div class="achievement-badge" id="achievement-yourmama" data-achievement="yourmama" tabindex="0">
+              <span class="achievement-icon is-rare" aria-hidden="true">
+                <svg class="rare-figure" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+                  <path d="M32 25c11 0 20.5 9.5 22.5 25 .6 4.5-2.3 6.5-6.5 6.5H16c-4.2 0-7.1-2-6.5-6.5C11.5 34.5 21 25 32 25z" fill="#ffc021"/>
+                  <ellipse cx="12.5" cy="45" rx="5.5" ry="8.5" fill="#ffc021" transform="rotate(-18 12.5 45)"/>
+                  <ellipse cx="51.5" cy="45" rx="5.5" ry="8.5" fill="#ffc021" transform="rotate(18 51.5 45)"/>
+                  <circle cx="32" cy="17" r="11.5" fill="#ffe0b2"/>
+                  <path d="M19.5 15a12.5 10.5 0 0 1 25 0c0 2.2-1 3.3-2.2 3.3-1-4.3-4.4-6.6-10.3-6.6s-9.3 2.3-10.3 6.6c-1.2 0-2.2-1.1-2.2-3.3z" fill="#5b3a24"/>
+                  <circle cx="13.5" cy="17" r="4.3" fill="#5b3a24"/>
+                  <circle cx="50.5" cy="17" r="4.3" fill="#5b3a24"/>
+                  <circle cx="27" cy="18" r="1.5" fill="#3a2a1a"/>
+                  <circle cx="37" cy="18" r="1.5" fill="#3a2a1a"/>
+                  <path d="M27 23c2 2.2 8 2.2 10 0" stroke="#3a2a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+                  <circle cx="23.5" cy="21" r="2.3" fill="#ff9e9e" opacity="0.55"/>
+                  <circle cx="40.5" cy="21" r="2.3" fill="#ff9e9e" opacity="0.55"/>
+                </svg>
+              </span>
+              <span class="achievement-name">???</span>
+            </div>
+            <div class="achievement-badge" id="achievement-streak3" data-achievement="streak3" tabindex="0">
+              <span class="achievement-icon achievement-icon-medal medal-bronze" aria-hidden="true">🥉</span>
+              <span class="achievement-name">???</span>
+            </div>
+            <div class="achievement-badge" id="achievement-streak5" data-achievement="streak5" tabindex="0">
+              <span class="achievement-icon achievement-icon-medal medal-silver" aria-hidden="true">🥈</span>
+              <span class="achievement-name">???</span>
+            </div>
+            <div class="achievement-badge" id="achievement-streak10" data-achievement="streak10" tabindex="0">
+              <span class="achievement-icon achievement-icon-medal medal-gold" aria-hidden="true">🥇</span>
+              <span class="achievement-name">???</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <aside class="premium-sidebar" id="premium-sidebar" hidden>
+    <div class="premium-sidebar-badge">✨ Go Premium</div>
+    <p class="premium-sidebar-title">Unlock everything</p>
+    <p class="premium-sidebar-desc">⏱️🤝🛠️🏆 four extra modes, plus unlimited plays everywhere.</p>
+    <div class="premium-sidebar-price-row">
+      <span class="premium-sidebar-price">€1.99</span>
+      <span class="premium-sidebar-price-note">/mo</span>
+    </div>
+    <p class="premium-sidebar-price-alt">or €12.99/yr — save 46%</p>
+    <button class="next premium-sidebar-btn" id="premium-sidebar-btn" type="button">Get Premium →</button>
+  </aside>
+</div>
+
+<a class="discord-footer" href="https://discord.gg/rxqTdc49s" target="_blank" rel="noopener noreferrer">
+  <svg class="discord-footer-icon" viewBox="0 0 127.14 96.36" aria-hidden="true"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
+  <span>Join our Discord — your feedback helps shape the game</span>
+</a>
+
 <script>
 (function(){
-  var ROUNDS = 10;
+  var ROUNDS = 5;
 
   // 67 real objects spanning a light bulb to the Statue of Liberty.
   // Rounds never pick two items freely — pickPair() below only ever
@@ -1791,7 +2463,14 @@
     {name:"Kick scooter", g:5000, emoji:"🛴"},
     {name:"Recreational kayak", g:25000, emoji:"🛶"},
     {name:"Two-person canoe", g:32000, emoji:"🛶"},
-    {name:"Empty wheelbarrow", g:15000, emoji:"🛒"}
+    {name:"Empty wheelbarrow", g:15000, emoji:"🛒"},
+
+    // Easter egg: infinitely heavy, so it can never fit any difficulty
+    // band's weight-ratio check (see pickPair()) and would never get
+    // picked through the normal path. rareChance instead gives it a flat
+    // shot at showing up in ANY round, paired against a random item from
+    // the pool regardless of band or difficulty.
+    {name:"Your mama", g:Infinity, emoji:"🌍", rareChance:0.25}
   ];
 
   // Three difficulty bands, all drawing from the same 305-item pool.
@@ -1804,7 +2483,7 @@
   };
 
   var MODES = {
-    classic:    { icon: "🎯", title: "10 Rounds" },
+    classic:    { icon: "🎯", title: "5 Rounds" },
     endless:    { icon: "♾️", title: "Endless" },
     daily:      { icon: "📅", title: "Daily Challenge" },
     timeattack: { icon: "⏱️", title: "Time Attack" },
@@ -1813,10 +2492,12 @@
     league:     { icon: "🏆", title: "League" }
   };
 
-  // League is the competitive take on 10 Rounds: same rules and
-  // difficulty picker, but three 10-round tries back to back whose
-  // points add up to one combined score for the leaderboard.
-  var LEAGUE_ATTEMPTS = 3;
+  // League is the competitive take on 5 Rounds: same rules and difficulty
+  // picker, but a single run whose score goes straight to the leaderboard
+  // and only one shot at it per local day. (LEAGUE_ATTEMPTS used to be 3
+  // back-to-back tries added into one combined score; the multi-try
+  // handoff-screen code below still works if this ever goes back up.)
+  var LEAGUE_ATTEMPTS = 1;
 
   // Points scale with how much of the round's time was left when you
   // answered — call it fast and it's worth more than calling it slow.
@@ -2053,30 +2734,102 @@
 
   var dailyRng = null;
 
-  // --- League's once-a-day limit -----------------------------------------
-  // Unlike Daily Challenge (same pairs for everyone, but replayable),
-  // League only lets a full 3-try run be SUBMITTED once per local day —
-  // marked at completion, not at the start, so an abandoned or reloaded
-  // run doesn't cost you your shot; you just start over from try 1.
+  // --- Global daily lock (one try per gamemode, resets at local 00:00) ---
+  // Classic, Daily Challenge, Endless and League each get exactly one try
+  // per local day, spent when a run is actually FINISHED (marked from
+  // showResults), so an abandoned or reloaded run doesn't cost you your
+  // shot. Zen is deliberately left out of this — "no timer, no pressure"
+  // is the whole point of the mode, so it stays unlimited. Games launched
+  // through the Custom builder (state.viaCustom) never touch these locks
+  // either way; that's a separate sandbox from the "real" daily modes.
+  // Premium unlocks unlimited plays across every mode: a run still gets
+  // marked as played (so the lock is there the moment Premium is turned
+  // back off via the demo reset link), but enforcement of that lock -
+  // disabling the menu card, swapping "Play again" for "Back to menu" -
+  // is skipped entirely while isPremiumUnlocked() is true.
   var LEAGUE_LAST_PLAYED_KEY = 'counterweight_league_last_played';
-  var LEAGUE_TAG_DEFAULT = 'The competitive take on 10 Rounds — three tries, combined score counts.';
-  var LEAGUE_TAG_DONE = "Today's League run is in — come back tomorrow for another shot.";
+  var DAILY_LOCK_INFO = {
+    classic:  { key: 'counterweight_lock_classic',  tag: 'The classic run — five pairs, points for speed, then compare your score.' },
+    daily:    { key: 'counterweight_lock_daily',    tag: 'Same five pairs as everyone, today only.' },
+    endless:  { key: 'counterweight_lock_endless',  tag: 'Keep guessing until you miss one.' },
+    league:   { key: LEAGUE_LAST_PLAYED_KEY,        tag: 'The competitive take on 5 Rounds — one run, once a day.' }
+  };
 
-  function hasPlayedLeagueToday(){
-    try{ return localStorage.getItem(LEAGUE_LAST_PLAYED_KEY) === todayKey(); } catch(e){ return false; }
+  function hasPlayedModeToday(mode){
+    var info = DAILY_LOCK_INFO[mode];
+    if (!info) return false;
+    try{ return localStorage.getItem(info.key) === todayKey(); } catch(e){ return false; }
   }
-  function markLeaguePlayedToday(){
-    try{ localStorage.setItem(LEAGUE_LAST_PLAYED_KEY, todayKey()); } catch(e){}
+  function markModePlayedToday(mode){
+    var info = DAILY_LOCK_INFO[mode];
+    if (!info) return;
+    try{ localStorage.setItem(info.key, todayKey()); } catch(e){}
+  }
+  function msUntilNextReset(){
+    var now = new Date();
+    var next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+    return Math.max(0, next.getTime() - now.getTime());
+  }
+  function pad2(n){ return n < 10 ? '0' + n : String(n); }
+  function formatCountdown(ms){
+    var totalSec = Math.floor(ms / 1000);
+    var h = Math.floor(totalSec / 3600);
+    var m = Math.floor((totalSec % 3600) / 60);
+    var s = totalSec % 60;
+    return pad2(h) + ':' + pad2(m) + ':' + pad2(s);
   }
 
-  function renderLeagueAvailability(){
-    var card = els.menuCards.filter(function(c){ return c.dataset.mode === 'league'; })[0];
-    if (!card) return;
-    var done = hasPlayedLeagueToday();
-    card.disabled = done;
-    card.classList.toggle('is-locked', done);
-    var tag = card.querySelector('.menu-card-tag');
-    if (tag) tag.textContent = done ? LEAGUE_TAG_DONE : LEAGUE_TAG_DEFAULT;
+  // Single pass over every menu card: applies BOTH the premium paywall
+  // lock and the daily-try lock, so the two never fight over the same
+  // card's classes (League can be gated by either one, or both).
+  function renderMenuCardStates(){
+    var unlocked = isPremiumUnlocked();
+    els.menuCards.forEach(function(card){
+      var mode = card.dataset.mode;
+      var comingSoon = !!COMING_SOON_MODES[mode];
+      var premiumLocked = !!PREMIUM_MODES[mode] && !unlocked;
+      var lockInfo = DAILY_LOCK_INFO[mode];
+      var playedToday = (lockInfo && !unlocked) ? hasPlayedModeToday(mode) : false;
+      card.disabled = comingSoon || playedToday;
+      card.classList.toggle('is-locked', comingSoon || premiumLocked || playedToday);
+      var badge = card.querySelector('.menu-card-lock-badge');
+      // Coming-soon badges stay visible regardless of Premium state — see
+      // the els.menuLockBadges pass below, which skips them for the same
+      // reason.
+      if (badge && comingSoon) badge.hidden = false;
+      if (lockInfo){
+        var tag = card.querySelector('.menu-card-tag');
+        if (tag) tag.textContent = comingSoon
+          ? 'Coming soon — one run, once a day.'
+          : playedToday
+            ? ('Come back in ' + formatCountdown(msUntilNextReset()) + ' for another shot.')
+            : lockInfo.tag;
+      }
+    });
+    if (els.menuLockBadges){
+      els.menuLockBadges.forEach(function(badge){
+        var card = badge.closest('.menu-card');
+        if (card && COMING_SOON_MODES[card.dataset.mode]) return;
+        badge.hidden = unlocked;
+      });
+    }
+    // Only surfaced once Premium is actually unlocked on this device, so
+    // testers (or anyone who tapped "Unlock Premium" out of curiosity)
+    // have a quick way back to the locked demo state.
+    if (els.resetPremiumLink) els.resetPremiumLink.hidden = !unlocked;
+    // The "buy Premium" side panel is a menu-screen-only ad: it has no
+    // reason to show once Premium is already unlocked, and it's force-
+    // hidden the instant you leave the menu (see the menu-screen
+    // transition points below) so it can never be used as a side-door
+    // out of an in-progress round.
+    if (els.premiumSidebar) els.premiumSidebar.hidden = unlocked || els.menuScreen.hidden;
+    // The left-panels wrapper (League board + Game Info) tracks purely
+    // "is the menu screen up" — neither panel has an unlock gate of its
+    // own, so both stay visible even once Premium is unlocked and the
+    // Premium panel above has hidden itself. The wrapper's own collapsed/
+    // expanded state (left-panels-toggle) is independent of this and
+    // survives a menu round-trip — see renderLeftPanelsToggle().
+    if (els.leftPanels) els.leftPanels.hidden = els.menuScreen.hidden;
   }
   function rand(){
     if (state.mode === 'daily' && dailyRng) return dailyRng();
@@ -2249,19 +3002,24 @@
     return name || 'Anonymous';
   }
 
-  function renderLeaderboard(rows, mineId){
+  // Shared by the results-screen board (#lb-list) and the standing
+  // League sidebar board (#league-lb-list) — same row markup either way,
+  // just aimed at a different <ol> and, for the sidebar, given a
+  // pre-trimmed slice of rows so it stays compact.
+  function renderLeaderboardInto(listEl, rows, mineId, emptyText){
+    if (!listEl) return;
     if (!rows.length){
-      els.lbList.innerHTML = '';
+      listEl.innerHTML = '';
       var empty = document.createElement('li');
       empty.className = 'lb-empty';
-      empty.textContent = 'No scores yet — be the first on the board.';
-      els.lbList.appendChild(empty);
+      empty.textContent = emptyText || 'No scores yet — be the first on the board.';
+      listEl.appendChild(empty);
       return;
     }
     // Scores may come from other viewers' documents — treat every
     // field as untrusted data, never as markup or instructions.
     var myPlayerId = getPlayerId();
-    els.lbList.innerHTML = rows.map(function(row, i){
+    listEl.innerHTML = rows.map(function(row, i){
       var name = escapeHtml(sanitizeName(row.name));
       var metaText;
       if (row.mode === 'endless') metaText = (row.difficulty || 'medium') + ' · survived ' + row.rounds;
@@ -2276,6 +3034,162 @@
         '<span class="lb-pts">' + formatPoints(row.points) + '</span>' +
         '</li>';
     }).join('');
+  }
+
+  function renderLeaderboard(rows, mineId){
+    renderLeaderboardInto(els.lbList, rows, mineId);
+  }
+
+  // The League sidebar is a standing board (visible on the menu, not tied
+  // to any one finished run), so it just shows the current top 5 rather
+  // than highlighting "your" row the way the post-game board does.
+  var LEAGUE_SIDEBAR_ROWS = 5;
+  async function refreshLeagueSidebarBoard(){
+    if (!els.leagueLbList) return;
+    var myToken = ++state.menuLbToken;
+    var board = await fetchLeaderboard('league');
+    if (myToken !== state.menuLbToken) return; // menu was left/reopened since
+    renderLeaderboardInto(els.leagueLbList, board.rows.slice(0, LEAGUE_SIDEBAR_ROWS), null, 'No League scores yet — be the first.');
+  }
+
+  // --- Game Info sidebar: quick rules and best streak.
+  function renderGameInfoStats(){
+    if (els.gameInfoBest) els.gameInfoBest.textContent = state.stats.best;
+  }
+
+  function renderGameInfoPanel(){
+    renderGameInfoStats();
+    renderAchievements();
+  }
+
+  // Hand-drawn badge art for the "Your mama" rare item — a simple, warm
+  // cartoon figure (round body, hair buns, rosy cheeks) rather than the
+  // plain 🌍 emoji, used inside the hexagon "rare item" badge (see the
+  // .is-rare CSS) wherever the item gets its own picture rather than just
+  // an inline text glyph: the in-round card and the Achievements icon.
+  var RARE_FIGURE_SVG =
+    '<svg class="rare-figure" viewBox="0 0 64 64" aria-hidden="true" focusable="false">' +
+    '<path d="M32 25c11 0 20.5 9.5 22.5 25 .6 4.5-2.3 6.5-6.5 6.5H16c-4.2 0-7.1-2-6.5-6.5C11.5 34.5 21 25 32 25z" fill="#ffc021"/>' +
+    '<ellipse cx="12.5" cy="45" rx="5.5" ry="8.5" fill="#ffc021" transform="rotate(-18 12.5 45)"/>' +
+    '<ellipse cx="51.5" cy="45" rx="5.5" ry="8.5" fill="#ffc021" transform="rotate(18 51.5 45)"/>' +
+    '<circle cx="32" cy="17" r="11.5" fill="#ffe0b2"/>' +
+    '<path d="M19.5 15a12.5 10.5 0 0 1 25 0c0 2.2-1 3.3-2.2 3.3-1-4.3-4.4-6.6-10.3-6.6s-9.3 2.3-10.3 6.6c-1.2 0-2.2-1.1-2.2-3.3z" fill="#5b3a24"/>' +
+    '<circle cx="13.5" cy="17" r="4.3" fill="#5b3a24"/>' +
+    '<circle cx="50.5" cy="17" r="4.3" fill="#5b3a24"/>' +
+    '<circle cx="27" cy="18" r="1.5" fill="#3a2a1a"/>' +
+    '<circle cx="37" cy="18" r="1.5" fill="#3a2a1a"/>' +
+    '<path d="M27 23c2 2.2 8 2.2 10 0" stroke="#3a2a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/>' +
+    '<circle cx="23.5" cy="21" r="2.3" fill="#ff9e9e" opacity="0.55"/>' +
+    '<circle cx="40.5" cy="21" r="2.3" fill="#ff9e9e" opacity="0.55"/>' +
+    '</svg>';
+
+  // --- Achievements: persistent, one-way unlocks (localStorage) shown as
+  // badges in the Game Info sidebar. A locked badge shows a grayed-out icon
+  // and "???" for the name; unlocking it (see unlockAchievement()) reveals
+  // the real name and colors the icon in for good, on this device.
+  var ACHIEVEMENTS_KEY = 'counterweight_achievements';
+  var ACHIEVEMENTS = [
+    { id: 'yourmama', name: 'Your Mama', emoji: '🌍', desc: "Find the rare “Your mama” item in Classic mode." },
+    { id: 'streak3', name: '3 Streak', emoji: '🥉', streak: 3, desc: 'Get 3 correct answers in a row.' },
+    { id: 'streak5', name: '5 Streak', emoji: '🥈', streak: 5, desc: 'Get 5 correct answers in a row.' },
+    { id: 'streak10', name: '10 Streak', emoji: '🥇', streak: 10, desc: 'Get 10 correct answers in a row.' }
+  ];
+
+  function getUnlockedAchievements(){
+    try{ return JSON.parse(localStorage.getItem(ACHIEVEMENTS_KEY) || '{}'); } catch(e){ return {}; }
+  }
+
+  function isAchievementUnlocked(id){
+    return !!getUnlockedAchievements()[id];
+  }
+
+  // Returns true only the first time this achievement is unlocked, so
+  // callers know whether to also show the celebration toast.
+  function unlockAchievement(id){
+    var unlocked = getUnlockedAchievements();
+    if (unlocked[id]) return false;
+    unlocked[id] = true;
+    try{ localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(unlocked)); } catch(e){}
+    return true;
+  }
+
+  // Call right after state.streak increments on a correct answer. Streak
+  // climbs one at a time, so each threshold (3/5/10) gets its own moment
+  // — bronze then silver then gold — rather than all firing at once.
+  function checkStreakAchievements(){
+    ACHIEVEMENTS.forEach(function(a){
+      if (!a.streak || state.streak !== a.streak) return;
+      if (unlockAchievement(a.id)){
+        renderAchievements();
+        showToast('Achievement unlocked!', a.streak + ' correct in a row!', a.emoji);
+      }
+    });
+  }
+
+  function renderAchievements(){
+    var unlocked = getUnlockedAchievements();
+    ACHIEVEMENTS.forEach(function(a){
+      var badge = document.getElementById('achievement-' + a.id);
+      if (!badge) return;
+      var isUnlocked = !!unlocked[a.id];
+      badge.classList.toggle('is-unlocked', isUnlocked);
+      var nameEl = badge.querySelector('.achievement-name');
+      if (nameEl) nameEl.textContent = isUnlocked ? a.name : '???';
+      badge.setAttribute('aria-label', (isUnlocked ? a.name + ' — unlocked. ' : 'Locked achievement. ') + a.desc);
+      badge.setAttribute('data-tooltip', a.desc);
+    });
+  }
+
+  // Shared hover/focus tooltip for achievement badges, telling the player
+  // how to earn whichever one they're pointing at (locked or not — the
+  // name stays a "???" mystery, but the requirement itself is no secret).
+  // Positioned in JS and clamped to the viewport so it can never poke past
+  // the edge of the sidebar or the screen (see .achv-tooltip CSS comment).
+  function showAchvTooltip(badge){
+    if (!els.achvTooltip) return;
+    var text = badge.getAttribute('data-tooltip');
+    if (!text) return;
+    els.achvTooltip.textContent = text;
+    els.achvTooltip.hidden = false;
+    var badgeRect = badge.getBoundingClientRect();
+    var tipRect = els.achvTooltip.getBoundingClientRect();
+    var left = badgeRect.left + badgeRect.width / 2 - tipRect.width / 2;
+    left = Math.max(8, Math.min(left, window.innerWidth - tipRect.width - 8));
+    var top = badgeRect.top - tipRect.height - 8;
+    if (top < 8) top = Math.min(badgeRect.bottom + 8, window.innerHeight - tipRect.height - 8);
+    els.achvTooltip.style.left = left + 'px';
+    els.achvTooltip.style.top = top + 'px';
+  }
+
+  function hideAchvTooltip(){
+    if (els.achvTooltip) els.achvTooltip.hidden = true;
+  }
+
+  // Shared toast banner (used for both the "found the rare item" callout
+  // and the one-time achievement unlock) — a single element, so a later
+  // call just replaces whatever's currently showing rather than stacking.
+  var achievementToastTimer = null;
+  function showToast(title, desc, icon){
+    if (!els.achievementToast) return;
+    if (els.achievementToastTitle) els.achievementToastTitle.textContent = title;
+    if (els.achievementToastDesc) els.achievementToastDesc.textContent = desc || '';
+    if (els.achievementToastIcon) els.achievementToastIcon.textContent = icon || '🏅';
+    els.achievementToast.hidden = false;
+    clearTimeout(achievementToastTimer);
+    achievementToastTimer = setTimeout(function(){
+      els.achievementToast.hidden = true;
+    }, 3800);
+  }
+
+  function showAchievementToast(text){
+    showToast('Achievement unlocked!', text, '🏅');
+  }
+
+  // Fires every time "Your mama" is dealt into a round (not just the
+  // first time — see unlockAchievement() for the one-time achievement
+  // toast instead), so it's a per-round callout rather than a milestone.
+  function showFoundRareToast(item){
+    showToast('You found ' + item.name + '!', "She's here — good luck lifting her.", item.emoji);
   }
 
   var els = {
@@ -2307,6 +3221,12 @@
     soundToggle: document.getElementById('sound-toggle'),
     unitToggle: document.getElementById('unit-toggle'),
     confetti: document.getElementById('confetti-layer'),
+    achievementToast: document.getElementById('achievement-toast'),
+    achievementToastTitle: document.getElementById('achievement-toast-title'),
+    achievementToastDesc: document.getElementById('achievement-toast-desc'),
+    achievementToastIcon: document.getElementById('achievement-toast-icon'),
+    achvTooltip: document.getElementById('achv-tooltip'),
+    achievementBadges: Array.prototype.slice.call(document.querySelectorAll('.achievement-badge')),
     lbHead: document.getElementById('lb-head'),
     lbNameRow: document.getElementById('lb-name-row'),
     lbNameInput: document.getElementById('lb-name-input'),
@@ -2320,6 +3240,7 @@
     lbLoginBtn: document.getElementById('lb-login-btn'),
     timerRow: document.getElementById('timer-row'),
     timerFill: document.getElementById('timer-fill'),
+    timerBonusMark: document.getElementById('timer-bonus-mark'),
     timerNum: document.getElementById('timer-num'),
     menuScreen: document.getElementById('menu-screen'),
     gameArea: document.getElementById('game-area'),
@@ -2361,7 +3282,28 @@
     menuLockBadges: Array.prototype.slice.call(document.querySelectorAll('.menu-card-lock-badge')),
     paywallScreen: document.getElementById('paywall-screen'),
     paywallBackBtn: document.getElementById('paywall-back-btn'),
-    paywallUnlockBtn: document.getElementById('paywall-unlock-btn')
+    paywallUnlockBtn: document.getElementById('paywall-unlock-btn'),
+    paywallPlanBtns: Array.prototype.slice.call(document.querySelectorAll('.paywall-plan-btn')),
+    paywallPrice: document.getElementById('paywall-price'),
+    paywallPriceNote: document.getElementById('paywall-price-note'),
+    pregameScreen: document.getElementById('pregame-screen'),
+    pregameIcon: document.getElementById('pregame-icon'),
+    pregameTitle: document.getElementById('pregame-title'),
+    pregameTag: document.getElementById('pregame-tag'),
+    pregameBackBtn: document.getElementById('pregame-back-btn'),
+    pregamePlayBtn: document.getElementById('pregame-play-btn'),
+    resetPremiumLink: document.getElementById('reset-premium-link'),
+    premiumSidebar: document.getElementById('premium-sidebar'),
+    premiumSidebarBtn: document.getElementById('premium-sidebar-btn'),
+    leagueLbList: document.getElementById('league-lb-list'),
+    gameInfoBest: document.getElementById('game-info-best'),
+    leftPanels: document.getElementById('left-panels'),
+    leftPanelsToggle: document.getElementById('left-panels-toggle'),
+    leftPanelsToggleLabel: document.getElementById('left-panels-toggle-label'),
+    leftPanelsContent: document.getElementById('left-panels-content'),
+    abandonOverlay: document.getElementById('abandon-overlay'),
+    abandonStayBtn: document.getElementById('abandon-stay-btn'),
+    abandonLeaveBtn: document.getElementById('abandon-leave-btn')
   };
 
   var CONFETTI_COLORS = ['#ffb400', '#5fd98a', '#ff6b5e', '#8ec9ff', '#e8c878'];
@@ -2427,11 +3369,37 @@
     return value * (UNIT_TO_GRAMS[unit] || 1);
   }
 
+  // Independently rolls each item in the pool that carries a rareChance
+  // (an easter-egg spawn probability rather than a normal band-fit item —
+  // see "Your mama" in ITEMS), returning the first one that hits. Uses
+  // rand() for the same reason pickPair() below does: Daily Challenge
+  // gets a seeded, shared sequence.
+  function rollRareItem(pool){
+    for (var k = 0; k < pool.length; k++){
+      if (pool[k].rareChance && rand() < pool[k].rareChance) return pool[k];
+    }
+    return null;
+  }
+
   // bypassBand/alreadyReset are only ever set by pickPair's own retries —
   // never pass them in from outside.
   function pickPair(bypassBand, alreadyReset){
     var pool = activeItems();
     var band = DIFFICULTIES[state.difficulty] || DIFFICULTIES.medium;
+    // A rare item (like "Your mama") is deliberately impossible to reach
+    // through the normal band-ratio matching below — an infinite weight
+    // never fits any difficulty's ratio window — so it gets its own tiny,
+    // flat chance to show up first, paired against any random other item.
+    // Restricted to Classic (including Custom runs built on the Classic
+    // engine, which also set state.mode to 'classic') — every other mode
+    // never rolls for it.
+    var rare = state.mode === 'classic' ? rollRareItem(pool) : null;
+    if (rare && pool.length > 1){
+      var others = pool.filter(function(it){ return it !== rare; });
+      var pair = [rare, others[Math.floor(rand() * others.length)]];
+      if (rand() < 0.5) pair.reverse();
+      return pair;
+    }
     // Try random anchors until one has an unused partner in this band.
     // Uses rand() rather than Math.random() directly so Daily Challenge
     // can substitute a seeded generator and get the same sequence for
@@ -2497,7 +3465,9 @@
       els.roundLabel.textContent = state.mode === 'endless' ? 'Streak' : 'Round';
       els.round.textContent = state.round;
     } else if (state.mode === 'league'){
-      els.roundLabel.textContent = 'Try ' + state.leagueAttempt + '/' + LEAGUE_ATTEMPTS + ' · Round';
+      els.roundLabel.textContent = LEAGUE_ATTEMPTS > 1
+        ? ('Try ' + state.leagueAttempt + '/' + LEAGUE_ATTEMPTS + ' · Round')
+        : 'Round';
       els.round.textContent = state.round + '/' + ROUNDS;
     } else {
       els.roundLabel.textContent = 'Round';
@@ -2552,11 +3522,24 @@
       card.disabled = false;
       card.className = 'card card-enter';
       // item.emoji/item.name may be a player-typed custom object — escape
-      // before it goes into innerHTML.
+      // before it goes into innerHTML. The rare item gets its own hand-
+      // drawn hexagon badge (see RARE_FIGURE_SVG) instead of a plain emoji.
+      var badgeInner = item.rareChance
+        ? RARE_FIGURE_SVG
+        : '<span class="emoji" aria-hidden="true">' + escapeHtml(item.emoji) + '</span>';
       card.innerHTML =
-        '<span class="emoji-badge"><span class="emoji" aria-hidden="true">' + escapeHtml(item.emoji) + '</span></span>' +
+        '<span class="emoji-badge' + (item.rareChance ? ' is-rare' : '') + '">' + badgeInner + '</span>' +
         '<span class="name">' + escapeHtml(item.name) + '</span>' +
         '<span class="weight">— ? —</span>';
+      // Not shown anywhere in the UI (weight stays hidden until answered)
+      // — just a harmless data attribute mirroring the item's own weight,
+      // which is already sitting in plain sight in this page's own ITEMS
+      // array regardless. Handy for automated testing.
+      card.dataset.weightG = String(item.g);
+      // Callout the moment she's dealt in, before the round is even
+      // answered — see showFoundRareToast() (separate from the one-time
+      // achievement unlock toast, which fires later, on finishRound()).
+      if (item.rareChance) showFoundRareToast(item);
     });
 
     if (state.mode === 'timeattack'){
@@ -2585,6 +3568,17 @@
     }
   }
 
+  // The mark sits at a fixed fraction of the bar (derived from the fastest
+  // SPEED_TIERS cutoff) — that fraction is the same regardless of
+  // difficulty, since the tiers are time fractions, not fixed seconds, so
+  // this only needs to run once per round rather than every tick.
+  function renderTimerBonusMark(){
+    if (!els.timerBonusMark) return;
+    var cutoff = SPEED_TIERS[0].cutoff;
+    els.timerBonusMark.style.left = ((1 - cutoff) * 100) + '%';
+    els.timerBonusMark.hidden = false;
+  }
+
   function startTimer(){
     clearTimer();
     var seconds = (DIFFICULTIES[state.difficulty] || DIFFICULTIES.medium).seconds;
@@ -2599,6 +3593,7 @@
     els.timerFill.style.width = '100%';
     els.timerFill.style.backgroundColor = 'rgb(' + TIMER_GOOD.join(',') + ')';
     els.timerNum.style.color = 'rgb(' + TIMER_GOOD.join(',') + ')';
+    renderTimerBonusMark();
 
     function tick(now){
       var elapsedMs = now - startTime;
@@ -2666,6 +3661,9 @@
     els.timerFill.style.width = '100%';
     els.timerFill.style.backgroundColor = 'rgb(' + TIMER_GOOD.join(',') + ')';
     els.timerNum.style.color = 'rgb(' + TIMER_GOOD.join(',') + ')';
+    // This bar is the 60s session clock, not the (hidden) 6s per-answer
+    // bonus window, so the bonus mark doesn't apply to it.
+    if (els.timerBonusMark) els.timerBonusMark.hidden = true;
 
     function tick(now){
       var elapsedMs = now - startTime;
@@ -2760,24 +3758,21 @@
     els.diffDesc.textContent = (DIFFICULTIES[state.difficulty] || DIFFICULTIES.medium).desc;
   }
 
-  function setDifficulty(diff){
+  // Difficulty is picked on the pregame screen now, before a round ever
+  // starts — this just updates the picker's own UI, it never touches the
+  // running game (there isn't one yet at this point).
+  function setPregameDifficulty(diff){
     if (diff === state.difficulty) return;
     sfx.click();
     state.difficulty = diff;
     renderDifficulty();
-    newGame();
   }
 
-  // Updates the small mode badge above the difficulty row, and shows/hides
-  // the difficulty picker itself — Daily Challenge locks difficulty to
-  // Medium for everyone, so its row is replaced with a plain note instead.
+  // Updates the small mode badge shown above the cards during play.
   function renderMode(){
     var m = MODES[state.mode] || MODES.classic;
     if (els.modeBannerIcon) els.modeBannerIcon.textContent = m.icon;
     if (els.modeBannerTitle) els.modeBannerTitle.textContent = m.title;
-    var isDaily = state.mode === 'daily';
-    if (els.diffRow) els.diffRow.hidden = isDaily;
-    if (els.dailyNote) els.dailyNote.hidden = !isDaily;
   }
 
   // Switches to a freshly chosen mode from the main menu and starts it.
@@ -2785,6 +3780,7 @@
     sfx.click();
     state.mode = mode;
     state.customOnly = false;
+    state.viaCustom = false;
     if (mode === 'daily') state.difficulty = 'medium';
     renderMode();
     renderDifficulty();
@@ -2801,17 +3797,27 @@
     els.gameArea.hidden = true;
     if (els.customScreen) els.customScreen.hidden = true;
     if (els.paywallScreen) els.paywallScreen.hidden = true;
+    if (els.pregameScreen) els.pregameScreen.hidden = true;
     if (els.menuLink) els.menuLink.hidden = true;
-    renderLeagueAvailability();
+    renderMenuCardStates();
+    refreshLeagueSidebarBoard();
+    renderGameInfoPanel();
   }
 
   // --- Premium paywall (demo) -----------------------------------------
-  // Time Attack, Head-to-Head, and Custom are gated behind a single local
-  // "unlock" flag. This is a client-side demo only: there is no server or
-  // payment processor here, so "purchasing" just flips a localStorage
-  // switch on this device rather than verifying a real transaction.
+  // Time Attack, Head-to-Head, Custom, and League are gated behind a single
+  // local "unlock" flag. This is a client-side demo only: there is no
+  // server or payment processor here, so "purchasing" just flips a
+  // localStorage switch on this device rather than verifying a real
+  // transaction. League keeps its usual spot in the menu (right under
+  // Daily Challenge) — going premium only changes whether you can launch
+  // it, not where it sits.
   var PREMIUM_KEY = 'counterweight_premium_unlocked';
-  var PREMIUM_MODES = { timeattack: true, headtohead: true, custom: true };
+  var PREMIUM_MODES = { timeattack: true, headtohead: true, custom: true, league: true };
+  // League is still being built: it stays locked on the menu no matter
+  // what — Premium unlock does not open it — and shows a "Coming soon"
+  // badge/tag instead of the usual Premium lock messaging.
+  var COMING_SOON_MODES = { league: true };
   var pendingUnlockMode = null;
 
   function isPremiumUnlocked(){
@@ -2821,29 +3827,105 @@
     try{ localStorage.setItem(PREMIUM_KEY, v ? '1' : '0'); } catch(e){}
   }
 
-  function renderMenuLocks(){
-    var unlocked = isPremiumUnlocked();
-    els.menuCards.forEach(function(card){
-      var locked = !!PREMIUM_MODES[card.dataset.mode] && !unlocked;
-      card.classList.toggle('is-locked', locked);
-    });
-    if (els.menuLockBadges){
-      els.menuLockBadges.forEach(function(badge){ badge.hidden = unlocked; });
-    }
+  // Retractable left sidebar (League board + Game Info): a plain
+  // collapse/expand toggle on the wrapper that already gates both panels
+  // together, remembered per device so the choice sticks across reloads.
+  var LEFT_PANEL_COLLAPSED_KEY = 'counterweight_left_panel_collapsed';
+  function isLeftPanelCollapsed(){
+    try{ return localStorage.getItem(LEFT_PANEL_COLLAPSED_KEY) === '1'; } catch(e){ return false; }
+  }
+  function setLeftPanelCollapsed(v){
+    try{ localStorage.setItem(LEFT_PANEL_COLLAPSED_KEY, v ? '1' : '0'); } catch(e){}
   }
 
+  // Subscription billing (demo): the paywall lets you toggle between the
+  // two plans before "buying" — this only changes the price shown, since
+  // unlocking is still just the one local flag above regardless of which
+  // plan was picked.
+  var PREMIUM_PLANS = {
+    monthly: { price: '€1.99', note: 'per month' },
+    yearly:  { price: '€12.99', note: 'per year' }
+  };
+  var selectedPlan = 'yearly';
+
+  function renderPaywallPlan(){
+    if (els.paywallPrice) els.paywallPrice.textContent = PREMIUM_PLANS[selectedPlan].price;
+    if (els.paywallPriceNote) els.paywallPriceNote.textContent = PREMIUM_PLANS[selectedPlan].note;
+    if (els.paywallPlanBtns) els.paywallPlanBtns.forEach(function(btn){
+      btn.classList.toggle('active', btn.dataset.plan === selectedPlan);
+    });
+  }
+
+  // Custom keeps its own dedicated setup screen (which already ends in an
+  // explicit "Start Custom Game" button); every other mode routes through
+  // the pregame confirm screen so nothing auto-starts on a menu tap.
   function launchMode(mode){
     if (mode === 'custom') openCustomSetup();
-    else selectMode(mode);
+    else openPregame(mode);
+  }
+
+  // --- Pregame confirm screen -------------------------------------------
+  // A short stop between "picked a mode" and "round 1 starts": shows what
+  // you're about to play and waits for an explicit Play tap. Nothing about
+  // the mode itself (difficulty, daily lock, etc.) is decided here.
+  var pregameMode = null;
+  var PREGAME_TAGS = {
+    zen: 'No timer, no pressure — just learn.',
+    timeattack: '60 seconds — answer as many as you can.',
+    headtohead: 'Pass the device — two players, one winner.'
+  };
+
+  function openPregame(mode){
+    sfx.click();
+    pregameMode = mode;
+    var m = MODES[mode] || MODES.classic;
+    if (els.pregameIcon) els.pregameIcon.textContent = m.icon;
+    if (els.pregameTitle) els.pregameTitle.textContent = m.title;
+    var lockInfo = DAILY_LOCK_INFO[mode];
+    var tag = lockInfo ? lockInfo.tag : (PREGAME_TAGS[mode] || '');
+    if (els.pregameTag) els.pregameTag.textContent = tag;
+    // Daily Challenge is fixed to Medium for everyone, so its difficulty
+    // picker is swapped for a plain note; every other mode (League
+    // included) picks difficulty here, once, before Play.
+    var isDaily = mode === 'daily';
+    if (els.diffRow) els.diffRow.hidden = isDaily;
+    if (els.dailyNote) els.dailyNote.hidden = !isDaily;
+    renderDifficulty();
+    els.menuScreen.hidden = true;
+    if (els.customScreen) els.customScreen.hidden = true;
+    if (els.paywallScreen) els.paywallScreen.hidden = true;
+    if (els.pregameScreen) els.pregameScreen.hidden = false;
+    if (els.menuLink) els.menuLink.hidden = true;
+    if (els.premiumSidebar) els.premiumSidebar.hidden = true;
+    if (els.leftPanels) els.leftPanels.hidden = true;
+  }
+
+  function closePregame(){
+    pregameMode = null;
+    if (els.pregameScreen) els.pregameScreen.hidden = true;
+    openMenu();
+  }
+
+  function confirmPregamePlay(){
+    sfx.click();
+    var mode = pregameMode;
+    pregameMode = null;
+    if (els.pregameScreen) els.pregameScreen.hidden = true;
+    if (mode) selectMode(mode);
   }
 
   function openPaywall(mode){
     sfx.click();
     pendingUnlockMode = mode;
+    selectedPlan = 'yearly';
+    renderPaywallPlan();
     els.menuScreen.hidden = true;
     if (els.customScreen) els.customScreen.hidden = true;
+    if (els.pregameScreen) els.pregameScreen.hidden = true;
     if (els.paywallScreen) els.paywallScreen.hidden = false;
     if (els.menuLink) els.menuLink.hidden = true;
+    if (els.premiumSidebar) els.premiumSidebar.hidden = true;
+    if (els.leftPanels) els.leftPanels.hidden = true;
   }
 
   function closePaywall(){
@@ -2855,7 +3937,7 @@
   function unlockPremium(){
     sfx.click();
     setPremiumUnlocked(true);
-    renderMenuLocks();
+    renderMenuCardStates();
     if (els.paywallScreen) els.paywallScreen.hidden = true;
     burstConfetti();
     var mode = pendingUnlockMode;
@@ -2864,10 +3946,53 @@
     else openMenu();
   }
 
+  // The "☰ Menu" escape hatch is available in every mode. Bailing back to
+  // the menu mid-round is how someone would dodge a bad pairing or skip
+  // their one daily try's real cost, so for every mode except Zen it goes
+  // through a confirm step first (see openAbandonConfirm/abandonGame)
+  // rather than leaving straight away. Zen has no results screen of its
+  // own to finish into, no timer, and nothing riding on a run, so it skips
+  // the confirm and just opens the menu directly.
+  function modeHasAbandonWarning(){
+    return state.mode !== 'zen';
+  }
+
   function closeMenuUI(){
     els.menuScreen.hidden = true;
     els.gameArea.hidden = false;
     if (els.menuLink) els.menuLink.hidden = false;
+    if (els.premiumSidebar) els.premiumSidebar.hidden = true;
+    if (els.leftPanels) els.leftPanels.hidden = true;
+  }
+
+  function openAbandonConfirm(){
+    sfx.click();
+    if (els.abandonOverlay) els.abandonOverlay.hidden = false;
+  }
+
+  function closeAbandonConfirm(){
+    if (els.abandonOverlay) els.abandonOverlay.hidden = true;
+  }
+
+  function handleMenuLinkClick(){
+    if (modeHasAbandonWarning()) openAbandonConfirm();
+    else openMenu();
+  }
+
+  // Bailing out mid-round costs exactly what finishing would: a native
+  // daily-locked mode (Classic/Daily/Endless — League can't be reached at
+  // all right now) spends today's one shot immediately, just like
+  // reaching the results screen normally would, and any in-progress
+  // streak resets to 0 as a loss. Custom-builder runs never touch the
+  // real daily lock, same as everywhere else that checks state.viaCustom.
+  function abandonGame(){
+    sfx.click();
+    closeAbandonConfirm();
+    stopTimer();
+    stopGlobalTimer();
+    if (!state.viaCustom) markModePlayedToday(state.mode);
+    state.streak = 0;
+    openMenu();
   }
 
   // --- Custom Game setup screen -------------------------------------
@@ -2877,7 +4002,7 @@
   // the normal selectMode()/newGame() flow.
   var customDraft = { mode: 'classic', difficulty: 'medium' };
 
-  var CUSTOM_MODE_TITLES = { classic: '10 Rounds', endless: 'Endless', timeattack: 'Time Attack', zen: 'Zen', headtohead: 'Head-to-Head' };
+  var CUSTOM_MODE_TITLES = { classic: '5 Rounds', endless: 'Endless', timeattack: 'Time Attack', zen: 'Zen', headtohead: 'Head-to-Head' };
 
   function renderCustomModeButtons(){
     if (!els.customModeBtns) return;
@@ -2946,7 +4071,10 @@
     sfx.click();
     els.menuScreen.hidden = true;
     if (els.customScreen) els.customScreen.hidden = false;
+    if (els.pregameScreen) els.pregameScreen.hidden = true;
     if (els.menuLink) els.menuLink.hidden = true;
+    if (els.premiumSidebar) els.premiumSidebar.hidden = true;
+    if (els.leftPanels) els.leftPanels.hidden = true;
     renderCustomModeButtons();
     renderCustomDiffButtons();
     if (els.customOnlyToggle) els.customOnlyToggle.checked = false;
@@ -2969,6 +4097,10 @@
     sfx.click();
     state.mode = customDraft.mode;
     state.customOnly = onlyMine;
+    // Custom runs use the same engines (classic/endless/zen/etc.) but are
+    // a separate sandbox — they never spend a daily-lock try on the real
+    // menu card for that mode.
+    state.viaCustom = true;
     state.difficulty = customDraft.difficulty;
     renderMode();
     renderDifficulty();
@@ -2977,6 +4109,8 @@
     els.menuScreen.hidden = true;
     els.gameArea.hidden = false;
     if (els.menuLink) els.menuLink.hidden = false;
+    if (els.premiumSidebar) els.premiumSidebar.hidden = true;
+    if (els.leftPanels) els.leftPanels.hidden = true;
     if (customDraft.mode === 'headtohead') startHeadToHead();
     else newGame();
   }
@@ -2994,6 +4128,17 @@
     var imperial = getUnitSystem() === 'imperial';
     els.unitToggle.textContent = imperial ? 'lb' : 'kg';
     els.unitToggle.setAttribute('aria-label', imperial ? 'Switch to metric units' : 'Switch to imperial units');
+  }
+
+  function renderLeftPanelsToggle(){
+    if (!els.leftPanels || !els.leftPanelsToggle) return;
+    var collapsed = isLeftPanelCollapsed();
+    els.leftPanels.classList.toggle('is-collapsed', collapsed);
+    els.leftPanelsToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    if (els.leftPanelsToggleLabel){
+      els.leftPanelsToggleLabel.textContent = collapsed ? 'Show sidebar' : 'Hide sidebar';
+    }
+    if (els.leftPanelsContent) els.leftPanelsContent.hidden = collapsed;
   }
 
   // Any weight already on screen (a revealed pair, the custom-objects
@@ -3053,6 +4198,7 @@
       }
       if (tracksStreak){
         state.streak++;
+        checkStreakAchievements();
         if (state.streak > state.stats.best){
           state.stats.best = state.streak;
           isNewBest = state.streak >= 3;
@@ -3084,6 +4230,15 @@
     var heavier = state.pair[heavierIndex];
     var lighter = state.pair[1 - heavierIndex];
     var ratio = heavier.g / lighter.g;
+    // "Your mama" (see ITEMS/rollRareItem) has Infinity weight, so whenever
+    // it's in the pair it's always the "heavier" side here — encountering
+    // it at all (whether you guessed right or not) is the achievement.
+    if (heavier.rareChance){
+      if (unlockAchievement('yourmama')){
+        renderAchievements();
+        showAchievementToast("Yo mama's so heavy, she broke the scale — but you found her anyway.");
+      }
+    }
     var callText = correct ? 'Correct' : (timedOut ? "Time's up" : 'Not quite');
     var ptsTag = '';
     if (scoring){
@@ -3336,6 +4491,10 @@
     els.verdict.hidden = true;
     els.next.hidden = true;
     els.results.hidden = false;
+    // The round is already over and scored, so there's nothing left to
+    // "abandon" — the results screen has its own Play again/Back to menu
+    // buttons instead of the mid-round "☰ Menu" escape hatch.
+    if (els.menuLink) els.menuLink.hidden = true;
     state.busy = false;
 
     if (state.mode === 'endless'){
@@ -3346,6 +4505,9 @@
       els.resultsSub.textContent = eTier.sub;
       if (els.lbHead) els.lbHead.textContent = 'Endless leaderboard';
       sfx.results(survived >= 3);
+      // Native Endless runs only get one shot per day; Custom-builder runs
+      // that happen to use the Endless engine are a separate sandbox.
+      if (!state.viaCustom){ markModePlayedToday('endless'); renderMenuCardStates(); }
     } else if (state.mode === 'timeattack'){
       var taTier = timeAttackTier(state.points);
       els.resultsScore.innerHTML = formatPoints(state.points) + '<small> pts</small>';
@@ -3354,17 +4516,17 @@
       if (els.lbHead) els.lbHead.textContent = 'Time Attack leaderboard';
       sfx.results(state.points >= 14);
     } else if (state.mode === 'league'){
-      // Three 10-round tries add up to one combined score. A run only
-      // costs you today's League slot once it's actually finished, so
-      // mark that here rather than when the run started.
-      markLeaguePlayedToday();
-      renderLeagueAvailability();
+      // A run only costs you today's League slot once it's actually
+      // finished, so mark that here rather than when the run started.
+      markModePlayedToday('league');
+      renderMenuCardStates();
       var leagueRounds = ROUNDS * LEAGUE_ATTEMPTS;
       var leagueMax = roundPts(leagueRounds * MAX_ROUND_POINTS * currentPointsMult());
       var leagueTier = resultTier(state.leagueTotal, leagueMax);
+      var leagueTriesNote = LEAGUE_ATTEMPTS > 1 ? (' across ' + LEAGUE_ATTEMPTS + ' tries') : '';
       els.resultsScore.innerHTML = formatPoints(state.leagueTotal) + '<small> / ' + formatPoints(leagueMax) + ' pts</small>';
       els.resultsMsg.textContent = leagueTier.msg;
-      els.resultsSub.textContent = leagueTier.sub + ' (' + state.leagueCorrectTotal + '/' + leagueRounds + ' correct across 3 tries) · back tomorrow for another run.';
+      els.resultsSub.textContent = leagueTier.sub + ' (' + state.leagueCorrectTotal + '/' + leagueRounds + ' correct' + leagueTriesNote + ') · back tomorrow for another run.';
       if (els.lbHead) els.lbHead.textContent = 'League leaderboard';
       sfx.results(state.leagueCorrectTotal / leagueRounds >= 0.6);
     } else {
@@ -3376,11 +4538,17 @@
       els.resultsSub.textContent = tier.sub + ' (' + state.sessionCorrect + '/' + ROUNDS + ' correct)';
       if (els.lbHead) els.lbHead.textContent = state.mode === 'daily' ? "Today's leaderboard" : 'Leaderboard';
       sfx.results(state.sessionCorrect / ROUNDS >= 0.6);
+      // Native Classic/Daily runs get one shot per day; Custom-builder
+      // runs using the Classic engine don't touch this lock.
+      if (!state.viaCustom){ markModePlayedToday(state.mode); renderMenuCardStates(); }
     }
-    // League is a once-a-day submission — no replaying into a second
-    // run today, so "Play again" is swapped out for "Back to menu".
-    els.again.hidden = state.mode === 'league';
-    (state.mode === 'league' ? els.resultsMenuBtn : els.again).focus();
+    // A mode that just spent today's only try swaps "Play again" out for
+    // "Back to menu" — League always has (once-a-day, single run), and now
+    // so do Classic/Daily/Endless the moment their run finishes. Premium
+    // makes every mode unlimited, so this never kicks in while unlocked.
+    var justLockedForToday = !isPremiumUnlocked() && !state.viaCustom && !!DAILY_LOCK_INFO[state.mode] && hasPlayedModeToday(state.mode);
+    els.again.hidden = justLockedForToday;
+    (justLockedForToday ? els.resultsMenuBtn : els.again).focus();
 
     if (state.customOnly){
       // Scores from a fully custom item pool aren't comparable to the
@@ -3451,6 +4619,7 @@
     els.next.hidden = true;
     els.h2hHandoff.hidden = true;
     els.h2hResults.hidden = false;
+    if (els.menuLink) els.menuLink.hidden = true;
     state.busy = false;
 
     var p1 = state.p1Points, p2 = state.p2Points;
@@ -3473,18 +4642,39 @@
     els.next.addEventListener('click', advance);
     els.again.addEventListener('click', newGame);
     els.diffBtns.forEach(function(btn){
-      btn.addEventListener('click', function(){ setDifficulty(btn.dataset.diff); });
+      btn.addEventListener('click', function(){ setPregameDifficulty(btn.dataset.diff); });
     });
     els.menuCards.forEach(function(card){
       card.addEventListener('click', function(){
         var mode = card.dataset.mode;
+        if (COMING_SOON_MODES[mode]) return;
         if (PREMIUM_MODES[mode] && !isPremiumUnlocked()) openPaywall(mode);
         else launchMode(mode);
       });
     });
-    if (els.menuLink) els.menuLink.addEventListener('click', openMenu);
+    if (els.menuLink) els.menuLink.addEventListener('click', handleMenuLinkClick);
+    if (els.abandonStayBtn) els.abandonStayBtn.addEventListener('click', function(){ sfx.click(); closeAbandonConfirm(); });
+    if (els.abandonLeaveBtn) els.abandonLeaveBtn.addEventListener('click', abandonGame);
     if (els.paywallBackBtn) els.paywallBackBtn.addEventListener('click', closePaywall);
     if (els.paywallUnlockBtn) els.paywallUnlockBtn.addEventListener('click', unlockPremium);
+    if (els.paywallPlanBtns) els.paywallPlanBtns.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        sfx.click();
+        selectedPlan = btn.dataset.plan;
+        renderPaywallPlan();
+      });
+    });
+    if (els.pregameBackBtn) els.pregameBackBtn.addEventListener('click', closePregame);
+    if (els.pregamePlayBtn) els.pregamePlayBtn.addEventListener('click', confirmPregamePlay);
+    if (els.resetPremiumLink) els.resetPremiumLink.addEventListener('click', function(){
+      sfx.click();
+      setPremiumUnlocked(false);
+      renderMenuCardStates();
+    });
+    // No specific mode is "pending" here (openPaywall(null)), so
+    // unlockPremium() just lands back on the menu afterward instead of
+    // launching straight into a round.
+    if (els.premiumSidebarBtn) els.premiumSidebarBtn.addEventListener('click', function(){ openPaywall(null); });
     if (els.customBackBtn) els.customBackBtn.addEventListener('click', closeCustomSetup);
     if (els.customModeBtns){
       els.customModeBtns.forEach(function(btn){
@@ -3545,6 +4735,13 @@
         refreshVisibleWeights();
       });
     }
+    if (els.leftPanelsToggle){
+      els.leftPanelsToggle.addEventListener('click', function(){
+        sfx.click();
+        setLeftPanelCollapsed(!isLeftPanelCollapsed());
+        renderLeftPanelsToggle();
+      });
+    }
     els.reset.addEventListener('click', function(){
       state.stats = { best: 0 };
       saveStats();
@@ -3569,6 +4766,12 @@
       });
     }
     if (els.leagueNextBtn) els.leagueNextBtn.addEventListener('click', startNextLeagueAttempt);
+    els.achievementBadges.forEach(function(badge){
+      badge.addEventListener('mouseenter', function(){ showAchvTooltip(badge); });
+      badge.addEventListener('mouseleave', hideAchvTooltip);
+      badge.addEventListener('focus', function(){ showAchvTooltip(badge); });
+      badge.addEventListener('blur', hideAchvTooltip);
+    });
     document.addEventListener('keydown', function(e){
       if (!els.menuScreen.hidden) return;
       if (!els.h2hHandoff.hidden){
@@ -3608,6 +4811,7 @@
       difficulty: (saved && saved.difficulty) || 'medium',
       mode: (saved && saved.mode) || 'classic',
       customOnly: false,
+      viaCustom: false,
       leagueAttempt: 1,
       leagueTotal: 0,
       leagueCorrectTotal: 0,
@@ -3620,17 +4824,25 @@
       busy: false,
       globalTimerId: null,
       globalTimeLeft: 0,
-      resultsToken: 0
+      resultsToken: 0,
+      menuLbToken: 0
     };
     bindEvents();
     renderDifficulty();
     renderMode();
     renderSoundToggle();
     renderUnitToggle();
-    renderMenuLocks();
+    renderLeftPanelsToggle();
+    renderMenuCardStates();
     updateScoreboardVisibility();
     renderStats();
     openMenu();
+
+    // Live countdown on any locked menu card, and auto-unlocks the moment
+    // local midnight passes while the menu happens to be sitting open.
+    setInterval(function(){
+      if (!els.menuScreen.hidden) renderMenuCardStates();
+    }, 1000);
 
     try{
       window.claude && window.claude.hot && window.claude.hot.snapshot && window.claude.hot.snapshot(function(){
