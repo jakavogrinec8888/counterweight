@@ -1,8 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
 <title>Counterweight</title>
 </head>
 <body>
@@ -1323,6 +1322,28 @@
     opacity: 0.75;
     margin: 12px 0 0;
   }
+  .paywall-signin-row{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin: 14px 0 0;
+  }
+  .paywall-signin-row[hidden]{ display: none; }
+  .paywall-signin-text{
+    margin: 0;
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+  .paywall-status{
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin: 10px 0 0;
+  }
+  .paywall-status[hidden]{ display: none; }
+  .paywall-status.is-error{ color: var(--bad); }
 
   /* --- Side panels (League leaderboard + Game Info + Premium ad) -------
      League leaderboard and Game Info stack together in .left-panels, on
@@ -1454,6 +1475,19 @@
     font-family: var(--font-display);
     font-weight: 800;
     color: var(--amber);
+  }
+  .objectives-list{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .objective-row .game-info-stat-label{ padding-right: 10px; }
+  /* Plain text + a running count, no badge — once the count reaches its
+     target the whole line (label and count together) turns green, same
+     as a correct answer elsewhere in the game. */
+  .objective-row.is-complete .game-info-stat-label,
+  .objective-row.is-complete .game-info-stat-value{
+    color: var(--good);
   }
   #google-signin-btn{
     display: flex;
@@ -1775,6 +1809,7 @@
     </div>
 
     <button class="reset-premium-link" id="reset-premium-link" type="button" hidden>Demo build: Premium is unlocked on this device — reset it</button>
+    <button class="reset-premium-link" id="manage-premium-link" type="button" hidden>Premium is active — manage subscription</button>
   </div>
 
   <div class="custom-screen" id="custom-screen" hidden>
@@ -1880,10 +1915,16 @@
       <span class="paywall-price-note" id="paywall-price-note">per year</span>
     </div>
 
+    <div class="paywall-signin-row" id="paywall-signin-row" hidden>
+      <p class="paywall-signin-text">Sign in with Google to subscribe.</p>
+      <div id="paywall-signin-btn"></div>
+    </div>
+
     <div class="controls">
       <button class="next" id="paywall-unlock-btn" type="button">Unlock Premium →</button>
     </div>
-    <p class="paywall-demo-note">Demo build: this is a placeholder paywall — "unlocking" just flips a local switch on this device, no real payment is taken.</p>
+    <p class="paywall-status" id="paywall-status" hidden></p>
+    <p class="paywall-demo-note" id="paywall-preview-note" hidden>Checkout isn't available in this preview — it works on the live site.</p>
   </div>
 
   <div class="game-area" id="game-area" hidden>
@@ -2114,6 +2155,15 @@
             <div class="achievement-badge" id="achievement-played1000" data-achievement="played1000" tabindex="0">
               <span class="achievement-icon" aria-hidden="true">👑</span>
               <span class="achievement-name">???</span>
+            </div>
+          </div>
+        </div>
+        <div class="game-info-section">
+          <div class="game-info-head">🎯 Objectives</div>
+          <div class="objectives-list" id="objectives-list">
+            <div class="game-info-stat-row objective-row" id="objective-dailygrind20">
+              <span class="game-info-stat-label">Complete the Daily Challenge 20 times</span>
+              <span class="game-info-stat-value objective-count" id="objective-dailygrind20-count">0/20</span>
             </div>
           </div>
         </div>
@@ -2799,11 +2849,14 @@
   // reaching results would. Games launched through the Custom builder
   // (state.viaCustom) never touch these locks either way; that's a separate
   // sandbox from the "real" daily modes. Premium unlocks unlimited plays
-  // across every mode: a run still gets marked as played (so the lock is
-  // there the moment Premium is turned back off via the demo reset link),
-  // but enforcement of that lock - disabling the menu card, swapping "Play
-  // again" for "Back to menu" - is skipped entirely while
-  // isPremiumUnlocked() is true.
+  // across every mode EXCEPT Daily Challenge (see ALWAYS_DAILY_LOCKED
+  // below) — for the rest, a run still gets marked as played (so the lock
+  // is there the moment Premium is turned back off via the demo reset
+  // link), but enforcement of that lock - disabling the menu card,
+  // swapping "Play again" for "Back to menu" - is skipped entirely while
+  // isPremiumUnlocked() is true. Daily Challenge keeps its lock enforced
+  // regardless, since "everyone plays the same puzzle, once a day" is the
+  // whole premise of the mode, not just a free-tier limit.
   var LEAGUE_LAST_PLAYED_KEY = 'counterweight_league_last_played';
   var DAILY_LOCK_INFO = {
     classic:  { key: 'counterweight_lock_classic',  tag: 'The classic run — five pairs, points for speed, then compare your score.' },
@@ -2812,6 +2865,10 @@
     league:   { key: LEAGUE_LAST_PLAYED_KEY,        tag: 'The competitive take on 5 Rounds — one run, once a day.' },
     zen:      { key: 'counterweight_lock_zen',      tag: 'No timer, no pressure — just learn.' }
   };
+  // Daily Challenge is everyone-plays-the-same-puzzle-today, which is the
+  // whole point of the mode — unlike Classic/Endless/Zen/League, Premium's
+  // "unlimited plays everywhere" does NOT lift this one's once-a-day lock.
+  var ALWAYS_DAILY_LOCKED = { daily: true };
 
   function hasPlayedModeToday(mode){
     var info = DAILY_LOCK_INFO[mode];
@@ -2847,7 +2904,10 @@
       var comingSoon = !!COMING_SOON_MODES[mode];
       var premiumLocked = !!PREMIUM_MODES[mode] && !unlocked;
       var lockInfo = DAILY_LOCK_INFO[mode];
-      var playedToday = (lockInfo && !unlocked) ? hasPlayedModeToday(mode) : false;
+      // Premium lifts the daily lock everywhere except Daily Challenge
+      // itself (see ALWAYS_DAILY_LOCKED above).
+      var exemptFromDailyLock = unlocked && !ALWAYS_DAILY_LOCKED[mode];
+      var playedToday = (lockInfo && !exemptFromDailyLock) ? hasPlayedModeToday(mode) : false;
       card.disabled = comingSoon || playedToday;
       card.classList.toggle('is-locked', comingSoon || premiumLocked || playedToday);
       var badge = card.querySelector('.menu-card-lock-badge');
@@ -2871,10 +2931,12 @@
         badge.hidden = unlocked;
       });
     }
-    // Only surfaced once Premium is actually unlocked on this device, so
-    // testers (or anyone who tapped "Unlock Premium" out of curiosity)
-    // have a quick way back to the locked demo state.
-    if (els.resetPremiumLink) els.resetPremiumLink.hidden = !unlocked;
+    // Preview (no Firebase): the old one-tap demo reset, so testers can
+    // flip Premium back to locked without clearing site data. Real
+    // deployment: a "manage subscription" link into Stripe's own portal
+    // instead, since there's a real subscription to view/cancel there.
+    if (els.resetPremiumLink) els.resetPremiumLink.hidden = !(unlocked && !firebaseAvailable);
+    if (els.managePremiumLink) els.managePremiumLink.hidden = !(unlocked && firebaseAvailable);
     // The "buy Premium" side panel is a menu-screen-only ad: it has no
     // reason to show once Premium is already unlocked, and it's force-
     // hidden the instant you leave the menu (see the menu-screen
@@ -3061,6 +3123,7 @@
   function renderGameInfoPanel(){
     renderGameInfoStats();
     renderAchievements();
+    renderObjectives();
   }
 
   // Hand-drawn badge art for the "Your mama" rare item — a simple, warm
@@ -3171,6 +3234,67 @@
       if (nameEl) nameEl.textContent = isUnlocked ? a.name : '???';
       badge.setAttribute('aria-label', (isUnlocked ? a.name + ' — unlocked. ' : 'Locked achievement. ') + a.desc);
       badge.setAttribute('data-tooltip', a.desc);
+    });
+  }
+
+  // --- Objectives: longer-term goals shown as plain text rows right under
+  // Achievements — unlike the Achievements badges above, an objective's
+  // description is never hidden behind "???"; it's a visible goal with a
+  // live x/target count that turns green once reached, not a surprise.
+  // Kept in its own storage key so clearing achievements never touches
+  // objective progress or vice versa. The first one tracks
+  // state.stats.dailyCompletions, a lifetime counter incremented once per
+  // finished Daily Challenge run (see showResults) — unlike the "played N
+  // rounds" achievements above, this only counts full Daily runs, not
+  // individual rounds.
+  var OBJECTIVES_KEY = 'counterweight_objectives';
+  var OBJECTIVES = [
+    { id: 'dailygrind20', dailyCompletions: 20, desc: 'Complete the Daily Challenge 20 times.' }
+  ];
+
+  function getUnlockedObjectives(){
+    try{ return JSON.parse(localStorage.getItem(OBJECTIVES_KEY) || '{}'); } catch(e){ return {}; }
+  }
+
+  function isObjectiveUnlocked(id){
+    return !!getUnlockedObjectives()[id];
+  }
+
+  // Returns true only the first time this objective is completed, so
+  // callers know whether to also show the celebration toast.
+  function unlockObjective(id){
+    var unlocked = getUnlockedObjectives();
+    if (unlocked[id]) return false;
+    unlocked[id] = true;
+    try{ localStorage.setItem(OBJECTIVES_KEY, JSON.stringify(unlocked)); } catch(e){}
+    return true;
+  }
+
+  // Checks for newly-completed objectives (toast + one-way unlock), then
+  // always re-renders so the visible x/target count stays current even
+  // on runs that don't cross the finish line yet.
+  function checkObjectives(){
+    OBJECTIVES.forEach(function(o){
+      if (!o.dailyCompletions) return;
+      if ((state.stats.dailyCompletions || 0) >= o.dailyCompletions && unlockObjective(o.id)){
+        showToast('Objective complete!', o.desc, '🎯');
+      }
+    });
+    renderObjectives();
+  }
+
+  function renderObjectives(){
+    var unlocked = getUnlockedObjectives();
+    OBJECTIVES.forEach(function(o){
+      var row = document.getElementById('objective-' + o.id);
+      var countEl = document.getElementById('objective-' + o.id + '-count');
+      if (!row) return;
+      var isComplete = !!unlocked[o.id];
+      row.classList.toggle('is-complete', isComplete);
+      if (countEl && o.dailyCompletions){
+        var current = Math.min(state.stats.dailyCompletions || 0, o.dailyCompletions);
+        countEl.textContent = current + '/' + o.dailyCompletions;
+      }
     });
   }
 
@@ -3329,6 +3453,11 @@
     pregameBackBtn: document.getElementById('pregame-back-btn'),
     pregamePlayBtn: document.getElementById('pregame-play-btn'),
     resetPremiumLink: document.getElementById('reset-premium-link'),
+    managePremiumLink: document.getElementById('manage-premium-link'),
+    paywallSigninRow: document.getElementById('paywall-signin-row'),
+    paywallSigninBtn: document.getElementById('paywall-signin-btn'),
+    paywallStatus: document.getElementById('paywall-status'),
+    paywallPreviewNote: document.getElementById('paywall-preview-note'),
     premiumSidebar: document.getElementById('premium-sidebar'),
     rightPanels: document.getElementById('right-panels'),
     premiumSidebarBtn: document.getElementById('premium-sidebar-btn'),
@@ -3844,14 +3973,22 @@
     renderGameInfoPanel();
   }
 
-  // --- Premium paywall (demo) -----------------------------------------
-  // Time Attack, Head-to-Head, Custom, and League are gated behind a single
-  // local "unlock" flag. This is a client-side demo only: there is no
-  // server or payment processor here, so "purchasing" just flips a
-  // localStorage switch on this device rather than verifying a real
-  // transaction. League keeps its usual spot in the menu (right under
-  // Daily Challenge) — going premium only changes whether you can launch
-  // it, not where it sits.
+  // --- Premium paywall --------------------------------------------------
+  // Time Attack, Head-to-Head, Custom, and League are gated behind one
+  // subscription check. League keeps its usual spot in the menu (right
+  // under Daily Challenge) — going premium only changes whether you can
+  // launch it, not where it sits.
+  //
+  // Real billing runs through the "Run Payments with Stripe" Firebase
+  // Extension, on the SAME Firebase project already wired up for the
+  // leaderboards above — a signed-in player's Firestore
+  // customers/{uid}/subscriptions doc is the one source of truth for
+  // whether Premium is active (see watchPremiumSubscription), kept live
+  // by Stripe's webhook. Just like the leaderboards, this only actually
+  // reaches Firebase/Stripe on a real deployment (see firebaseAppPromise
+  // above) — a Claude Artifact preview has no way to run real checkout,
+  // so isPremiumUnlocked() falls back to the old local demo-unlock flag
+  // there purely so this mode's cards/paywall can still be tried out.
   var PREMIUM_KEY = 'counterweight_premium_unlocked';
   var PREMIUM_MODES = { timeattack: true, headtohead: true, custom: true, league: true };
   // League is still being built: it stays locked on the menu no matter
@@ -3860,11 +3997,117 @@
   var COMING_SOON_MODES = { league: true };
   var pendingUnlockMode = null;
 
+  // Fill these in from your own Stripe + Firebase Extension setup — see
+  // the game's setup notes. They're plain IDs, not secrets.
+  var STRIPE_PRICE_IDS = {
+    monthly: 'price_1UGlz1Az5gW0keGS5wHlqUeF',
+    yearly:  'price_1UGlznAz5gW0keGSEnGa4ZmE'
+  };
+  // The Cloud Functions region picked when installing the extension.
+  var STRIPE_FUNCTIONS_REGION = 'europe-west1';
+  // The extension's callable functions are deployed prefixed with its own
+  // instance id — this assumes the default id ("firestore-stripe-payments")
+  // was kept at install time.
+  var STRIPE_PORTAL_FUNCTION = 'ext-firestore-stripe-payments-createPortalLink';
+
+  var firebaseAvailable = false;
+  var premiumSubscriptionActive = false;
+  var unsubscribePremiumWatch = null;
+
+  firebaseAppPromise.then(function(fb){
+    firebaseAvailable = !!fb;
+    renderPaywallEnvironmentNotes();
+  });
+
   function isPremiumUnlocked(){
+    if (firebaseAvailable) return premiumSubscriptionActive;
     try{ return localStorage.getItem(PREMIUM_KEY) === '1'; } catch(e){ return false; }
   }
   function setPremiumUnlocked(v){
     try{ localStorage.setItem(PREMIUM_KEY, v ? '1' : '0'); } catch(e){}
+  }
+
+  // Keeps premiumSubscriptionActive — and every card/paywall render that
+  // reads isPremiumUnlocked() — in sync with the REAL subscription status
+  // Stripe's webhook writes into Firestore, so the moment a checkout
+  // finishes (or a subscription lapses/cancels) Premium flips live with
+  // no reload needed. Re-attached whenever the signed-in user changes.
+  function watchPremiumSubscription(fb, uid){
+    if (unsubscribePremiumWatch){ unsubscribePremiumWatch(); unsubscribePremiumWatch = null; }
+    if (!fb || !uid){
+      premiumSubscriptionActive = false;
+      renderMenuCardStates();
+      return;
+    }
+    try{
+      unsubscribePremiumWatch = fb.firestore()
+        .collection('customers').doc(uid).collection('subscriptions')
+        .where('status', 'in', ['trialing', 'active'])
+        .onSnapshot(function(snap){
+          premiumSubscriptionActive = !snap.empty;
+          renderMenuCardStates();
+        }, function(){ /* ignore — stays at last-known state */ });
+    } catch(e){
+      // Never let a subscription-watch failure break sign-in or anything
+      // else hanging off onAuthStateChanged — just stay at last-known state.
+    }
+  }
+
+  function showPaywallStatus(msg, isError){
+    if (!els.paywallStatus) return;
+    els.paywallStatus.textContent = msg || '';
+    els.paywallStatus.hidden = !msg;
+    els.paywallStatus.classList.toggle('is-error', !!isError);
+  }
+
+  // Shows/hides the "sign in to subscribe" row and the preview-only note
+  // on the paywall — called whenever the paywall opens, and whenever
+  // sign-in state or Firebase availability itself changes.
+  function renderPaywallEnvironmentNotes(){
+    if (els.paywallPreviewNote) els.paywallPreviewNote.hidden = firebaseAvailable;
+    if (els.paywallSigninRow) els.paywallSigninRow.hidden = !(firebaseAvailable && !state.firebaseUser);
+  }
+
+  // Kicks off a real Stripe Checkout for the given plan by writing a
+  // checkout_sessions doc — the Firebase Extension's own Cloud Function
+  // picks it up, creates the Stripe session, and writes the resulting
+  // url (or an error) back onto the same doc.
+  function startCheckout(plan){
+    var priceId = STRIPE_PRICE_IDS[plan];
+    var uid = state.firebaseUser && state.firebaseUser.uid;
+    if (!priceId || !uid) return;
+    showPaywallStatus('Redirecting to secure checkout…', false);
+    firebaseAppPromise.then(function(fb){
+      if (!fb) return;
+      fb.firestore().collection('customers').doc(uid).collection('checkout_sessions').add({
+        price: priceId,
+        success_url: window.location.href,
+        cancel_url: window.location.href
+      }).then(function(docRef){
+        docRef.onSnapshot(function(snap){
+          var data = snap.data();
+          if (!data) return;
+          if (data.error){ showPaywallStatus('Checkout error: ' + data.error.message, true); }
+          if (data.url){ window.location.assign(data.url); }
+        });
+      }).catch(function(){ showPaywallStatus("Couldn't start checkout — try again.", true); });
+    });
+  }
+
+  // Opens Stripe's hosted billing portal so a subscriber can change plans,
+  // update a card, or cancel — same portal Stripe provides for any of its
+  // subscription customers, reached through the extension's callable.
+  function openBillingPortal(){
+    sfx.click();
+    firebaseAppPromise.then(function(fb){
+      if (!fb) return;
+      try{
+        var fn = fb.app().functions(STRIPE_FUNCTIONS_REGION).httpsCallable(STRIPE_PORTAL_FUNCTION);
+        fn({ returnUrl: window.location.href }).then(function(res){
+          if (res && res.data && res.data.url) window.location.assign(res.data.url);
+        }).catch(function(){ showPaywallStatus("Couldn't open the billing portal — try again.", true); });
+      } catch(e){}
+    });
   }
 
   // --- Sign In With Google ------------------------------------------
@@ -3961,6 +4204,7 @@
     } catch(e){ return; }
     renderGoogleButton(els.googleSigninBtn);
     renderGoogleButton(els.lbSigninBtn);
+    renderGoogleButton(els.paywallSigninBtn);
   }
 
   // The GIS script loads async and may not be ready the instant start()
@@ -4079,6 +4323,8 @@
     pendingUnlockMode = mode;
     selectedPlan = 'yearly';
     renderPaywallPlan();
+    showPaywallStatus('', false);
+    renderPaywallEnvironmentNotes();
     els.menuScreen.hidden = true;
     if (els.customScreen) els.customScreen.hidden = true;
     if (els.pregameScreen) els.pregameScreen.hidden = true;
@@ -4091,20 +4337,42 @@
 
   function closePaywall(){
     pendingUnlockMode = null;
+    state.pendingPremiumCheckout = null;
     if (els.paywallScreen) els.paywallScreen.hidden = true;
     openMenu();
   }
 
   function unlockPremium(){
     sfx.click();
-    setPremiumUnlocked(true);
-    renderMenuCardStates();
-    if (els.paywallScreen) els.paywallScreen.hidden = true;
-    burstConfetti();
-    var mode = pendingUnlockMode;
-    pendingUnlockMode = null;
-    if (mode) launchMode(mode);
-    else openMenu();
+    if (!firebaseAvailable){
+      // Preview fallback: no real Stripe/Firebase reachable here (see the
+      // comment above isPremiumUnlocked), so keep the old instant local
+      // demo-unlock so this mode's cards/paywall can still be tried out.
+      setPremiumUnlocked(true);
+      renderMenuCardStates();
+      if (els.paywallScreen) els.paywallScreen.hidden = true;
+      burstConfetti();
+      var mode = pendingUnlockMode;
+      pendingUnlockMode = null;
+      if (mode) launchMode(mode);
+      else openMenu();
+      return;
+    }
+    if (!state.firebaseUser){
+      // Not signed in yet — remember which plan they picked and prompt
+      // sign-in; the onAuthStateChanged handler in start() resumes
+      // checkout automatically the moment sign-in completes.
+      state.pendingPremiumCheckout = selectedPlan;
+      renderPaywallEnvironmentNotes();
+      showPaywallStatus('Sign in above to continue.', false);
+      return;
+    }
+    // Real checkout redirects the whole page to Stripe, so there's no
+    // "launch the pending mode" step here the way the demo path has one —
+    // once payment succeeds Stripe sends them back to this same page, the
+    // subscription syncs in live (see watchPremiumSubscription), and
+    // they're simply sitting on the menu with Premium now unlocked.
+    startCheckout(selectedPlan);
   }
 
   // The "☰ Menu" escape hatch is available in every mode. Bailing back to
@@ -4674,13 +4942,28 @@
       sfx.results(state.sessionCorrect / ROUNDS >= 0.6);
       // Native Classic/Daily runs get one shot per day; Custom-builder
       // runs using the Classic engine don't touch this lock.
-      if (!state.viaCustom){ markModePlayedToday(state.mode); renderMenuCardStates(); }
+      if (!state.viaCustom){
+        markModePlayedToday(state.mode);
+        renderMenuCardStates();
+        // Lifetime count of finished Daily Challenge runs, for the "Daily
+        // Grind" objective — only native Daily runs count, same Custom
+        // exemption as the lock above, and only whole finished runs (not
+        // per-round, unlike totalPlayed) since the objective is about
+        // showing up for the daily puzzle itself.
+        if (state.mode === 'daily'){
+          state.stats.dailyCompletions = (state.stats.dailyCompletions || 0) + 1;
+          saveStats();
+          checkObjectives();
+        }
+      }
     }
     // A mode that just spent today's only try swaps "Play again" out for
     // "Back to menu" — League always has (once-a-day, single run), and now
     // so do Classic/Daily/Endless the moment their run finishes. Premium
-    // makes every mode unlimited, so this never kicks in while unlocked.
-    var justLockedForToday = !isPremiumUnlocked() && !state.viaCustom && !!DAILY_LOCK_INFO[state.mode] && hasPlayedModeToday(state.mode);
+    // makes every mode unlimited EXCEPT Daily Challenge (see
+    // ALWAYS_DAILY_LOCKED), so this still kicks in there even unlocked.
+    var exemptFromDailyLock = isPremiumUnlocked() && !ALWAYS_DAILY_LOCKED[state.mode];
+    var justLockedForToday = !exemptFromDailyLock && !state.viaCustom && !!DAILY_LOCK_INFO[state.mode] && hasPlayedModeToday(state.mode);
     els.again.hidden = justLockedForToday;
     (justLockedForToday ? els.resultsMenuBtn : els.again).focus();
 
@@ -4810,6 +5093,7 @@
       setPremiumUnlocked(false);
       renderMenuCardStates();
     });
+    if (els.managePremiumLink) els.managePremiumLink.addEventListener('click', openBillingPortal);
     // No specific mode is "pending" here (openPaywall(null)), so
     // unlockPremium() just lands back on the menu afterward instead of
     // launching straight into a round.
@@ -4951,7 +5235,8 @@
       menuLbToken: 0,
       firebaseUser: null,
       pendingScoreEntry: null,
-      pendingScoreToken: 0
+      pendingScoreToken: 0,
+      pendingPremiumCheckout: null
     };
     bindEvents();
     renderDifficulty();
@@ -4976,6 +5261,13 @@
       fb.auth().onAuthStateChanged(function(user){
         state.firebaseUser = user;
         renderLeaderboardSignInPrompt();
+        renderPaywallEnvironmentNotes();
+        watchPremiumSubscription(fb, user ? user.uid : null);
+        if (user && state.pendingPremiumCheckout){
+          var plan = state.pendingPremiumCheckout;
+          state.pendingPremiumCheckout = null;
+          startCheckout(plan);
+        }
         if (user && state.pendingScoreEntry && state.pendingScoreToken === state.resultsToken){
           var entry = state.pendingScoreEntry;
           state.pendingScoreEntry = null;
