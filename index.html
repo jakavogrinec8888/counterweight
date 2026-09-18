@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><title>Counterweight</title>
+<title>Counterweight</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -96,6 +96,8 @@
     .bay{ padding: 14px 10px 18px; }
     .card .emoji-badge{ width: 68px; height: 68px; }
     .card .emoji{ font-size: 2.1rem; }
+    .guess-item-emoji{ font-size: 3.2rem; }
+    .guess-slider-value{ font-size: 1.2rem; }
   }
 
   .confetti-layer{
@@ -550,6 +552,153 @@
     text-transform: uppercase;
   }
   .pts-zero{ background: var(--steel); color: var(--text-dim); }
+
+  /* Guess the Weight: single-item weight estimation, replacing the usual
+     two-card comparison bay for this mode (see showGuessBay()). */
+  .guess-panel{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 0 4px;
+  }
+  .guess-panel[hidden]{ display: none; }
+  .guess-item{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .guess-item-emoji{
+    font-size: 4.2rem;
+    line-height: 1;
+  }
+  .guess-item-name{
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: var(--text);
+    text-align: center;
+  }
+  .guess-prompt{
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+  }
+  .guess-slider-row{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 360px;
+  }
+  .guess-slider-row[hidden]{ display: none; }
+  .guess-slider-value{
+    margin: 0;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: var(--amber);
+  }
+  .guess-slider-track-wrap{
+    position: relative;
+    width: 100%;
+    /* Room for the thumb to overhang the track without clipping. */
+    padding: 10px 0;
+  }
+  /* The native range input's own track is made fully transparent (see
+     .guess-slider background below) — the visible bar is actually
+     .guess-slider-heatmap, a plain div sitting behind it. Before a guess
+     is submitted it's a flat gray bar, same look as before; once the
+     answer's known, renderGuessHeatmap() paints it green-to-red around
+     the correct weight so you can see exactly how the scoring falls off,
+     with plain gray again past the point where no points are awarded. */
+  .guess-slider-heatmap{
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 6px;
+    border-radius: 999px;
+    background: var(--steel);
+    pointer-events: none;
+  }
+  /* A plain <input type=range> gets a custom track/thumb so it fits the
+     game's dark theme — the log scale (0.1g to 1 ton) is handled purely
+     in JS via the slider's own -1..6 (log10 grams) min/max, so the input
+     itself is just a normal linear range control. */
+  .guess-slider{
+    position: relative;
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    background: transparent;
+    outline: none;
+    cursor: pointer;
+    margin: 0;
+  }
+  .guess-slider::-webkit-slider-thumb{
+    -webkit-appearance: none;
+    appearance: none;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--amber);
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--steel);
+    cursor: pointer;
+  }
+  .guess-slider::-moz-range-thumb{
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--amber);
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--steel);
+    cursor: pointer;
+  }
+  .guess-slider::-moz-range-track{
+    height: 6px;
+    border-radius: 999px;
+    background: transparent;
+  }
+  .guess-slider:focus-visible{ outline: 2px solid var(--amber); outline-offset: 3px; }
+  .guess-slider:disabled{ cursor: default; }
+  .guess-slider:disabled::-webkit-slider-thumb{ opacity: 0.6; }
+  .guess-slider:disabled::-moz-range-thumb{ opacity: 0.6; }
+  .guess-slider-ends{
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+  }
+  .guess-feedback{
+    text-align: center;
+    max-width: 40ch;
+  }
+  .guess-feedback[hidden]{ display: none; }
+  .guess-feedback-actual{
+    margin: 0 0 6px;
+    font-size: 0.88rem;
+    color: var(--text-dim);
+  }
+  .guess-feedback-points{
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.05rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+  .guess-feedback-points.is-great{ color: var(--good); }
+  .guess-feedback-points.is-ok{ color: var(--amber); }
+  .guess-feedback-points.is-bad{ color: var(--bad); }
 
   .controls{
     display: flex;
@@ -1759,6 +1908,12 @@
       <span class="menu-card-tag">The classic run — five pairs, points for speed, then compare your score.</span>
     </button>
 
+    <button class="menu-card menu-card-featured" data-mode="guess" type="button">
+      <span class="menu-card-icon" aria-hidden="true">⚖️</span>
+      <span class="menu-card-title">Guess the Weight</span>
+      <span class="menu-card-tag">One item, no comparison — how close can you get? Nail it for 5,000 points.</span>
+    </button>
+
     <button class="menu-card menu-card-daily" data-mode="daily" type="button">
       <span class="menu-card-icon" aria-hidden="true">📅</span>
       <span class="menu-card-daily-text">
@@ -2004,6 +2159,30 @@
       </div>
 
       <div class="verdict" id="verdict" aria-live="polite"></div>
+
+      <div class="guess-panel" id="guess-panel" hidden>
+        <div class="guess-item">
+          <span class="guess-item-emoji" id="guess-item-emoji" aria-hidden="true">⚖️</span>
+          <span class="guess-item-name" id="guess-item-name"></span>
+        </div>
+        <p class="guess-prompt">How much do you think it weighs?</p>
+        <div class="guess-slider-row" id="guess-slider-row">
+          <p class="guess-slider-value" id="guess-slider-value" aria-live="polite">1 kg</p>
+          <div class="guess-slider-track-wrap">
+            <div class="guess-slider-heatmap" id="guess-slider-heatmap" aria-hidden="true"></div>
+            <input class="guess-slider" id="guess-slider" type="range" min="-1" max="6" step="0.001" value="3" aria-label="Your weight guess">
+          </div>
+          <div class="guess-slider-ends" aria-hidden="true">
+            <span>0.1 g</span>
+            <span>1 ton</span>
+          </div>
+          <button class="next" id="guess-submit-btn" type="button">Guess →</button>
+        </div>
+        <div class="guess-feedback" id="guess-feedback" hidden aria-live="polite">
+          <p class="guess-feedback-actual" id="guess-feedback-actual"></p>
+          <p class="guess-feedback-points" id="guess-feedback-points"></p>
+        </div>
+      </div>
 
       <div class="controls">
         <button class="next" id="next-btn" type="button" hidden>Next round →</button>
@@ -2611,7 +2790,8 @@
     timeattack: { icon: "⏱️", title: "Time Attack" },
     zen:        { icon: "🌿", title: "Zen" },
     headtohead: { icon: "🤝", title: "Head-to-Head" },
-    league:     { icon: "🏆", title: "League" }
+    league:     { icon: "🏆", title: "League" },
+    guess:      { icon: "⚖️", title: "Guess the Weight" }
   };
 
   // League is the competitive take on 5 Rounds: same rules and difficulty
@@ -2799,6 +2979,124 @@
     return RESULT_TIERS[RESULT_TIERS.length - 1];
   }
 
+  // --- Guess the Weight: scoring ---------------------------------------
+  // The item pool spans ~2g to ~450,000g (over 5 orders of magnitude), so an
+  // absolute-difference score would be meaningless (trivial for a 200kg item,
+  // impossible for a 2g one). Instead we score on the LOG ratio between guess
+  // and actual: a perfect guess (ratio 1) scores GUESS_MAX_POINTS, and a guess
+  // that's off by 10x in either direction (too heavy or too light) scores 0.
+  // A smoothstep ease keeps near-misses feeling generous while wild guesses
+  // fall off sharply, rather than a harsh linear taper.
+  var GUESS_MAX_POINTS = 5000;
+  var GUESS_MAX_LOG_ERROR = Math.log(10); // 10x off (either direction) = zero points
+
+  // The guess is entered on a log-scale slider (0.1g to ~1 ton) rather than
+  // typed in, since dragging a linear slider across 7 orders of magnitude
+  // would be unusable — a log scale means equal drag distance always feels
+  // like an equal *proportional* change in weight, at any point on the bar.
+  var GUESS_SLIDER_MIN_G = 0.1;
+  var GUESS_SLIDER_MAX_G = 1e6; // ~1 ton
+  var GUESS_SLIDER_MIN_LOG = Math.log10(GUESS_SLIDER_MIN_G);
+  var GUESS_SLIDER_MAX_LOG = Math.log10(GUESS_SLIDER_MAX_G);
+
+  // Slider position (its raw value, log10 of grams) <-> an actual gram
+  // amount. sliderToGrams is what scoring/feedback use; gramsToSlider is
+  // only needed to seed the slider back to a sane starting spot each round.
+  function sliderToGrams(sliderVal){
+    return Math.pow(10, sliderVal);
+  }
+  function gramsToSlider(g){
+    var v = Math.log10(Math.max(g, GUESS_SLIDER_MIN_G));
+    return Math.min(GUESS_SLIDER_MAX_LOG, Math.max(GUESS_SLIDER_MIN_LOG, v));
+  }
+
+  function computeGuessPoints(guessG, actualG){
+    if (!(guessG > 0) || !(actualG > 0)) return 0;
+    var logError = Math.abs(Math.log(guessG / actualG));
+    var t = Math.max(0, 1 - logError / GUESS_MAX_LOG_ERROR);
+    var eased = t * t * (3 - 2 * t); // smoothstep
+    return Math.round(GUESS_MAX_POINTS * eased);
+  }
+
+  // --- Guess the Weight: post-answer slider heatmap ----------------------
+  // Once the actual weight's known, the whole slider track is repainted to
+  // show exactly how the scoring falls off around it: green right on top
+  // of the answer, fading through orange and red as you move away, then a
+  // hard cut to plain gray once you're past the point where a guess would
+  // earn zero points (matches computeGuessPoints's own 10x-off cutoff).
+  var GUESS_HEATMAP_STEPS = 48;
+  var GUESS_HEATMAP_GRAY = [51, 61, 71];   // --steel
+  var GUESS_HEATMAP_BAD  = [255, 107, 94]; // --bad
+  var GUESS_HEATMAP_MID  = [255, 180, 0];  // --amber
+  var GUESS_HEATMAP_GOOD = [95, 217, 138]; // --good
+
+  function lerpChannel(a, b, t){ return Math.round(a + (b - a) * t); }
+
+  // Maps a points value (0..GUESS_MAX_POINTS) to an RGB triplet: exactly 0
+  // is flat gray (no-points zone), then red -> amber -> green as points
+  // climb, matching the same rough bands as guessResultClass's text tiers.
+  function guessHeatColor(pts){
+    if (pts <= 0) return GUESS_HEATMAP_GRAY;
+    var f = Math.min(1, pts / GUESS_MAX_POINTS);
+    var from = f <= 0.5 ? GUESS_HEATMAP_BAD : GUESS_HEATMAP_MID;
+    var to = f <= 0.5 ? GUESS_HEATMAP_MID : GUESS_HEATMAP_GOOD;
+    var localT = f <= 0.5 ? (f / 0.5) : ((f - 0.5) / 0.5);
+    return [
+      lerpChannel(from[0], to[0], localT),
+      lerpChannel(from[1], to[1], localT),
+      lerpChannel(from[2], to[2], localT)
+    ];
+  }
+
+  function renderGuessHeatmap(actualG){
+    if (!els.guessHeatmap) return;
+    var stops = [];
+    for (var i = 0; i <= GUESS_HEATMAP_STEPS; i++){
+      var frac = i / GUESS_HEATMAP_STEPS;
+      var logG = GUESS_SLIDER_MIN_LOG + frac * (GUESS_SLIDER_MAX_LOG - GUESS_SLIDER_MIN_LOG);
+      var pts = computeGuessPoints(sliderToGrams(logG), actualG);
+      var rgb = guessHeatColor(pts);
+      stops.push('rgb(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ') ' + (frac * 100).toFixed(2) + '%');
+    }
+    els.guessHeatmap.style.background = 'linear-gradient(to right, ' + stops.join(', ') + ')';
+  }
+
+  // Back to the plain gray bar for a fresh round, before any guess exists.
+  function resetGuessHeatmap(){
+    if (els.guessHeatmap) els.guessHeatmap.style.background = '';
+  }
+
+  function guessResultLabel(points){
+    if (points >= GUESS_MAX_POINTS) return 'Dead on.';
+    if (points >= 4000) return 'Excellent guess!';
+    if (points >= 3000) return 'Really close.';
+    if (points >= 2000) return 'Not bad.';
+    if (points >= 1000) return 'In the ballpark.';
+    if (points > 0) return 'Way off.';
+    return 'Nowhere close.';
+  }
+
+  function guessResultClass(points){
+    if (points >= 3000) return 'is-great';
+    if (points >= 1000) return 'is-ok';
+    return 'is-bad';
+  }
+
+  var GUESS_RESULT_TIERS = [
+    { frac: 0.85, msg: "Uncanny sense of weight.", sub: "You're rarely off by much." },
+    { frac: 0.65, msg: "Sharp estimator.", sub: "Your gut is well calibrated." },
+    { frac: 0.4, msg: "Solid instincts.", sub: "More close than not." },
+    { frac: 0.2, msg: "A few wild swings in there.", sub: "Scale is hard to eyeball." },
+    { frac: 0, msg: "Weights can be deceiving.", sub: "Run it back." }
+  ];
+
+  function guessResultTier(points, maxPoints){
+    for (var i = 0; i < GUESS_RESULT_TIERS.length; i++){
+      if (points >= Math.ceil(maxPoints * GUESS_RESULT_TIERS[i].frac)) return GUESS_RESULT_TIERS[i];
+    }
+    return GUESS_RESULT_TIERS[GUESS_RESULT_TIERS.length - 1];
+  }
+
   var ENDLESS_TIERS = [
     { min: 20, msg: "Legendary calibration.", sub: "That's an incredible run." },
     { min: 12, msg: "Master weigher.", sub: "Way deeper than most ever get." },
@@ -2878,7 +3176,8 @@
     daily:    { key: 'counterweight_lock_daily',    tag: 'Same five pairs as everyone, today only.' },
     endless:  { key: 'counterweight_lock_endless',  tag: 'Keep guessing until you miss one.' },
     league:   { key: LEAGUE_LAST_PLAYED_KEY,        tag: 'The competitive take on 5 Rounds — one run, once a day.' },
-    zen:      { key: 'counterweight_lock_zen',      tag: 'No timer, no pressure — just learn.' }
+    zen:      { key: 'counterweight_lock_zen',      tag: 'No timer, no pressure — just learn.' },
+    guess:    { key: 'counterweight_lock_guess',    tag: 'One item, no comparison — how close can you get? Nail it for 5,000 points.' }
   };
   // Daily Challenge is everyone-plays-the-same-puzzle-today, which is the
   // whole point of the mode — unlike Classic/Endless/Zen/League, Premium's
@@ -2949,9 +3248,12 @@
     // Preview (no Firebase): the old one-tap demo reset, so testers can
     // flip Premium back to locked without clearing site data. Real
     // deployment: a "manage subscription" link into Stripe's own portal
-    // instead, since there's a real subscription to view/cancel there.
+    // instead, since there's a real subscription to view/cancel there —
+    // but only when there actually IS one: a comped account (see
+    // isCompedAccount()) has Premium without ever going through Stripe
+    // checkout, so there's nothing for that portal to show.
     if (els.resetPremiumLink) els.resetPremiumLink.hidden = !(unlocked && !firebaseAvailable);
-    if (els.managePremiumLink) els.managePremiumLink.hidden = !(unlocked && firebaseAvailable);
+    if (els.managePremiumLink) els.managePremiumLink.hidden = !(premiumSubscriptionActive && firebaseAvailable);
     // The "buy Premium" side panel is a menu-screen-only ad: it has no
     // reason to show once Premium is already unlocked, and it's force-
     // hidden the instant you leave the menu (see the menu-screen
@@ -3102,6 +3404,7 @@
       var metaText;
       if (row.mode === 'endless') metaText = (row.difficulty || 'medium') + ' · survived ' + row.rounds;
       else if (row.mode === 'timeattack') metaText = (row.difficulty || 'medium') + ' · ' + (row.correct != null ? row.correct + ' correct' : '');
+      else if (row.mode === 'guess') metaText = (row.rounds || ROUNDS) + ' guesses';
       else metaText = (row.difficulty || 'medium') + ' · ' + (row.correct != null ? row.correct + '/' + row.rounds + ' correct' : '');
       var meta = escapeHtml(metaText);
       var isMine = row.id === mineId || (myUid && row.uid === myUid);
@@ -3178,9 +3481,9 @@
     { id: 'played50', name: 'Regular', emoji: '🎮', played: 50, desc: 'Play 50 rounds total on medium or hard.' },
     { id: 'played100', name: 'Dedicated', emoji: '🕹️', played: 100, desc: 'Play 100 rounds total on medium or hard.' },
     { id: 'played1000', name: 'Legend', emoji: '👑', played: 1000, desc: 'Play 1000 rounds total on medium or hard.' },
-    { id: 'fast10', name: 'Quick Draw', emoji: '⚡', fast: 10, desc: 'Answer "Fast" 10 times total on medium or hard.' },
-    { id: 'fast50', name: 'Lightning', emoji: '💨', fast: 50, desc: 'Answer "Fast" 50 times total on medium or hard.' },
-    { id: 'fast100', name: 'Speed Demon', emoji: '🚀', fast: 100, desc: 'Answer "Fast" 100 times total on medium or hard.' }
+    { id: 'fast10', name: 'Quick Draw', emoji: '⚡', fast: 10, desc: 'Answer "Fast" correctly 10 times total on Hard.' },
+    { id: 'fast50', name: 'Lightning', emoji: '💨', fast: 50, desc: 'Answer "Fast" correctly 50 times total on Hard.' },
+    { id: 'fast100', name: 'Speed Demon', emoji: '🚀', fast: 100, desc: 'Answer "Fast" correctly 100 times total on Hard.' }
   ];
 
   function getUnlockedAchievements(){
@@ -3250,11 +3553,11 @@
   }
 
   // Cumulative-lifetime "answered Fast" milestones. state.stats.fastAnswers
-  // climbs once per correct answer landed in the fastest SPEED_TIERS bucket
-  // (see finishRound()) — same easy-mode exclusion and exact-threshold
-  // pattern as checkPlayedAchievements() above, and for the same reason:
-  // letting it keep climbing on easy while skipping the check would let it
-  // sail past 10/50/100 unnoticed.
+  // climbs once per CORRECT answer landed in the fastest SPEED_TIERS
+  // bucket, on Hard difficulty only (see finishRound()) — same
+  // exact-threshold pattern as checkPlayedAchievements() above, and for
+  // the same reason: letting it keep climbing on Easy/Medium while
+  // skipping the check would let it sail past 10/50/100 unnoticed.
   function checkFastAchievements(){
     ACHIEVEMENTS.forEach(function(a){
       if (!a.fast || state.stats.fastAnswers !== a.fast) return;
@@ -3515,7 +3818,18 @@
     abandonOverlay: document.getElementById('abandon-overlay'),
     abandonDesc: document.getElementById('abandon-desc'),
     abandonStayBtn: document.getElementById('abandon-stay-btn'),
-    abandonLeaveBtn: document.getElementById('abandon-leave-btn')
+    abandonLeaveBtn: document.getElementById('abandon-leave-btn'),
+    guessPanel: document.getElementById('guess-panel'),
+    guessItemEmoji: document.getElementById('guess-item-emoji'),
+    guessItemName: document.getElementById('guess-item-name'),
+    guessSliderRow: document.getElementById('guess-slider-row'),
+    guessSlider: document.getElementById('guess-slider'),
+    guessSliderValue: document.getElementById('guess-slider-value'),
+    guessHeatmap: document.getElementById('guess-slider-heatmap'),
+    guessSubmitBtn: document.getElementById('guess-submit-btn'),
+    guessFeedback: document.getElementById('guess-feedback'),
+    guessFeedbackActual: document.getElementById('guess-feedback-actual'),
+    guessFeedbackPoints: document.getElementById('guess-feedback-points')
   };
 
   var CONFETTI_COLORS = ['#ffb400', '#5fd98a', '#ff6b5e', '#8ec9ff', '#e8c878'];
@@ -3833,6 +4147,7 @@
     els.h2hHandoff.hidden = true;
     els.h2hResults.hidden = true;
     if (els.leagueHandoff) els.leagueHandoff.hidden = true;
+    if (els.guessPanel) els.guessPanel.hidden = true;
   }
 
   function newRound(){
@@ -3883,6 +4198,110 @@
     } else {
       startTimer();
     }
+  }
+
+  // --- Guess the Weight: round flow -------------------------------------
+  // A single item, no comparison card, no timer — just "how much do you
+  // think this weighs?" Reuses the shared #game-area/#results/state.answered
+  // machinery rather than duplicating a whole separate screen (unlike
+  // Head-to-Head), since its scoring is a plain 0-25000 point total that
+  // fits the generic results panel just fine.
+  function pickGuessItem(){
+    var pool = activeItems().filter(function(it){ return isFinite(it.g) && it.g > 0; });
+    if (!pool.length) return null;
+    if (!state.usedGuessItems) state.usedGuessItems = [];
+    var unused = pool.filter(function(it){ return state.usedGuessItems.indexOf(it) === -1; });
+    if (!unused.length){
+      state.usedGuessItems = [];
+      unused = pool;
+    }
+    var pick = unused[Math.floor(rand() * unused.length)];
+    state.usedGuessItems.push(pick);
+    return pick;
+  }
+
+  function showGuessBay(){
+    setHidden(els.beamWrap, true);
+    els.cardsWrap.hidden = true;
+    els.verdict.hidden = true;
+    els.results.hidden = true;
+    els.h2hHandoff.hidden = true;
+    els.h2hResults.hidden = true;
+    if (els.leagueHandoff) els.leagueHandoff.hidden = true;
+    els.timerRow.hidden = true;
+    if (els.guessPanel) els.guessPanel.hidden = false;
+  }
+
+  // Reflects the slider's current (log-scale) position as a live,
+  // unit-aware weight readout — called on every drag/keyboard move, and
+  // once up front each round so the label always matches the thumb.
+  function renderGuessSliderValue(){
+    if (!els.guessSlider || !els.guessSliderValue) return;
+    var g = sliderToGrams(parseFloat(els.guessSlider.value));
+    els.guessSliderValue.textContent = formatWeight(g);
+  }
+
+  function newGuessRound(){
+    showGuessBay();
+    state.busy = false;
+    state.answered = false;
+    state.guessItem = pickGuessItem();
+    els.next.hidden = true;
+    renderStats();
+
+    var item = state.guessItem;
+    if (item && els.guessItemEmoji && els.guessItemName){
+      var badgeInner = item.rareChance ? RARE_FIGURE_SVG : escapeHtml(item.emoji);
+      els.guessItemEmoji.innerHTML = badgeInner;
+      els.guessItemName.textContent = item.name;
+    }
+    if (els.guessSlider){
+      els.guessSlider.disabled = false;
+      // Always start centered on 1kg (slider value 3) rather than wherever
+      // the last round's guess landed — otherwise a wild previous guess
+      // would bias the next one before the player's even seen the item.
+      els.guessSlider.value = '3';
+    }
+    renderGuessSliderValue();
+    resetGuessHeatmap();
+    if (els.guessSubmitBtn) els.guessSubmitBtn.disabled = false;
+    if (els.guessSliderRow) els.guessSliderRow.hidden = false;
+    if (els.guessFeedback) els.guessFeedback.hidden = true;
+    if (els.guessSlider){
+      // Deferred so the slider isn't fighting the round-transition paint.
+      setTimeout(function(){ els.guessSlider.focus(); }, 50);
+    }
+  }
+
+  function submitGuess(){
+    if (state.answered || state.busy || !els.guessSlider) return;
+    state.busy = true;
+    state.answered = true;
+    var guessG = sliderToGrams(parseFloat(els.guessSlider.value));
+    var actualG = state.guessItem ? state.guessItem.g : 0;
+    var pts = computeGuessPoints(guessG, actualG);
+    state.points += pts;
+
+    els.guessSlider.disabled = true;
+    if (els.guessSubmitBtn) els.guessSubmitBtn.disabled = true;
+    renderGuessHeatmap(actualG);
+
+    if (els.guessFeedback){
+      els.guessFeedback.hidden = false;
+      if (els.guessFeedbackActual){
+        els.guessFeedbackActual.textContent =
+          'It actually weighs ' + formatWeight(actualG) + ' — you guessed ' + formatWeight(guessG) + '.';
+      }
+      if (els.guessFeedbackPoints){
+        els.guessFeedbackPoints.textContent = '+' + pts + ' pts — ' + guessResultLabel(pts);
+        els.guessFeedbackPoints.className = 'guess-feedback-points ' + guessResultClass(pts);
+      }
+    }
+    renderStats();
+    if (pts >= 1000) sfx.correct(); else sfx.wrong();
+    els.next.hidden = false;
+    els.next.textContent = state.round < ROUNDS ? 'Next round →' : 'See results →';
+    state.busy = false;
   }
 
   // Bar/number colors, matching --good and --bad — interpolated by hand
@@ -4044,10 +4463,12 @@
     state.streak = 0;
     state.wrongStreak = 0;
     state.usedPairs = [];
+    state.usedGuessItems = [];
     stopGlobalTimer();
     if (state.mode === 'league'){ state.leagueAttempt = 1; state.leagueTotal = 0; state.leagueCorrectTotal = 0; }
     if (state.mode === 'daily') dailyRng = mulberry32(dailySeed());
     if (state.mode === 'timeattack') startGlobalTimer();
+    if (state.mode === 'guess'){ newGuessRound(); return; }
     newRound();
   }
 
@@ -4119,7 +4540,7 @@
     state.mode = mode;
     state.customOnly = false;
     state.viaCustom = false;
-    if (mode === 'daily') state.difficulty = 'medium';
+    if (mode === 'daily' || mode === 'guess') state.difficulty = 'medium';
     renderMode();
     renderDifficulty();
     updateScoreboardVisibility();
@@ -4160,6 +4581,17 @@
   // there purely so this mode's cards/paywall can still be tried out.
   var PREMIUM_KEY = 'counterweight_premium_unlocked';
   var PREMIUM_MODES = { endless: true, timeattack: true, headtohead: true, custom: true, league: true };
+  // Accounts permanently comped to Premium, no Stripe subscription needed
+  // (e.g. the developer's own account) — checked by email since that's
+  // what a signed-in player can see about themselves, rather than needing
+  // to go dig their Firebase uid out of the console. Matched
+  // case-insensitively against the verified email Firebase Auth hands
+  // back for the signed-in Google account.
+  var COMPED_EMAILS = { 'jaka.vogrinec@gmail.com': true };
+  function isCompedAccount(){
+    var email = state.firebaseUser && state.firebaseUser.email;
+    return !!(email && COMPED_EMAILS[email.toLowerCase()]);
+  }
   // League is still being built: it stays locked on the menu no matter
   // what — Premium unlock does not open it — and shows a "Coming soon"
   // badge/tag instead of the usual Premium lock messaging.
@@ -4189,7 +4621,7 @@
   });
 
   function isPremiumUnlocked(){
-    if (firebaseAvailable) return premiumSubscriptionActive;
+    if (firebaseAvailable) return premiumSubscriptionActive || isCompedAccount();
     try{ return localStorage.getItem(PREMIUM_KEY) === '1'; } catch(e){ return false; }
   }
   function setPremiumUnlocked(v){
@@ -4458,10 +4890,12 @@
     var tag = lockInfo ? lockInfo.tag : (PREGAME_TAGS[mode] || '');
     if (els.pregameTag) els.pregameTag.textContent = tag;
     // Daily Challenge is fixed to Medium for everyone, so its difficulty
-    // picker is swapped for a plain note; every other mode (League
-    // included) picks difficulty here, once, before Play.
+    // picker is swapped for a plain note; Guess the Weight has no
+    // difficulty concept at all (the log-ratio scoring already scales
+    // itself), so its picker is just hidden with no note; every other
+    // mode (League included) picks difficulty here, once, before Play.
     var isDaily = mode === 'daily';
-    if (els.diffRow) els.diffRow.hidden = isDaily;
+    if (els.diffRow) els.diffRow.hidden = isDaily || mode === 'guess';
     if (els.dailyNote) els.dailyNote.hidden = !isDaily;
     renderDifficulty();
     els.menuScreen.hidden = true;
@@ -4797,11 +5231,12 @@
         var elapsedFrac = Math.min((performance.now() - state.roundStartTime) / budgetMs, 1);
         tier = speedTier(elapsedFrac);
         earned = roundPts(tier.points * currentPointsMult());
-        // Lifetime "answered Fast" count, same easy-mode exclusion as the
-        // other achievement counters (see checkFastAchievements()) — counts
-        // across every scored mode (including Head-to-Head), same as the
-        // scoring/tier logic above.
-        if (state.difficulty !== 'easy' && tier.label === 'Fast'){
+        // Lifetime "answered Fast" count — unlike the other achievement
+        // counters (streaks/played), this one only counts on Hard, not
+        // Medium too, and only for a correct answer (we're already inside
+        // `if (correct)` here). Counts across every scored mode (including
+        // Head-to-Head), same as the scoring/tier logic above.
+        if (state.difficulty === 'hard' && tier.label === 'Fast'){
           state.stats.fastAnswers = (state.stats.fastAnswers || 0) + 1;
           checkFastAchievements();
         }
@@ -4933,6 +5368,15 @@
       }
       return;
     }
+    if (state.mode === 'guess'){
+      if (state.round < ROUNDS){
+        state.round++;
+        newGuessRound();
+      } else {
+        showResults();
+      }
+      return;
+    }
     // classic & daily: a fixed run of ROUNDS rounds
     if (state.round < ROUNDS){
       state.round++;
@@ -5038,6 +5482,14 @@
         mode: 'league',
         ts: Date.now()
       };
+    } else if (state.mode === 'guess'){
+      entry = {
+        points: state.points,
+        rounds: ROUNDS,
+        difficulty: 'medium',
+        mode: 'guess',
+        ts: Date.now()
+      };
     } else {
       entry = {
         points: state.points,
@@ -5078,6 +5530,7 @@
     els.verdict.hidden = true;
     els.next.hidden = true;
     els.results.hidden = false;
+    if (els.guessPanel) els.guessPanel.hidden = true;
     // The round is already over and scored, so there's nothing left to
     // "abandon" — the results screen has its own Play again/Back to menu
     // buttons instead of the mid-round "☰ Menu" escape hatch.
@@ -5116,6 +5569,15 @@
       els.resultsSub.textContent = leagueTier.sub + ' (' + state.leagueCorrectTotal + '/' + leagueRounds + ' correct' + leagueTriesNote + ') · back tomorrow for another run.';
       if (els.lbHead) els.lbHead.textContent = 'League leaderboard';
       sfx.results(state.leagueCorrectTotal / leagueRounds >= 0.6);
+    } else if (state.mode === 'guess'){
+      var guessMax = GUESS_MAX_POINTS * ROUNDS;
+      var guessTier = guessResultTier(state.points, guessMax);
+      els.resultsScore.innerHTML = formatPoints(state.points) + '<small> / ' + formatPoints(guessMax) + ' pts</small>';
+      els.resultsMsg.textContent = guessTier.msg;
+      els.resultsSub.textContent = guessTier.sub;
+      if (els.lbHead) els.lbHead.textContent = 'Guess the Weight leaderboard';
+      sfx.results(state.points / guessMax >= 0.5);
+      if (!state.viaCustom){ markModePlayedToday('guess'); renderMenuCardStates(); }
     } else {
       // classic & daily share the fixed-round scoring path
       var maxPoints = roundPts(ROUNDS * MAX_ROUND_POINTS * currentPointsMult());
@@ -5248,6 +5710,8 @@
     });
     els.next.addEventListener('click', advance);
     els.again.addEventListener('click', newGame);
+    if (els.guessSubmitBtn) els.guessSubmitBtn.addEventListener('click', submitGuess);
+    if (els.guessSlider) els.guessSlider.addEventListener('input', renderGuessSliderValue);
     els.diffBtns.forEach(function(btn){
       btn.addEventListener('click', function(){ setPregameDifficulty(btn.dataset.diff); });
     });
@@ -5381,6 +5845,17 @@
         if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); newGame(); }
         return;
       }
+      if (state.mode === 'guess'){
+        // Guess mode has no card pair (state.pair stays null), so the
+        // generic ArrowLeft/ArrowRight/1/2 -> answer() fallback below would
+        // throw. It also has a live number input, where digit keys like
+        // "1"/"2" must reach the field normally rather than being hijacked.
+        if (e.key === 'Enter'){
+          e.preventDefault();
+          if (!state.answered) submitGuess(); else advance();
+        }
+        return;
+      }
       if (!state.answered){
         if (e.key === 'ArrowLeft' || e.key === '1'){ answer(0); }
         else if (e.key === 'ArrowRight' || e.key === '2'){ answer(1); }
@@ -5400,6 +5875,8 @@
       streak: (saved && saved.streak) || 0,
       wrongStreak: (saved && saved.wrongStreak) || 0,
       usedPairs: (saved && saved.usedPairs) || [],
+      usedGuessItems: [],
+      guessItem: null,
       difficulty: (saved && saved.difficulty) || 'medium',
       mode: (saved && saved.mode) || 'classic',
       customOnly: false,
@@ -5447,6 +5924,13 @@
         state.firebaseUser = user;
         renderLeaderboardSignInPrompt();
         renderPaywallEnvironmentNotes();
+        // isCompedAccount() only needs state.firebaseUser (set just above),
+        // not a real subscription — render right away so a comped account's
+        // premium unlock is instant, rather than waiting on
+        // watchPremiumSubscription's Firestore round-trip (or, if that
+        // watch ever fails to attach, the once-a-second menu refresh) to
+        // eventually catch up.
+        renderMenuCardStates();
         watchPremiumSubscription(fb, user ? user.uid : null);
         if (user) syncProgressFromCloud(fb, user.uid);
         if (user && state.pendingPremiumCheckout){
@@ -5487,4 +5971,3 @@
   }
 })();
 </script>
-</body></html>
