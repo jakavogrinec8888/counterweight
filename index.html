@@ -1,11 +1,4 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>Counterweight</title>
-</head>
-<body>
-<title>Counterweight</title>
+<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><title>Counterweight</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -339,14 +332,15 @@
     border-radius: inherit;
   }
 
-  /* Fixed marker showing where the fastest speed tier (max round-point
-     bonus) ends — see SPEED_TIERS. Its position is a constant fraction of
+  /* Fixed markers showing where each speed tier (see SPEED_TIERS) ends:
+     #timer-bonus-mark at the Fast→Medium boundary, #timer-bonus-mark-2 at
+     the Medium→Slow boundary. Their positions are a constant fraction of
      the bar regardless of difficulty (the tiers are time-fraction cutoffs,
-     not fixed seconds), so it's only ever repositioned defensively, never
-     animated with the fill. Only meaningful on the real per-round timer
-     (startTimer()) — Time Attack's visible bar is a separate 60s global
-     clock that doesn't line up with its hidden per-answer bonus window,
-     so it's hidden there. */
+     not fixed seconds), so they're only ever repositioned defensively,
+     never animated with the fill. Only meaningful on the real per-round
+     timer (startTimer()) — Time Attack's visible bar is a separate 60s
+     global clock that doesn't line up with its hidden per-answer bonus
+     window, so both are hidden there. */
   .timer-bonus-mark{
     position: absolute;
     top: 0;
@@ -1540,6 +1534,12 @@
     padding: 2px;
   }
   .account-signout:hover{ color: var(--text); }
+  .account-sync-note{
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    margin: 4px 0 0;
+  }
+  .account-sync-note[hidden]{ display: none; }
   .achievements-grid{
     display: flex;
     flex-wrap: wrap;
@@ -1778,15 +1778,16 @@
 
     <p class="menu-section-label">More ways to play</p>
     <div class="menu-cards menu-cards-secondary">
-      <button class="menu-card menu-card-compact" data-mode="endless" type="button">
-        <span class="menu-card-icon" aria-hidden="true">♾️</span>
-        <span class="menu-card-title">Endless</span>
-        <span class="menu-card-tag">Keep guessing until you miss one.</span>
-      </button>
       <button class="menu-card menu-card-compact" data-mode="zen" type="button">
         <span class="menu-card-icon" aria-hidden="true">🌿</span>
         <span class="menu-card-title">Zen</span>
         <span class="menu-card-tag">No timer, no pressure — just learn.</span>
+      </button>
+      <button class="menu-card menu-card-compact" data-mode="endless" type="button">
+        <span class="menu-card-lock-badge" hidden>🔒 Premium</span>
+        <span class="menu-card-icon" aria-hidden="true">♾️</span>
+        <span class="menu-card-title">Endless</span>
+        <span class="menu-card-tag">Keep guessing until you miss one.</span>
       </button>
       <button class="menu-card menu-card-compact" data-mode="timeattack" type="button">
         <span class="menu-card-lock-badge" hidden>🔒 Premium</span>
@@ -1895,14 +1896,15 @@
     <button class="menu-link" id="paywall-back-btn" type="button">← Menu</button>
     <div class="paywall-badge">🔒 Premium</div>
     <p class="paywall-title">Unlock the Premium modes</p>
-    <p class="paywall-sub">Four extra modes, unlimited plays everywhere — cancel anytime.</p>
+    <p class="paywall-sub">Five extra modes, unlimited plays everywhere — cancel anytime.</p>
 
     <ul class="paywall-features">
+      <li><span class="paywall-feature-icon">♾️</span><span><strong>Endless</strong> — unlimited plays, keep guessing until you miss one.</span></li>
       <li><span class="paywall-feature-icon">⏱️</span><span><strong>Time Attack</strong> — 60 seconds, as many as you can.</span></li>
       <li><span class="paywall-feature-icon">🤝</span><span><strong>Head-to-Head</strong> — pass-and-play local multiplayer.</span></li>
       <li><span class="paywall-feature-icon">🛠️</span><span><strong>Custom</strong> — add your own objects and weigh them.</span></li>
       <li><span class="paywall-feature-icon">🏆</span><span><strong>League</strong> — one competitive run, once a day.</span></li>
-      <li><span class="paywall-feature-icon">♾️</span><span><strong>Unlimited plays</strong> — every mode, no daily limit.</span></li>
+      <li><span class="paywall-feature-icon">🔓</span><span><strong>Unlimited plays</strong> — every mode, no daily limit.</span></li>
     </ul>
 
     <div class="paywall-plan-toggle" id="paywall-plan-toggle" role="group" aria-label="Billing period">
@@ -1960,7 +1962,7 @@
 
     <div class="bay">
       <div class="timer-row" id="timer-row">
-        <div class="timer-track"><div class="timer-fill" id="timer-fill"></div><div class="timer-bonus-mark" id="timer-bonus-mark" hidden></div></div>
+        <div class="timer-track"><div class="timer-fill" id="timer-fill"></div><div class="timer-bonus-mark" id="timer-bonus-mark" hidden></div><div class="timer-bonus-mark" id="timer-bonus-mark-2" hidden></div></div>
         <span class="timer-num" id="timer-num" aria-live="off">5</span>
       </div>
 
@@ -2156,6 +2158,18 @@
               <span class="achievement-icon" aria-hidden="true">👑</span>
               <span class="achievement-name">???</span>
             </div>
+            <div class="achievement-badge" id="achievement-fast10" data-achievement="fast10" tabindex="0">
+              <span class="achievement-icon" aria-hidden="true">⚡</span>
+              <span class="achievement-name">???</span>
+            </div>
+            <div class="achievement-badge" id="achievement-fast50" data-achievement="fast50" tabindex="0">
+              <span class="achievement-icon" aria-hidden="true">💨</span>
+              <span class="achievement-name">???</span>
+            </div>
+            <div class="achievement-badge" id="achievement-fast100" data-achievement="fast100" tabindex="0">
+              <span class="achievement-icon" aria-hidden="true">🚀</span>
+              <span class="achievement-name">???</span>
+            </div>
           </div>
         </div>
         <div class="game-info-section">
@@ -2175,7 +2189,7 @@
     <aside class="premium-sidebar" id="premium-sidebar" hidden>
       <div class="premium-sidebar-badge">✨ Go Premium</div>
       <p class="premium-sidebar-title">Unlock everything</p>
-      <p class="premium-sidebar-desc">⏱️🤝🛠️🏆 four extra modes, plus unlimited plays everywhere.</p>
+      <p class="premium-sidebar-desc">♾️⏱️🤝🛠️🏆 five extra modes, plus unlimited plays everywhere.</p>
       <div class="premium-sidebar-price-row">
         <span class="premium-sidebar-price">€1.99</span>
         <span class="premium-sidebar-price-note">/mo</span>
@@ -2193,6 +2207,7 @@
         <span class="account-name" id="account-name"></span>
         <button class="account-signout" id="account-signout-btn" type="button">Sign out</button>
       </div>
+      <p class="account-sync-note" id="account-sync-note" hidden>🔄 Achievements, objectives &amp; stats sync to this account</p>
     </aside>
   </div>
 </div>
@@ -3154,15 +3169,18 @@
   var ACHIEVEMENTS_KEY = 'counterweight_achievements';
   var ACHIEVEMENTS = [
     { id: 'yourmama', name: 'Your Mama', emoji: '🌍', desc: "Find the rare “Your mama” item in Classic mode." },
-    { id: 'streak3', name: '3 Streak', emoji: '🥉', streak: 3, desc: 'Get 3 correct answers in a row.' },
-    { id: 'streak5', name: '5 Streak', emoji: '🥈', streak: 5, desc: 'Get 5 correct answers in a row.' },
-    { id: 'streak10', name: '10 Streak', emoji: '🥇', streak: 10, desc: 'Get 10 correct answers in a row.' },
-    { id: 'wrongstreak3', name: 'Oof x3', emoji: '😬', wrongStreak: 3, desc: 'Get 3 wrong answers in a row.' },
-    { id: 'wrongstreak5', name: 'Oof x5', emoji: '😵', wrongStreak: 5, desc: 'Get 5 wrong answers in a row.' },
-    { id: 'wrongstreak10', name: 'Oof x10', emoji: '💀', wrongStreak: 10, desc: 'Get 10 wrong answers in a row.' },
-    { id: 'played50', name: 'Regular', emoji: '🎮', played: 50, desc: 'Play 50 rounds total.' },
-    { id: 'played100', name: 'Dedicated', emoji: '🕹️', played: 100, desc: 'Play 100 rounds total.' },
-    { id: 'played1000', name: 'Legend', emoji: '👑', played: 1000, desc: 'Play 1000 rounds total.' }
+    { id: 'streak3', name: '3 Streak', emoji: '🥉', streak: 3, desc: 'Get 3 correct answers in a row on medium or hard.' },
+    { id: 'streak5', name: '5 Streak', emoji: '🥈', streak: 5, desc: 'Get 5 correct answers in a row on medium or hard.' },
+    { id: 'streak10', name: '10 Streak', emoji: '🥇', streak: 10, desc: 'Get 10 correct answers in a row on medium or hard.' },
+    { id: 'wrongstreak3', name: 'Oof x3', emoji: '😬', wrongStreak: 3, desc: 'Get 3 wrong answers in a row on medium or hard.' },
+    { id: 'wrongstreak5', name: 'Oof x5', emoji: '😵', wrongStreak: 5, desc: 'Get 5 wrong answers in a row on medium or hard.' },
+    { id: 'wrongstreak10', name: 'Oof x10', emoji: '💀', wrongStreak: 10, desc: 'Get 10 wrong answers in a row on medium or hard.' },
+    { id: 'played50', name: 'Regular', emoji: '🎮', played: 50, desc: 'Play 50 rounds total on medium or hard.' },
+    { id: 'played100', name: 'Dedicated', emoji: '🕹️', played: 100, desc: 'Play 100 rounds total on medium or hard.' },
+    { id: 'played1000', name: 'Legend', emoji: '👑', played: 1000, desc: 'Play 1000 rounds total on medium or hard.' },
+    { id: 'fast10', name: 'Quick Draw', emoji: '⚡', fast: 10, desc: 'Answer "Fast" 10 times total on medium or hard.' },
+    { id: 'fast50', name: 'Lightning', emoji: '💨', fast: 50, desc: 'Answer "Fast" 50 times total on medium or hard.' },
+    { id: 'fast100', name: 'Speed Demon', emoji: '🚀', fast: 100, desc: 'Answer "Fast" 100 times total on medium or hard.' }
   ];
 
   function getUnlockedAchievements(){
@@ -3180,6 +3198,7 @@
     if (unlocked[id]) return false;
     unlocked[id] = true;
     try{ localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(unlocked)); } catch(e){}
+    queueProgressPush();
     return true;
   }
 
@@ -3187,6 +3206,11 @@
   // climbs one at a time, so each threshold (3/5/10) gets its own moment
   // — bronze then silver then gold — rather than all firing at once.
   function checkStreakAchievements(){
+    // Easy mode's much wider weight gap makes streaks trivial to farm, so
+    // it doesn't count toward any achievement — only medium/hard rounds do.
+    // (Daily Challenge is always forced to medium — see selectMode — so
+    // it's unaffected by this either way.)
+    if (state.difficulty === 'easy') return;
     ACHIEVEMENTS.forEach(function(a){
       if (!a.streak || state.streak !== a.streak) return;
       if (unlockAchievement(a.id)){
@@ -3200,6 +3224,8 @@
   // WRONG answers (state.wrongStreak — see finishRound()) rather than
   // correct ones. Purely a fun/comedic milestone, no penalty attached.
   function checkWrongStreakAchievements(){
+    // Same reasoning as checkStreakAchievements(): easy mode doesn't count.
+    if (state.difficulty === 'easy') return;
     ACHIEVEMENTS.forEach(function(a){
       if (!a.wrongStreak || state.wrongStreak !== a.wrongStreak) return;
       if (unlockAchievement(a.id)){
@@ -3219,6 +3245,22 @@
       if (unlockAchievement(a.id)){
         renderAchievements();
         showToast('Achievement unlocked!', a.played + ' rounds played!', a.emoji);
+      }
+    });
+  }
+
+  // Cumulative-lifetime "answered Fast" milestones. state.stats.fastAnswers
+  // climbs once per correct answer landed in the fastest SPEED_TIERS bucket
+  // (see finishRound()) — same easy-mode exclusion and exact-threshold
+  // pattern as checkPlayedAchievements() above, and for the same reason:
+  // letting it keep climbing on easy while skipping the check would let it
+  // sail past 10/50/100 unnoticed.
+  function checkFastAchievements(){
+    ACHIEVEMENTS.forEach(function(a){
+      if (!a.fast || state.stats.fastAnswers !== a.fast) return;
+      if (unlockAchievement(a.id)){
+        renderAchievements();
+        showToast('Achievement unlocked!', 'Answered Fast ' + a.fast + ' times!', a.emoji);
       }
     });
   }
@@ -3267,6 +3309,7 @@
     if (unlocked[id]) return false;
     unlocked[id] = true;
     try{ localStorage.setItem(OBJECTIVES_KEY, JSON.stringify(unlocked)); } catch(e){}
+    queueProgressPush();
     return true;
   }
 
@@ -3391,6 +3434,7 @@
     accountAvatar: document.getElementById('account-avatar'),
     accountName: document.getElementById('account-name'),
     accountSignoutBtn: document.getElementById('account-signout-btn'),
+    accountSyncNote: document.getElementById('account-sync-note'),
     lbHead: document.getElementById('lb-head'),
     lbSigninRow: document.getElementById('lb-signin-row'),
     lbSigninBtn: document.getElementById('lb-signin-btn'),
@@ -3401,6 +3445,7 @@
     timerRow: document.getElementById('timer-row'),
     timerFill: document.getElementById('timer-fill'),
     timerBonusMark: document.getElementById('timer-bonus-mark'),
+    timerBonusMark2: document.getElementById('timer-bonus-mark-2'),
     timerNum: document.getElementById('timer-num'),
     menuScreen: document.getElementById('menu-screen'),
     gameArea: document.getElementById('game-area'),
@@ -3505,6 +3550,124 @@
 
   function saveStats(){
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.stats)); } catch(e){}
+    queueProgressPush();
+  }
+
+  // --- Cloud progress sync (achievements/objectives/stats) ---------------
+  // Achievements, objectives, and the lifetime stats counters above all
+  // live in localStorage, which is why they used to be stuck on whichever
+  // browser earned them. When a Google sign-in is active, mirror them into
+  // Firestore under that player's own uid — same pattern as the Stripe
+  // subscription watch elsewhere in this file — so progress follows the
+  // account across browsers/devices instead. Firestore only actually
+  // reaches Google's servers on a real deployment (see the
+  // firebaseAppPromise comment above); everywhere below degrades to a
+  // no-op when Firebase isn't available, so local-only play is unaffected.
+  //
+  // Security rules (Firestore console -> Rules) should restrict this
+  // collection to its own owner, same idea as the `customers` collection
+  // the Stripe extension already uses:
+  //   match /progress/{uid} {
+  //     allow read, write: if request.auth != null && request.auth.uid == uid;
+  //   }
+  var PROGRESS_COLLECTION = 'progress';
+  var progressSyncInFlight = false;
+  var progressPushTimer = null;
+  var suppressProgressPush = false;
+
+  function currentProgressSnapshot(){
+    return {
+      achievements: getUnlockedAchievements(),
+      objectives: getUnlockedObjectives(),
+      stats: {
+        best: state.stats.best || 0,
+        totalPlayed: state.stats.totalPlayed || 0,
+        fastAnswers: state.stats.fastAnswers || 0,
+        dailyCompletions: state.stats.dailyCompletions || 0
+      }
+    };
+  }
+
+  // Union of two locked-flag maps: once unlocked on any device, it stays
+  // unlocked everywhere — a merge never revokes an earned badge/objective.
+  function mergeFlags(a, b){
+    var out = Object.assign({}, a || {});
+    Object.keys(b || {}).forEach(function(k){ if (b[k]) out[k] = true; });
+    return out;
+  }
+
+  // These counters only ever climb (see checkPlayedAchievements(),
+  // checkFastAchievements(), etc.), so whichever side has the higher
+  // number has strictly more progress — safe to take the max instead of
+  // needing a real conflict-resolving merge.
+  function mergeStatCounters(a, b){
+    a = a || {}; b = b || {};
+    var out = {};
+    ['best', 'totalPlayed', 'fastAnswers', 'dailyCompletions'].forEach(function(k){
+      out[k] = Math.max(a[k] || 0, b[k] || 0);
+    });
+    return out;
+  }
+
+  // Applies a merged snapshot locally (storage + in-memory state + every
+  // affected render). suppressProgressPush avoids immediately re-queuing
+  // a push of the exact data syncProgressFromCloud() is about to write
+  // itself right after calling this.
+  function applyProgressSnapshot(snap){
+    suppressProgressPush = true;
+    try{ localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(snap.achievements || {})); } catch(e){}
+    try{ localStorage.setItem(OBJECTIVES_KEY, JSON.stringify(snap.objectives || {})); } catch(e){}
+    state.stats = Object.assign({}, state.stats, snap.stats || {});
+    saveStats();
+    renderAchievements();
+    renderObjectives();
+    renderStats();
+    suppressProgressPush = false;
+  }
+
+  // Runs once right after sign-in completes (see onAuthStateChanged in
+  // start()): pulls whatever this player already has in the cloud (a
+  // brand new player has no doc yet, so `cloud` is just null), merges it
+  // with whatever this browser already has locally, applies the merged
+  // result here, then writes it back so the cloud doc and this browser
+  // agree before any new play happens.
+  async function syncProgressFromCloud(fb, uid){
+    if (!fb || !uid || progressSyncInFlight) return;
+    progressSyncInFlight = true;
+    try{
+      var ref = fb.firestore().collection(PROGRESS_COLLECTION).doc(uid);
+      var snap = await ref.get();
+      var cloud = snap.exists ? snap.data() : null;
+      var local = currentProgressSnapshot();
+      var merged = {
+        achievements: mergeFlags(local.achievements, cloud && cloud.achievements),
+        objectives: mergeFlags(local.objectives, cloud && cloud.objectives),
+        stats: mergeStatCounters(local.stats, cloud && cloud.stats)
+      };
+      applyProgressSnapshot(merged);
+      await ref.set(merged, { merge: true });
+    } catch(e){ /* offline, rules mismatch, preview mode, etc — local play still works untouched */ }
+    progressSyncInFlight = false;
+  }
+
+  // Pushes the current local snapshot up to Firestore whenever it changes
+  // while signed in (a new achievement, a new objective, any stat
+  // climbing) — debounced so a fast streak of rounds coalesces into one
+  // write instead of one per round. A complete no-op while signed out;
+  // the next sign-in's syncProgressFromCloud() call catches it up.
+  function queueProgressPush(){
+    if (suppressProgressPush || !firebaseAvailable || !state.firebaseUser) return;
+    clearTimeout(progressPushTimer);
+    progressPushTimer = setTimeout(function(){
+      var uid = state.firebaseUser && state.firebaseUser.uid;
+      if (!uid) return;
+      firebaseAppPromise.then(function(fb){
+        if (!fb) return;
+        fb.firestore().collection(PROGRESS_COLLECTION).doc(uid)
+          .set(currentProgressSnapshot(), { merge: true })
+          .catch(function(){ /* best-effort; the local copy is already saved */ });
+      });
+    }, 800);
   }
 
   // --- Custom objects ----------------------------------------------------
@@ -3735,15 +3898,20 @@
     }
   }
 
-  // The mark sits at a fixed fraction of the bar (derived from the fastest
-  // SPEED_TIERS cutoff) — that fraction is the same regardless of
-  // difficulty, since the tiers are time fractions, not fixed seconds, so
-  // this only needs to run once per round rather than every tick.
+  // The marks sit at fixed fractions of the bar (derived from the first two
+  // SPEED_TIERS cutoffs: Fast→Medium and Medium→Slow) — those fractions are
+  // the same regardless of difficulty, since the tiers are time fractions,
+  // not fixed seconds, so this only needs to run once per round rather than
+  // every tick.
   function renderTimerBonusMark(){
-    if (!els.timerBonusMark) return;
-    var cutoff = SPEED_TIERS[0].cutoff;
-    els.timerBonusMark.style.left = ((1 - cutoff) * 100) + '%';
-    els.timerBonusMark.hidden = false;
+    if (els.timerBonusMark){
+      els.timerBonusMark.style.left = ((1 - SPEED_TIERS[0].cutoff) * 100) + '%';
+      els.timerBonusMark.hidden = false;
+    }
+    if (els.timerBonusMark2){
+      els.timerBonusMark2.style.left = ((1 - SPEED_TIERS[1].cutoff) * 100) + '%';
+      els.timerBonusMark2.hidden = false;
+    }
   }
 
   function startTimer(){
@@ -3829,8 +3997,9 @@
     els.timerFill.style.backgroundColor = 'rgb(' + TIMER_GOOD.join(',') + ')';
     els.timerNum.style.color = 'rgb(' + TIMER_GOOD.join(',') + ')';
     // This bar is the 60s session clock, not the (hidden) 6s per-answer
-    // bonus window, so the bonus mark doesn't apply to it.
+    // bonus window, so the bonus marks don't apply to it.
     if (els.timerBonusMark) els.timerBonusMark.hidden = true;
+    if (els.timerBonusMark2) els.timerBonusMark2.hidden = true;
 
     function tick(now){
       var elapsedMs = now - startTime;
@@ -3990,7 +4159,7 @@
   // so isPremiumUnlocked() falls back to the old local demo-unlock flag
   // there purely so this mode's cards/paywall can still be tried out.
   var PREMIUM_KEY = 'counterweight_premium_unlocked';
-  var PREMIUM_MODES = { timeattack: true, headtohead: true, custom: true, league: true };
+  var PREMIUM_MODES = { endless: true, timeattack: true, headtohead: true, custom: true, league: true };
   // League is still being built: it stays locked on the menu no matter
   // what — Premium unlock does not open it — and shows a "Coming soon"
   // badge/tag instead of the usual Premium lock messaging.
@@ -4176,6 +4345,7 @@
     var profile = getSavedGoogleProfile();
     if (els.accountProfile) els.accountProfile.hidden = !profile;
     if (els.googleSigninBtn) els.googleSigninBtn.hidden = !!profile;
+    if (els.accountSyncNote) els.accountSyncNote.hidden = !profile;
     if (profile){
       if (els.accountAvatar) els.accountAvatar.src = profile.picture || '';
       if (els.accountName) els.accountName.textContent = profile.name || profile.email || 'Signed in';
@@ -4627,6 +4797,14 @@
         var elapsedFrac = Math.min((performance.now() - state.roundStartTime) / budgetMs, 1);
         tier = speedTier(elapsedFrac);
         earned = roundPts(tier.points * currentPointsMult());
+        // Lifetime "answered Fast" count, same easy-mode exclusion as the
+        // other achievement counters (see checkFastAchievements()) — counts
+        // across every scored mode (including Head-to-Head), same as the
+        // scoring/tier logic above.
+        if (state.difficulty !== 'easy' && tier.label === 'Fast'){
+          state.stats.fastAnswers = (state.stats.fastAnswers || 0) + 1;
+          checkFastAchievements();
+        }
         if (state.mode === 'headtohead'){
           var pKey = 'p' + state.activePlayer;
           state[pKey + 'Points'] = roundPts(state[pKey + 'Points'] + earned);
@@ -4656,9 +4834,16 @@
     }
     // Lifetime rounds-played count climbs regardless of mode (even Zen and
     // Head-to-Head, which don't track a right/wrong streak) — "play 50/100/
-    // 1000 rounds" is just about showing up, not about scoring or streaks.
-    state.stats.totalPlayed = (state.stats.totalPlayed || 0) + 1;
-    checkPlayedAchievements();
+    // 1000 rounds" is just about showing up, not about scoring or streaks —
+    // but easy-mode rounds don't add to it at all (not just skip the toast),
+    // since totalPlayed only exists for this exact-threshold achievement
+    // check; letting it keep climbing on easy while skipping the check
+    // would let it sail past 50/100/1000 unnoticed and never unlock once
+    // you switch back to medium/hard.
+    if (state.difficulty !== 'easy'){
+      state.stats.totalPlayed = (state.stats.totalPlayed || 0) + 1;
+      checkPlayedAchievements();
+    }
     saveStats();
     renderStats();
     if (isNewBest){
@@ -5263,6 +5448,7 @@
         renderLeaderboardSignInPrompt();
         renderPaywallEnvironmentNotes();
         watchPremiumSubscription(fb, user ? user.uid : null);
+        if (user) syncProgressFromCloud(fb, user.uid);
         if (user && state.pendingPremiumCheckout){
           var plan = state.pendingPremiumCheckout;
           state.pendingPremiumCheckout = null;
@@ -5301,6 +5487,4 @@
   }
 })();
 </script>
-
-</body>
-</html>
+</body></html>
