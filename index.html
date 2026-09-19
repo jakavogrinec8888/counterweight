@@ -2876,6 +2876,15 @@
     hard:   { min: 1.01, max: 1.20, seconds: 5,  pointsMult: 1.05, desc: "Razor close — never more than 20% apart. 5s a round, 5% bonus points." }
   };
 
+  // Medium and (especially) Hard will happily pick two items whose *listed*
+  // weights are only a few percent apart — fine for a fixed-spec object,
+  // but a "typical" chicken egg or goldfish can easily swing that much on
+  // its own, making the "correct" answer a coin flip. Rather than a full
+  // variance model, any pair involving a natural item is held to this
+  // floor regardless of difficulty, so razor-close matchups stay reserved
+  // for objects whose weight doesn't wander.
+  var NATURAL_PAIR_MIN_RATIO = 2.0;
+
   var MODES = {
     classic:    { icon: "🎯", title: "5 Rounds" },
     endless:    { icon: "♾️", title: "Endless" },
@@ -4279,7 +4288,8 @@
         if (j === i) continue;
         var other = pool[j];
         var ratio = Math.max(anchor.g, other.g) / Math.min(anchor.g, other.g);
-        var fits = bypassBand || (ratio <= band.max && ratio >= band.min);
+        var minRatio = (anchor.natural || other.natural) ? Math.max(band.min, NATURAL_PAIR_MIN_RATIO) : band.min;
+        var fits = bypassBand || (ratio <= band.max && ratio >= minRatio);
         if (fits){
           var key = i < j ? i + '_' + j : j + '_' + i;
           if (state.usedPairs.indexOf(key) === -1) candidates.push({ item: other, key: key });
