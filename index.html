@@ -763,6 +763,32 @@
     color: var(--text-dim);
   }
 
+  /* The Wordle-style "copy result" button — sits right under the score so
+     it's the natural next tap right when the result is freshest, distinct
+     from the Play again/Back to menu pair further down. */
+  .share-btn{
+    display: inline-block;
+    margin: 8px 0 4px;
+    background: none;
+    border: 1px solid var(--good);
+    color: var(--good);
+    border-radius: 999px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 9px 20px;
+    cursor: pointer;
+    transition: transform 150ms, background 150ms;
+  }
+  .share-btn[hidden]{ display: none; }
+  .share-btn:hover{ background: rgba(95,217,138,0.12); transform: translateY(-1px); }
+  .share-btn:focus-visible{ outline: 2px solid var(--good); outline-offset: 2px; }
+  .share-btn.is-copied{
+    background: var(--good);
+    color: #0d1f14;
+    border-color: var(--good);
+  }
+
   .leaderboard{
     text-align: left;
     margin-top: 20px;
@@ -2222,6 +2248,8 @@
         <div class="results-score"><span id="results-score">0/5</span></div>
         <p class="results-msg" id="results-msg"></p>
         <p class="results-sub" id="results-sub"></p>
+
+        <button class="share-btn" id="share-result-btn" type="button" hidden>📋 Copy result to share</button>
 
         <div class="leaderboard" id="leaderboard">
           <div class="lb-head" id="lb-head">Leaderboard</div>
@@ -3720,6 +3748,7 @@
     resultsMsg: document.getElementById('results-msg'),
     resultsSub: document.getElementById('results-sub'),
     resultsMenuBtn: document.getElementById('results-menu-btn'),
+    shareResultBtn: document.getElementById('share-result-btn'),
     again: document.getElementById('again-btn'),
     diffRow: document.getElementById('diff-row'),
     diffBtns: [document.getElementById('diff-easy'), document.getElementById('diff-medium'), document.getElementById('diff-hard')],
@@ -4286,6 +4315,7 @@
     var actualG = state.guessItem ? state.guessItem.g : 0;
     var pts = computeGuessPoints(guessG, actualG);
     state.points += pts;
+    state.roundLog.push({ points: pts });
 
     els.guessSlider.disabled = true;
     if (els.guessSubmitBtn) els.guessSubmitBtn.disabled = true;
@@ -4469,6 +4499,7 @@
     state.wrongStreak = 0;
     state.usedPairs = [];
     state.usedGuessItems = [];
+    state.roundLog = [];
     stopGlobalTimer();
     if (state.mode === 'league'){ state.leagueAttempt = 1; state.leagueTotal = 0; state.leagueCorrectTotal = 0; }
     if (state.mode === 'daily') dailyRng = mulberry32(dailySeed());
@@ -4488,6 +4519,7 @@
     state.streak = 0;
     state.wrongStreak = 0;
     state.usedPairs = [];
+    state.roundLog = [];
     if (els.leagueHandoff) els.leagueHandoff.hidden = true;
     newRound();
   }
@@ -5272,6 +5304,13 @@
       }
       sfx.wrong();
     }
+    // One entry per round, for the results screen's shareable text (see
+    // buildRoundGrid()) — skipped for Zen (nothing to score) and
+    // Head-to-Head (two players' rounds interleave, so a single log
+    // wouldn't mean anything).
+    if (scoring && tracksStreak){
+      state.roundLog.push({ correct: correct, tier: tier ? tier.label : null });
+    }
     // Lifetime rounds-played count climbs regardless of mode (even Zen and
     // Head-to-Head, which don't track a right/wrong streak) — "play 50/100/
     // 1000 rounds" is just about showing up, not about scoring or streaks —
@@ -5514,6 +5553,86 @@
     els.lbError.hidden = !msg;
   }
 
+  // --- Shareable result text ---------------------------------------------
+  // A Wordle-style "copy your result" string — free, self-propagating
+  // advertising the moment someone pastes it into a text or a tweet.
+  // Built fresh in showResults() from the same numbers already on screen,
+  // so it can never say something different from what the player sees.
+  var SHARE_URL = 'counterweightgame.com';
+
+  // Thousands separators for the shared text only (formatPoints() stays
+  // as-is everywhere it's already used on screen) — "18,420" reads better
+  // pasted into a text than "18420" does.
+  function formatPointsShare(n){
+    return Math.round(n).toLocaleString('en-US');
+  }
+
+  // One square per round for the fixed-length modes (Classic/Daily/League),
+  // built from state.roundLog (see finishRound()): green for a fast
+  // correct answer, yellow for medium, orange for correct-but-slow, black
+  // for a miss — the same shape as Wordle's grid, reusing the speed tiers
+  // this game already scores rounds by.
+  function buildRoundGrid(){
+    return (state.roundLog || []).map(function(r){
+      if (!r.correct) return '⬛';
+      if (r.tier === 'Fast') return '🟩';
+      if (r.tier === 'Medium') return '🟨';
+      return '🟧'; // Slow
+    }).join('');
+  }
+
+  // Same idea for Guess the Weight, keyed off points-per-round instead of
+  // correct/tier — roughly the same bands as guessResultClass.
+  function buildGuessGrid(){
+    return (state.roundLog || []).map(function(r){
+      if (r.points >= 3000) return '🟩';
+      if (r.points >= 1000) return '🟨';
+      if (r.points > 0) return '🟧';
+      return '⬛';
+    }).join('');
+  }
+
+  // Copies state.shareText (set by showResults()) to the clipboard, with a
+  // manual textarea+execCommand fallback for browsers/contexts where the
+  // async Clipboard API is unavailable or blocked (e.g. non-HTTPS, or an
+  // embedded preview). Flips the button's own label to a confirmation
+  // rather than a separate toast, mirroring Wordle's own share button.
+  function copyResultToClipboard(){
+    if (!state.shareText || !els.shareResultBtn) return;
+    var text = state.shareText;
+    function showCopied(){
+      var btn = els.shareResultBtn;
+      if (!btn.dataset.label) btn.dataset.label = btn.textContent;
+      btn.textContent = '✓ Copied!';
+      btn.classList.add('is-copied');
+      clearTimeout(btn._resetTimer);
+      btn._resetTimer = setTimeout(function(){
+        btn.textContent = btn.dataset.label;
+        btn.classList.remove('is-copied');
+      }, 1600);
+    }
+    function fallbackCopy(){
+      try{
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showCopied();
+      } catch(e){ /* clipboard truly unavailable — nothing more we can do */ }
+    }
+    sfx.click();
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(showCopied, fallbackCopy);
+    } else {
+      fallbackCopy();
+    }
+  }
+
   // Governs the results-screen leaderboard's sign-in prompt: shows the
   // "sign in to submit" row when nobody's signed in and Google Sign-In
   // actually loaded, shows the "not available in this preview" note
@@ -5541,6 +5660,7 @@
     // buttons instead of the mid-round "☰ Menu" escape hatch.
     if (els.menuLink) els.menuLink.hidden = true;
     state.busy = false;
+    state.shareText = null;
 
     if (state.mode === 'endless'){
       var survived = state.round - 1;
@@ -5550,6 +5670,9 @@
       els.resultsSub.textContent = eTier.sub;
       if (els.lbHead) els.lbHead.textContent = 'Endless leaderboard';
       sfx.results(survived >= 3);
+      state.shareText = 'Counterweight — Endless ' + MODES.endless.icon + '\n' +
+        'Survived ' + survived + ' round' + (survived === 1 ? '' : 's') + '!\n' +
+        SHARE_URL;
       // Native Endless runs only get one shot per day; Custom-builder runs
       // that happen to use the Endless engine are a separate sandbox.
       if (!state.viaCustom){ markModePlayedToday('endless'); renderMenuCardStates(); }
@@ -5560,6 +5683,9 @@
       els.resultsSub.textContent = taTier.sub + ' (' + state.sessionCorrect + ' correct)';
       if (els.lbHead) els.lbHead.textContent = 'Time Attack leaderboard';
       sfx.results(state.points >= 14);
+      state.shareText = 'Counterweight — Time Attack ' + MODES.timeattack.icon + '\n' +
+        formatPointsShare(state.points) + ' pts • ' + state.sessionCorrect + ' correct\n' +
+        SHARE_URL;
     } else if (state.mode === 'league'){
       // A run only costs you today's League slot once it's actually
       // finished, so mark that here rather than when the run started.
@@ -5574,6 +5700,10 @@
       els.resultsSub.textContent = leagueTier.sub + ' (' + state.leagueCorrectTotal + '/' + leagueRounds + ' correct' + leagueTriesNote + ') · back tomorrow for another run.';
       if (els.lbHead) els.lbHead.textContent = 'League leaderboard';
       sfx.results(state.leagueCorrectTotal / leagueRounds >= 0.6);
+      state.shareText = 'Counterweight — League ' + MODES.league.icon + '\n' +
+        formatPointsShare(state.leagueTotal) + '/' + formatPointsShare(leagueMax) + ' pts • ' + state.leagueCorrectTotal + '/' + leagueRounds + ' correct\n' +
+        buildRoundGrid() + '\n' +
+        SHARE_URL;
     } else if (state.mode === 'guess'){
       var guessMax = GUESS_MAX_POINTS * ROUNDS;
       var guessTier = guessResultTier(state.points, guessMax);
@@ -5582,6 +5712,10 @@
       els.resultsSub.textContent = guessTier.sub;
       if (els.lbHead) els.lbHead.textContent = 'Guess the Weight leaderboard';
       sfx.results(state.points / guessMax >= 0.5);
+      state.shareText = 'Counterweight — Guess the Weight ' + MODES.guess.icon + '\n' +
+        formatPointsShare(state.points) + '/' + formatPointsShare(guessMax) + ' pts\n' +
+        buildGuessGrid() + '\n' +
+        SHARE_URL;
       if (!state.viaCustom){ markModePlayedToday('guess'); renderMenuCardStates(); }
     } else {
       // classic & daily share the fixed-round scoring path
@@ -5592,6 +5726,13 @@
       els.resultsSub.textContent = tier.sub + ' (' + state.sessionCorrect + '/' + ROUNDS + ' correct)';
       if (els.lbHead) els.lbHead.textContent = state.mode === 'daily' ? "Today's leaderboard" : 'Leaderboard';
       sfx.results(state.sessionCorrect / ROUNDS >= 0.6);
+      var shareLabel = state.mode === 'daily'
+        ? ('Daily Challenge ' + MODES.daily.icon + ' (' + todayKey() + ')')
+        : ('5 Rounds ' + MODES.classic.icon);
+      state.shareText = 'Counterweight — ' + shareLabel + '\n' +
+        formatPointsShare(state.points) + '/' + formatPointsShare(maxPoints) + ' pts • ' + state.sessionCorrect + '/' + ROUNDS + ' correct\n' +
+        buildRoundGrid() + '\n' +
+        SHARE_URL;
       // Native Classic/Daily runs get one shot per day; Custom-builder
       // runs using the Classic engine don't touch this lock.
       if (!state.viaCustom){
@@ -5609,6 +5750,11 @@
         }
       }
     }
+    if (els.shareResultBtn){
+      els.shareResultBtn.hidden = !state.shareText;
+      els.shareResultBtn.textContent = els.shareResultBtn.dataset.label || els.shareResultBtn.textContent;
+      els.shareResultBtn.classList.remove('is-copied');
+    }
     // A mode that just spent today's only try swaps "Play again" out for
     // "Back to menu" — League always has (once-a-day, single run), and now
     // so do Classic/Daily/Endless the moment their run finishes. Premium
@@ -5621,8 +5767,10 @@
 
     if (state.customOnly){
       // Scores from a fully custom item pool aren't comparable to the
-      // standard leaderboard, so skip it entirely for this run.
+      // standard leaderboard (or worth sharing as a "Counterweight" result),
+      // so skip both entirely for this run.
       if (els.leaderboard) els.leaderboard.hidden = true;
+      if (els.shareResultBtn) els.shareResultBtn.hidden = true;
       return;
     }
     if (els.leaderboard) els.leaderboard.hidden = false;
@@ -5717,6 +5865,7 @@
     els.again.addEventListener('click', newGame);
     if (els.guessSubmitBtn) els.guessSubmitBtn.addEventListener('click', submitGuess);
     if (els.guessSlider) els.guessSlider.addEventListener('input', renderGuessSliderValue);
+    if (els.shareResultBtn) els.shareResultBtn.addEventListener('click', copyResultToClipboard);
     els.diffBtns.forEach(function(btn){
       btn.addEventListener('click', function(){ setPregameDifficulty(btn.dataset.diff); });
     });
@@ -5882,6 +6031,8 @@
       usedPairs: (saved && saved.usedPairs) || [],
       usedGuessItems: [],
       guessItem: null,
+      roundLog: [],
+      shareText: null,
       difficulty: (saved && saved.difficulty) || 'medium',
       mode: (saved && saved.mode) || 'classic',
       customOnly: false,
