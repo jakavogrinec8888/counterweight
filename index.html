@@ -4120,6 +4120,16 @@
   var progressSyncInFlight = false;
   var progressPushTimer = null;
   var suppressProgressPush = false;
+  // Tracks which account's uid this browser's local achievements/objectives/
+  // stats currently belong to, so syncProgressFromCloud() can tell "this
+  // device reconnecting to the same account" (safe to merge local + cloud)
+  // apart from "a different Google account just signed in on this device"
+  // (local data belongs to someone/something else and must NOT be merged
+  // in, or it permanently contaminates the new account's cloud doc). null
+  // means either a fresh install or pure never-signed-in guest play, which
+  // is still safe to merge — that's the normal "first sign-in" case where
+  // local guest progress should carry into the new account.
+  var LAST_SYNCED_UID_KEY = 'counterweight_last_synced_uid';
 
   function currentProgressSnapshot(){
     return {
@@ -4173,10 +4183,13 @@
 
   // Runs once right after sign-in completes (see onAuthStateChanged in
   // start()): pulls whatever this player already has in the cloud (a
-  // brand new player has no doc yet, so `cloud` is just null), merges it
-  // with whatever this browser already has locally, applies the merged
-  // result here, then writes it back so the cloud doc and this browser
-  // agree before any new play happens.
+  // brand new player has no doc yet, so `cloud` is just null). If this
+  // browser's local progress is trustworthy for this account (see
+  // safeToMergeLocal below), merges the two and applies the merged result;
+  // otherwise a different account's leftovers are sitting in local storage,
+  // so this adopts the cloud's own record instead of merging them in. Either
+  // way, writes the result back so the cloud doc and this browser agree
+  // before any new play happens.
   async function syncProgressFromCloud(fb, uid){
     if (!fb || !uid || progressSyncInFlight) return;
     progressSyncInFlight = true;
@@ -4185,12 +4198,33 @@
       var snap = await ref.get();
       var cloud = snap.exists ? snap.data() : null;
       var local = currentProgressSnapshot();
-      var merged = {
+      var lastUid = null;
+      try{ lastUid = localStorage.getItem(LAST_SYNCED_UID_KEY); } catch(e){}
+      // Merge local into cloud only when this browser's local progress can
+      // actually be trusted to belong to this account: either it's never
+      // been claimed by any account (null — fresh install or guest play,
+      // where merging is exactly the desired "first sign-in" behavior), or
+      // it was last synced to this same uid (reconnecting / already-merged
+      // multi-device case). Anything else means a *different* account was
+      // last used on this device, so its leftover local data must not leak
+      // into this one — just adopt the cloud's own record instead.
+      var safeToMergeLocal = (lastUid === null || lastUid === uid);
+      var merged = safeToMergeLocal ? {
         achievements: mergeFlags(local.achievements, cloud && cloud.achievements),
         objectives: mergeFlags(local.objectives, cloud && cloud.objectives),
         stats: mergeStatCounters(local.stats, cloud && cloud.stats)
+      } : {
+        achievements: (cloud && cloud.achievements) || {},
+        objectives: (cloud && cloud.objectives) || {},
+        // applyProgressSnapshot() overlays snap.stats onto the EXISTING
+        // state.stats rather than replacing it outright, so an empty {}
+        // here would leave the previous account's numbers stuck in memory
+        // for a brand-new account with no cloud doc yet. Spell out the
+        // zeroed shape explicitly so every synced field actually resets.
+        stats: (cloud && cloud.stats) || { best: 0, totalPlayed: 0, fastAnswers: 0, dailyCompletions: 0 }
       };
       applyProgressSnapshot(merged);
+      try{ localStorage.setItem(LAST_SYNCED_UID_KEY, uid); } catch(e){}
       await ref.set(merged, { merge: true });
     } catch(e){ /* offline, rules mismatch, preview mode, etc — local play still works untouched */ }
     progressSyncInFlight = false;
