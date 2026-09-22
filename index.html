@@ -1181,6 +1181,41 @@
   }
   .reset-premium-link:hover{ color: var(--text); }
   .reset-premium-link[hidden]{ display: none; }
+
+  /* Plain, always-in-the-markup pricing line for the main menu screen.
+     Deliberately NOT gated behind any JS-driven reveal (unlike the
+     premium-sidebar ad or the paywall modal) — this is the one place on
+     the site where pricing is visible immediately, without clicking into
+     a Premium-locked mode first, and without needing JS to un-hide it.
+     Hidden only once Premium is actually active (see the render pass),
+     since it has nothing useful to tell an existing subscriber. */
+  .static-pricing-note{
+    max-width: 420px;
+    margin: 14px auto 0;
+    padding: 10px 14px;
+    border-top: 1px solid var(--steel);
+    font-size: 0.72rem;
+    line-height: 1.45;
+    color: var(--text-dim);
+    text-align: center;
+  }
+  .static-pricing-note strong{ color: var(--amber); font-weight: 700; }
+  .static-pricing-note[hidden]{ display: none; }
+
+  /* Short maker's note — a real trust signal (who made this, why, is it
+     still being worked on) that a "who is behind this" check can find
+     without hunting for an About page that doesn't exist. Always visible,
+     same treatment as .static-pricing-note, no JS gating. */
+  .static-maker-note{
+    max-width: 420px;
+    margin: 10px auto 0;
+    padding: 0 14px;
+    font-size: 0.7rem;
+    line-height: 1.5;
+    color: var(--text-dim);
+    text-align: center;
+    opacity: 0.85;
+  }
   .menu-card-compact{ padding: 13px 12px; gap: 4px; }
   .menu-card-compact .menu-card-icon{ font-size: 1.25rem; }
   .menu-card-compact .menu-card-title{ font-size: 0.85rem; }
@@ -2051,6 +2086,10 @@
 
     <button class="reset-premium-link" id="reset-premium-link" type="button" hidden>Demo build: Premium is unlocked on this device — reset it</button>
     <button class="reset-premium-link" id="manage-premium-link" type="button" hidden>Premium is active — manage subscription</button>
+
+    <p class="static-pricing-note" id="static-pricing-note">Free to play. Premium unlocks 5 extra modes — <strong>€1.99/mo</strong> or <strong>€12.99/yr</strong> (save 46%). Cancel anytime.</p>
+
+    <p class="static-maker-note">I've always had ideas for simple games — not another first-person shooter chasing amazing graphics, but something fun to play no matter how it looks. Simple, intuitive, fun. Counterweight is that idea, and it's my full-time project right now.</p>
   </div>
 
   <div class="custom-screen" id="custom-screen" hidden>
@@ -2127,8 +2166,16 @@
     </div>
     <p class="daily-note" id="daily-note" hidden>Medium difficulty, same five pairs for everyone today.</p>
 
-    <div class="controls">
+    <div class="controls controls-row">
       <button class="next" id="pregame-play-btn" type="button">▶ Play</button>
+      <button class="next secondary" id="pregame-lb-btn" type="button">🏆 Leaderboard</button>
+    </div>
+
+    <div class="leaderboard" id="pregame-leaderboard" hidden>
+      <div class="lb-head" id="pregame-lb-head">Leaderboard</div>
+      <ol class="lb-list" id="pregame-lb-list">
+        <li class="lb-empty">Loading leaderboard…</li>
+      </ol>
     </div>
   </div>
 
@@ -3475,6 +3522,10 @@
     // transition points below) so it can never be used as a side-door
     // out of an in-progress round.
     if (els.premiumSidebar) els.premiumSidebar.hidden = unlocked || els.menuScreen.hidden;
+    // Plain pricing line (see the CSS comment on .static-pricing-note): stays
+    // visible by default in the raw markup, only hidden once Premium is
+    // actually active — nothing left to sell an existing subscriber.
+    if (els.staticPricingNote) els.staticPricingNote.hidden = unlocked;
     // The left-panels wrapper (League board + Game Info) tracks purely
     // "is the menu screen up" — neither panel has an unlock gate of its
     // own, so both stay visible even once Premium is unlocked and the
@@ -4028,6 +4079,10 @@
     pregameTag: document.getElementById('pregame-tag'),
     pregameBackBtn: document.getElementById('pregame-back-btn'),
     pregamePlayBtn: document.getElementById('pregame-play-btn'),
+    pregameLbBtn: document.getElementById('pregame-lb-btn'),
+    pregameLeaderboard: document.getElementById('pregame-leaderboard'),
+    pregameLbHead: document.getElementById('pregame-lb-head'),
+    pregameLbList: document.getElementById('pregame-lb-list'),
     resetPremiumLink: document.getElementById('reset-premium-link'),
     managePremiumLink: document.getElementById('manage-premium-link'),
     paywallSigninRow: document.getElementById('paywall-signin-row'),
@@ -4035,6 +4090,7 @@
     paywallStatus: document.getElementById('paywall-status'),
     paywallPreviewNote: document.getElementById('paywall-preview-note'),
     premiumSidebar: document.getElementById('premium-sidebar'),
+    staticPricingNote: document.getElementById('static-pricing-note'),
     rightPanels: document.getElementById('right-panels'),
     premiumSidebarBtn: document.getElementById('premium-sidebar-btn'),
     leagueLbList: document.getElementById('league-lb-list'),
@@ -5200,6 +5256,11 @@
   // you're about to play and waits for an explicit Play tap. Nothing about
   // the mode itself (difficulty, daily lock, etc.) is decided here.
   var pregameMode = null;
+  // Bumped on every openPregame()/togglePregameLeaderboard() call so a
+  // slow fetchLeaderboard() response from a mode the player has since
+  // backed out of (or reopened a different mode into) never overwrites
+  // what's currently on screen — same pattern as state.resultsToken.
+  var pregameLbToken = 0;
   var PREGAME_TAGS = {
     zen: 'No timer, no pressure — just learn.',
     timeattack: '60 seconds — answer as many as you can.',
@@ -5224,6 +5285,16 @@
     if (els.diffRow) els.diffRow.hidden = isDaily || mode === 'guess';
     if (els.dailyNote) els.dailyNote.hidden = !isDaily;
     renderDifficulty();
+    // Head-to-head is local pass-and-play with no shared board to show —
+    // every other mode reaching this screen does have one. Always start
+    // collapsed on a fresh open so switching modes never flashes the
+    // previous mode's scores before a fetch for the new one lands.
+    pregameLbToken++;
+    if (els.pregameLbBtn){
+      els.pregameLbBtn.hidden = mode === 'headtohead';
+      els.pregameLbBtn.textContent = '🏆 Leaderboard';
+    }
+    if (els.pregameLeaderboard) els.pregameLeaderboard.hidden = true;
     els.menuScreen.hidden = true;
     if (els.customScreen) els.customScreen.hidden = true;
     if (els.paywallScreen) els.paywallScreen.hidden = true;
@@ -5238,6 +5309,40 @@
     pregameMode = null;
     if (els.pregameScreen) els.pregameScreen.hidden = true;
     openMenu();
+  }
+
+  // Lets a player check a mode's top 10 straight from the pregame screen,
+  // without having to actually finish a round first — same fetchLeaderboard
+  // top-10 read used everywhere else, just aimed at whichever mode is
+  // currently being previewed rather than the one just finished.
+  function loadPregameLeaderboard(mode){
+    if (!els.pregameLbList) return;
+    var myToken = pregameLbToken;
+    els.pregameLbList.innerHTML = '<li class="lb-empty">Loading leaderboard…</li>';
+    if (els.pregameLbHead){
+      var title = (MODES[mode] || MODES.classic).title;
+      els.pregameLbHead.textContent = mode === 'daily' ? "Today's leaderboard" : (title + ' leaderboard');
+    }
+    var filterFn = mode === 'daily' ? function(r){ return r.dateKey === todayKey(); } : null;
+    fetchLeaderboard(mode, filterFn).then(function(board){
+      // A newer open/toggle (or leaving the screen and coming back to a
+      // different mode) may have started since this fetch went out —
+      // bail rather than paint stale rows over whatever's current now.
+      if (myToken !== pregameLbToken) return;
+      renderLeaderboardInto(els.pregameLbList, board.rows, null,
+        mode === 'daily' ? 'No scores yet today — be the first.' : 'No scores yet — be the first on the board.');
+    });
+  }
+
+  function togglePregameLeaderboard(){
+    if (!els.pregameLeaderboard || !pregameMode) return;
+    var willShow = els.pregameLeaderboard.hidden;
+    els.pregameLeaderboard.hidden = !willShow;
+    if (els.pregameLbBtn) els.pregameLbBtn.textContent = willShow ? '▲ Hide leaderboard' : '🏆 Leaderboard';
+    if (willShow){
+      pregameLbToken++;
+      loadPregameLeaderboard(pregameMode);
+    }
   }
 
   function confirmPregamePlay(){
@@ -6180,6 +6285,7 @@
     });
     if (els.pregameBackBtn) els.pregameBackBtn.addEventListener('click', closePregame);
     if (els.pregamePlayBtn) els.pregamePlayBtn.addEventListener('click', confirmPregamePlay);
+    if (els.pregameLbBtn) els.pregameLbBtn.addEventListener('click', togglePregameLeaderboard);
     if (els.resetPremiumLink) els.resetPremiumLink.addEventListener('click', function(){
       sfx.click();
       setPremiumUnlocked(false);
