@@ -1,4 +1,6 @@
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Guess which everyday object weighs more — from a blueberry to the Statue of Liberty. Free browser game, 260+ real items, no download or login needed.">
 <title>Counterweight</title>
 <!-- Browser tab icon: a balance-scale emoji rendered as an inline SVG data
      URI, so the favicon needs no separate image file to host — works as
@@ -2553,6 +2555,8 @@
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-functions-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-analytics-compat.js"></script>
 <script>
 (function(){
   var ROUNDS = 5;
@@ -3555,6 +3559,22 @@
   // when Firebase didn't load — see comment above).
   var dbPromise = firebaseAppPromise.then(function(fb){ return fb ? fb.firestore() : null; });
 
+  // GA4 (via the Firebase Analytics compat SDK, same project as above —
+  // see FIREBASE_CONFIG's measurementId). Resolves null wherever Firebase
+  // itself resolves null (local preview, blocked network, etc.), same
+  // fallback pattern as dbPromise.
+  var analyticsPromise = firebaseAppPromise.then(function(fb){
+    if (!fb || !fb.analytics) return null;
+    try{ return fb.analytics(); } catch(e){ return null; }
+  });
+
+  function logEvent(name, params){
+    analyticsPromise.then(function(analytics){
+      if (!analytics) return;
+      try{ analytics.logEvent(name, params || {}); } catch(e){}
+    });
+  }
+
   var LOCAL_SCORES_KEY = 'counterweight_local_scores_v1';
 
   function readLocalScores(){
@@ -3724,7 +3744,7 @@
   // the real name and colors the icon in for good, on this device.
   var ACHIEVEMENTS_KEY = 'counterweight_achievements';
   var ACHIEVEMENTS = [
-    { id: 'yourmama', name: 'Your Mama', emoji: '🌍', desc: "Find the rare “Your mama” item in Classic mode." },
+    { id: 'yourmama', name: 'Your Mama', emoji: '🌍', desc: "Correctly pick “Your mama” as the heavier item when she shows up in Classic mode." },
     { id: 'streak3', name: '3 Streak', emoji: '🥉', streak: 3, desc: 'Get 3 correct answers in a row on medium or hard.' },
     { id: 'streak5', name: '5 Streak', emoji: '🥈', streak: 5, desc: 'Get 5 correct answers in a row on medium or hard.' },
     { id: 'streak10', name: '10 Streak', emoji: '🥇', streak: 10, desc: 'Get 10 correct answers in a row on medium or hard.' },
@@ -5034,6 +5054,7 @@
     var priceId = STRIPE_PRICE_IDS[plan];
     var uid = state.firebaseUser && state.firebaseUser.uid;
     if (!priceId || !uid) return;
+    logEvent('begin_checkout', { plan: plan });
     showPaywallStatus('Redirecting to secure checkout…', false);
     firebaseAppPromise.then(function(fb){
       if (!fb) return;
@@ -5057,14 +5078,29 @@
   // subscription customers, reached through the extension's callable.
   function openBillingPortal(){
     sfx.click();
+    // This button lives on the main menu (not the paywall screen), so
+    // feedback has to use the global toast — showPaywallStatus writes into
+    // an element that's hidden whenever the paywall screen isn't showing.
+    showToast('Opening billing portal…', 'This should only take a second.', '💳');
     firebaseAppPromise.then(function(fb){
-      if (!fb) return;
+      if (!fb || !fb.app().functions){
+        showToast("Couldn't open the billing portal", 'Please try again in a moment.', '⚠️');
+        return;
+      }
       try{
         var fn = fb.app().functions(STRIPE_FUNCTIONS_REGION).httpsCallable(STRIPE_PORTAL_FUNCTION);
         fn({ returnUrl: window.location.href }).then(function(res){
-          if (res && res.data && res.data.url) window.location.assign(res.data.url);
-        }).catch(function(){ showPaywallStatus("Couldn't open the billing portal — try again.", true); });
-      } catch(e){}
+          if (res && res.data && res.data.url){
+            window.location.assign(res.data.url);
+          } else {
+            showToast("Couldn't open the billing portal", 'Please try again in a moment.', '⚠️');
+          }
+        }).catch(function(){
+          showToast("Couldn't open the billing portal", 'Please try again in a moment.', '⚠️');
+        });
+      } catch(e){
+        showToast("Couldn't open the billing portal", 'Please try again in a moment.', '⚠️');
+      }
     });
   }
 
@@ -5266,7 +5302,7 @@
     // previous mode's scores before a fetch for the new one lands.
     pregameLbToken++;
     if (els.pregameLbBtn){
-      els.pregameLbBtn.hidden = mode === 'headtohead';
+      els.pregameLbBtn.hidden = mode === 'headtohead' || mode === 'zen';
       els.pregameLbBtn.textContent = '🏆 Leaderboard';
     }
     if (els.pregameLeaderboard) els.pregameLeaderboard.hidden = true;
@@ -5330,6 +5366,7 @@
 
   function openPaywall(mode){
     sfx.click();
+    logEvent('paywall_view', { mode: mode || 'unknown' });
     pendingUnlockMode = mode;
     selectedPlan = 'yearly';
     renderPaywallPlan();
@@ -5714,12 +5751,13 @@
     var lighter = state.pair[1 - heavierIndex];
     var ratio = heavier.g / lighter.g;
     // "Your mama" (see ITEMS/rollRareItem) has Infinity weight, so whenever
-    // it's in the pair it's always the "heavier" side here — encountering
-    // it at all (whether you guessed right or not) is the achievement.
-    if (heavier.rareChance){
+    // it's in the pair it's always the "heavier" side here. The achievement
+    // requires actually picking her, not just having her show up — a wrong
+    // guess or a timeout doesn't count (hence the `correct` check).
+    if (heavier.rareChance && correct){
       if (unlockAchievement('yourmama')){
         renderAchievements();
-        showAchievementToast("Yo mama's so heavy, she broke the scale — but you found her anyway.");
+        showAchievementToast("Yo mama's so heavy, she broke the scale — but you picked her anyway.");
       }
     }
     var callText = correct ? 'Correct' : (timedOut ? "Time's up" : 'Not quite');
