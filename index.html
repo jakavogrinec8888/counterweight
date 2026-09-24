@@ -1790,6 +1790,15 @@
   .objective-row.is-complete .game-info-stat-value{
     color: var(--good);
   }
+  /* Live "Resets in HH:MM:SS" line under a repeating (weekly) objective's
+     label — its own dimmer/smaller line so it reads as metadata about the
+     goal, not part of the goal's own text. */
+  .objective-timer{
+    display: block;
+    font-size: 0.68rem;
+    opacity: 0.7;
+    margin-top: 2px;
+  }
   #google-signin-btn{
     display: flex;
     justify-content: center;
@@ -2533,9 +2542,9 @@
         <div class="game-info-section">
           <div class="game-info-head">🎯 Objectives</div>
           <div class="objectives-list" id="objectives-list">
-            <div class="game-info-stat-row objective-row" id="objective-dailygrind20">
-              <span class="game-info-stat-label">Complete the Daily Challenge 20 times</span>
-              <span class="game-info-stat-value objective-count" id="objective-dailygrind20-count">0/20</span>
+            <div class="game-info-stat-row objective-row" id="objective-weeklygrind5">
+              <span class="game-info-stat-label">Complete the Daily Challenge 5 times this week<span class="objective-timer" id="objective-weeklygrind5-timer"></span></span>
+              <span class="game-info-stat-value objective-count" id="objective-weeklygrind5-count">0/5</span>
             </div>
           </div>
         </div>
@@ -3475,6 +3484,25 @@
     return pad2(h) + ':' + pad2(m) + ':' + pad2(s);
   }
 
+  // Week key for the weekly objective below: the local date (YYYY-MM-DD)
+  // of the Monday that starts the current week, so "this week" always
+  // means the same Mon-through-Sun span regardless of which day it's
+  // computed on — mirrors todayKey() above, one level up.
+  function weekKey(){
+    var d = new Date();
+    var day = d.getDay(); // 0=Sun .. 6=Sat
+    var diffToMonday = (day === 0 ? -6 : 1 - day);
+    var monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() + diffToMonday);
+    return monday.getFullYear() + '-' + String(monday.getMonth() + 1).padStart(2, '0') + '-' + String(monday.getDate()).padStart(2, '0');
+  }
+  function msUntilNextWeeklyReset(){
+    var now = new Date();
+    var day = now.getDay();
+    var daysUntilMonday = day === 0 ? 1 : (8 - day);
+    var next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilMonday, 0, 0, 0, 0);
+    return Math.max(0, next.getTime() - now.getTime());
+  }
+
   // Single pass over every menu card: applies BOTH the premium paywall
   // lock and the daily-try lock, so the two never fight over the same
   // card's classes (League can be gated by either one, or both).
@@ -3886,14 +3914,23 @@
   // description is never hidden behind "???"; it's a visible goal with a
   // live x/target count that turns green once reached, not a surprise.
   // Kept in its own storage key so clearing achievements never touches
-  // objective progress or vice versa. The first one tracks
-  // state.stats.dailyCompletions, a lifetime counter incremented once per
-  // finished Daily Challenge run (see showResults) — unlike the "played N
-  // rounds" achievements above, this only counts full Daily runs, not
-  // individual rounds.
+  // objective progress or vice versa.
+  //
+  // The one objective right now (`weekly: true`) is a REPEATING weekly
+  // goal — complete the Daily Challenge `target` times before the week
+  // (Mon-Sun local) runs out, then it re-locks and starts over next week.
+  // That's different enough from a one-way lifetime unlock (progress
+  // resets, "complete" is re-earned every week) that it's tracked with
+  // its own small store (see getWeeklyObjectiveProgress()) instead of
+  // the unlockedObjectives flag map below, and deliberately stays out of
+  // the cloud progress sync (currentProgressSnapshot()/mergeStatCounters()
+  // etc.) — those all assume monotonic "only ever climbs" counters, which
+  // a weekly-resetting one is not; this one just lives in localStorage,
+  // same as the daily lock timers it's modeled on.
   var OBJECTIVES_KEY = 'counterweight_objectives';
+  var WEEKLY_OBJECTIVE_KEY = 'counterweight_weekly_objective';
   var OBJECTIVES = [
-    { id: 'dailygrind20', dailyCompletions: 20, desc: 'Complete the Daily Challenge 20 times.' }
+    { id: 'weeklygrind5', weekly: true, target: 5, desc: 'Complete the Daily Challenge 5 times this week.' }
   ];
 
   function getUnlockedObjectives(){
@@ -3915,11 +3952,44 @@
     return true;
   }
 
-  // Checks for newly-completed objectives (toast + one-way unlock), then
-  // always re-renders so the visible x/target count stays current even
-  // on runs that don't cross the finish line yet.
+  // Reads this week's progress toward the weekly objective, transparently
+  // rolling over to a fresh 0/incomplete the moment the stored record
+  // belongs to an earlier week (lazy reset, same idea as todayKey() vs.
+  // hasPlayedModeToday() above — nothing has to run exactly at the
+  // boundary, the next read after it just sees a new weekKey()).
+  function getWeeklyObjectiveProgress(){
+    var raw = null;
+    try{ raw = JSON.parse(localStorage.getItem(WEEKLY_OBJECTIVE_KEY) || 'null'); } catch(e){ raw = null; }
+    var wk = weekKey();
+    if (!raw || raw.week !== wk) return { week: wk, count: 0, completed: false };
+    return raw;
+  }
+  function saveWeeklyObjectiveProgress(progress){
+    try{ localStorage.setItem(WEEKLY_OBJECTIVE_KEY, JSON.stringify(progress)); } catch(e){}
+  }
+  // Called once per finished Daily Challenge run (see showResults) to
+  // add a tick toward this week's goal.
+  function bumpWeeklyObjectiveProgress(){
+    var progress = getWeeklyObjectiveProgress();
+    progress.count = (progress.count || 0) + 1;
+    saveWeeklyObjectiveProgress(progress);
+  }
+
+  // Checks for newly-completed objectives (toast + unlock — one-way for a
+  // lifetime objective, re-earnable weekly for the weekly one), then
+  // always re-renders so the visible x/target count and timer stay
+  // current even on runs/ticks that don't cross the finish line.
   function checkObjectives(){
     OBJECTIVES.forEach(function(o){
+      if (o.weekly){
+        var progress = getWeeklyObjectiveProgress();
+        if (!progress.completed && progress.count >= o.target){
+          progress.completed = true;
+          saveWeeklyObjectiveProgress(progress);
+          showToast('Objective complete!', o.desc, '🎯');
+        }
+        return;
+      }
       if (!o.dailyCompletions) return;
       if ((state.stats.dailyCompletions || 0) >= o.dailyCompletions && unlockObjective(o.id)){
         showToast('Objective complete!', o.desc, '🎯');
@@ -3934,6 +4004,14 @@
       var row = document.getElementById('objective-' + o.id);
       var countEl = document.getElementById('objective-' + o.id + '-count');
       if (!row) return;
+      if (o.weekly){
+        var progress = getWeeklyObjectiveProgress();
+        row.classList.toggle('is-complete', !!progress.completed);
+        if (countEl) countEl.textContent = Math.min(progress.count || 0, o.target) + '/' + o.target;
+        var timerEl = document.getElementById('objective-' + o.id + '-timer');
+        if (timerEl) timerEl.textContent = 'Resets in ' + formatCountdown(msUntilNextWeeklyReset());
+        return;
+      }
       var isComplete = !!unlocked[o.id];
       row.classList.toggle('is-complete', isComplete);
       if (countEl && o.dailyCompletions){
@@ -4991,7 +5069,11 @@
   // to go dig their Firebase uid out of the console. Matched
   // case-insensitively against the verified email Firebase Auth hands
   // back for the signed-in Google account.
-  var COMPED_EMAILS = { 'jaka.vogrinec@gmail.com': true };
+  var COMPED_EMAILS = {
+    'jaka.vogrinec@gmail.com': true,
+    'blaz.gomilsek@gmail.com': true,
+    'jurij1.freser@gmail.com': true
+  };
   function isCompedAccount(){
     var email = state.firebaseUser && state.firebaseUser.email;
     return !!(email && COMPED_EMAILS[email.toLowerCase()]);
@@ -6184,14 +6266,16 @@
       if (!state.viaCustom){
         markModePlayedToday(state.mode);
         renderMenuCardStates();
-        // Lifetime count of finished Daily Challenge runs, for the "Daily
-        // Grind" objective — only native Daily runs count, same Custom
-        // exemption as the lock above, and only whole finished runs (not
-        // per-round, unlike totalPlayed) since the objective is about
-        // showing up for the daily puzzle itself.
+        // Lifetime count of finished Daily Challenge runs (kept for
+        // stats/sync purposes) plus this week's tick toward the weekly
+        // "Daily Grind" objective — only native Daily runs count, same
+        // Custom exemption as the lock above, and only whole finished
+        // runs (not per-round, unlike totalPlayed) since the objective
+        // is about showing up for the daily puzzle itself.
         if (state.mode === 'daily'){
           state.stats.dailyCompletions = (state.stats.dailyCompletions || 0) + 1;
           saveStats();
+          bumpWeeklyObjectiveProgress();
           checkObjectives();
         }
       }
@@ -6568,9 +6652,15 @@
     openMenu();
 
     // Live countdown on any locked menu card, and auto-unlocks the moment
-    // local midnight passes while the menu happens to be sitting open.
+    // local midnight passes while the menu happens to be sitting open —
+    // also ticks the weekly objective's own "Resets in ..." countdown and
+    // rolls it over the moment Monday 00:00 passes while the menu is up,
+    // same idea as the daily lock reset just above.
     setInterval(function(){
-      if (!els.menuScreen.hidden) renderMenuCardStates();
+      if (!els.menuScreen.hidden){
+        renderMenuCardStates();
+        renderObjectives();
+      }
     }, 1000);
 
     try{
