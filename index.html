@@ -5111,6 +5111,7 @@
     showToast('Opening billing portal…', 'This should only take a second.', '💳');
     firebaseAppPromise.then(function(fb){
       if (!fb || !fb.app().functions){
+        console.error('[billing portal] Firebase Functions SDK unavailable — fb.app().functions is missing.');
         showToast("Couldn't open the billing portal", 'Please try again in a moment.', '⚠️');
         return;
       }
@@ -5120,12 +5121,22 @@
           if (res && res.data && res.data.url){
             window.location.assign(res.data.url);
           } else {
+            console.error('[billing portal] Callable succeeded but returned no url:', res && res.data);
             showToast("Couldn't open the billing portal", 'Please try again in a moment.', '⚠️');
           }
-        }).catch(function(){
+        }).catch(function(err){
+          // Logged so the real cause (e.g. functions/not-found if the
+          // extension's function isn't deployed to STRIPE_FUNCTIONS_REGION,
+          // functions/unauthenticated, or a CORS/network failure) shows up
+          // in the browser console instead of being swallowed — the toast
+          // alone can't distinguish "not signed in" from "extension not
+          // configured" from "wrong region", and that's exactly the kind
+          // of case we need to tell apart to fix it for real.
+          console.error('[billing portal] createPortalLink call failed:', err && err.code, err && err.message, err);
           showToast("Couldn't open the billing portal", 'Please try again in a moment.', '⚠️');
         });
       } catch(e){
+        console.error('[billing portal] Threw before the call could even be made:', e);
         showToast("Couldn't open the billing portal", 'Please try again in a moment.', '⚠️');
       }
     });
