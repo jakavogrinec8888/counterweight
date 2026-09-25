@@ -1567,6 +1567,51 @@
   }
   .abandon-box .controls-row{ justify-content: center; }
 
+  /* --- Gem-grant gift confirm --------------------------------------------
+     Same visual language as the abandon-round confirm above, but parented
+     to .console instead of .game-area so it can appear over ANY screen —
+     a gem grant is applied the moment its email signs in (see
+     applyPendingGemGrants()), which can happen while sitting on the menu,
+     not just mid-round. Requires an explicit OK tap rather than
+     auto-hiding like the achievement toast does, since a currency grant
+     is worth deliberately confirming rather than possibly missing. */
+  .gift-overlay{
+    position: absolute;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(10,12,16,0.72);
+    border-radius: 24px;
+  }
+  .gift-overlay[hidden]{ display: none; }
+  .gift-box{
+    width: 100%;
+    max-width: 320px;
+    background: var(--panel);
+    border: 1px solid var(--amber-dim);
+    border-radius: 16px;
+    padding: 24px 20px 18px;
+    box-shadow: 0 24px 50px -20px rgba(0,0,0,0.6);
+    text-align: center;
+  }
+  .gift-icon{ font-size: 2.2rem; margin-bottom: 6px; }
+  .gift-title{
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.2rem;
+    margin: 0 0 8px;
+    color: var(--amber);
+  }
+  .gift-desc{
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: var(--text);
+    margin: 0 0 4px;
+  }
+
   /* --- Paywall ------------------------------------------------------- */
   .paywall-screen[hidden]{ display: none; }
   .paywall-badge{
@@ -2134,6 +2179,17 @@
   </div>
 
   <div class="achv-tooltip" id="achv-tooltip" role="tooltip" hidden></div>
+
+  <div class="gift-overlay" id="gift-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="gift-title">
+    <div class="gift-box">
+      <div class="gift-icon" aria-hidden="true">🎁</div>
+      <p class="gift-title" id="gift-title">Gift received!</p>
+      <p class="gift-desc" id="gift-desc"></p>
+      <div class="controls">
+        <button class="next" id="gift-ok-btn" type="button">OK</button>
+      </div>
+    </div>
+  </div>
 
   <div class="menu-screen" id="menu-screen">
     <button class="menu-card menu-card-featured" data-mode="classic" type="button">
@@ -4159,6 +4215,21 @@
     showToast('You found ' + item.name + '!', "She's here — good luck lifting her.", item.emoji);
   }
 
+  // A confirm-style dialog (not an auto-hiding toast) for moments worth
+  // making sure the player actually sees and acknowledges — right now
+  // just the gem-grant gift (see applyPendingGemGrants()). Sits over the
+  // whole console rather than just .game-area (like the abandon-round
+  // confirm does) since a grant can land while sitting on the menu.
+  function showGiftModal(title, desc){
+    if (!els.giftOverlay) return;
+    if (els.giftTitle) els.giftTitle.textContent = title;
+    if (els.giftDesc) els.giftDesc.textContent = desc;
+    els.giftOverlay.hidden = false;
+  }
+  function closeGiftModal(){
+    if (els.giftOverlay) els.giftOverlay.hidden = true;
+  }
+
   var els = {
     round: document.getElementById('stat-round'),
     roundLabel: document.getElementById('round-label'),
@@ -4195,6 +4266,10 @@
     achievementToastDesc: document.getElementById('achievement-toast-desc'),
     achievementToastIcon: document.getElementById('achievement-toast-icon'),
     achvTooltip: document.getElementById('achv-tooltip'),
+    giftOverlay: document.getElementById('gift-overlay'),
+    giftTitle: document.getElementById('gift-title'),
+    giftDesc: document.getElementById('gift-desc'),
+    giftOkBtn: document.getElementById('gift-ok-btn'),
     achievementBadges: Array.prototype.slice.call(document.querySelectorAll('.achievement-badge')),
     googleSigninBtn: document.getElementById('google-signin-btn'),
     accountUnavailableNote: document.getElementById('account-unavailable-note'),
@@ -5226,7 +5301,9 @@
   // an entry once it's been delivered so it can't fire again for that
   // email on a future edit of this file.
   var GEM_GRANTS = {
-    'jvvogrinec@gmail.com': { id: 'grant_jvvogrinec_30000', amount: 30000 }
+    'jvvogrinec@gmail.com': { id: 'grant_jvvogrinec_30000', amount: 30000 },
+    'blaz.gomilsek@gmail.com': { id: 'grant_blazgomilsek_30000', amount: 30000 },
+    'jurij1.freser@gmail.com': { id: 'grant_jurijfreser_30000', amount: 30000 }
   };
   function applyPendingGemGrants(){
     var email = state.firebaseUser && state.firebaseUser.email;
@@ -5234,7 +5311,13 @@
     if (!grant || isObjectiveUnlocked(grant.id)) return;
     unlockObjective(grant.id);
     addGems(grant.amount);
-    showToast('🎁 Gift received!', '+' + grant.amount + ' 💎', '💎');
+    burstConfetti();
+    sfx.best();
+    // A currency grant this size gets its own confirm dialog rather than
+    // the achievement toast (which auto-hides after ~4s and could easily
+    // be missed if it lands while the player isn't looking at the header).
+    var amountText = String(grant.amount).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    showGiftModal('Gift received! 🎁', 'You just got ' + amountText + ' 💎 added to your account.');
   }
   // League is still being built: it stays locked on the menu no matter
   // what — Premium unlock does not open it — and shows a "Coming soon"
@@ -6634,6 +6717,7 @@
     if (els.menuLink) els.menuLink.addEventListener('click', handleMenuLinkClick);
     if (els.abandonStayBtn) els.abandonStayBtn.addEventListener('click', function(){ sfx.click(); closeAbandonConfirm(); });
     if (els.abandonLeaveBtn) els.abandonLeaveBtn.addEventListener('click', abandonGame);
+    if (els.giftOkBtn) els.giftOkBtn.addEventListener('click', function(){ sfx.click(); closeGiftModal(); });
     if (els.paywallBackBtn) els.paywallBackBtn.addEventListener('click', closePaywall);
     if (els.paywallUnlockBtn) els.paywallUnlockBtn.addEventListener('click', unlockPremium);
     if (els.paywallPlanBtns) els.paywallPlanBtns.forEach(function(btn){
