@@ -855,6 +855,22 @@
     color: var(--text-dim);
   }
 
+  /* Daily Challenge results only: a nudge toward the weekly gems objective
+     (see the Objectives panel), so the currency stays visible right at the
+     moment a run that counts toward it just finished, not just tucked away
+     in the sidebar. */
+  .results-gems-hint{
+    display: inline-block;
+    margin: 0 0 10px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--amber-dim);
+    background: rgba(255,180,0,0.08);
+    color: var(--amber);
+    font-size: 0.76rem;
+    font-weight: 700;
+  }
+
   /* The Wordle-style "copy result" button — sits right under the score so
      it's the natural next tap right when the result is freshest, distinct
      from the Play again/Back to menu pair further down. */
@@ -1058,6 +1074,29 @@
     flex-shrink: 0;
   }
 
+  /* The gem balance: a persistent little pill in the header, same footprint
+     as the unit/sound toggles beside it but not a button — nothing to
+     click yet, just a running total that ticks up when gems are earned
+     (see the Objectives reward). Lives outside .menu-screen (a sibling, in
+     .plate-actions) so it stays visible on every screen, not just the menu. */
+  .gem-display{
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid var(--steel);
+    background: var(--bg-deep);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--amber);
+    flex-shrink: 0;
+  }
+  .gem-display-icon{ font-size: 0.85rem; line-height: 1; }
+
   .game-area[hidden]{ display: none; }
 
   .mode-banner{
@@ -1219,6 +1258,17 @@
   }
   .reset-premium-link:hover{ color: var(--text); }
   .reset-premium-link[hidden]{ display: none; }
+
+  /* Gem-purchased Premium's own status line — plain text, not a button
+     (nothing to click, just naming when it runs out), same footprint and
+     placement as the two links above it. */
+  .gems-premium-note{
+    margin: 16px 0 0;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    text-align: center;
+  }
+  .gems-premium-note[hidden]{ display: none; }
 
   /* Plain, always-in-the-markup pricing line for the main menu screen.
      Deliberately NOT gated behind any JS-driven reveal (unlike the
@@ -1579,6 +1629,16 @@
     color: var(--amber);
   }
   .paywall-price-note{ font-size: 0.78rem; color: var(--text-dim); }
+  /* Only shown on the gems plan — tells you your balance right next to
+     the price, since "1500 💎" alone doesn't say whether you can afford
+     it. A redeem attempt that comes up short reports the shortfall
+     through the shared .paywall-status line instead, not here. */
+  .paywall-gems-balance{
+    margin: -8px 0 14px;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+  .paywall-gems-balance[hidden]{ display: none; }
   .paywall-plan-toggle{
     display: flex;
     gap: 6px;
@@ -1799,6 +1859,10 @@
     opacity: 0.7;
     margin-top: 2px;
   }
+  /* The gem payout named right in the objective's own row — matches the
+     amber the header gem count uses, so it reads as "this is a currency
+     amount" at a glance, same visual language in both places. */
+  .objective-reward{ color: var(--amber); font-weight: 700; }
   #google-signin-btn{
     display: flex;
     justify-content: center;
@@ -2051,6 +2115,10 @@
       <p class="tagline">Guess which one tips the scale. Six ways to play, 260+ real objects.</p>
     </div>
     <div class="plate-actions">
+      <span class="gem-display" id="gem-display" title="Gems">
+        <span class="gem-display-icon" aria-hidden="true">💎</span>
+        <span id="gem-count">0</span>
+      </span>
       <button class="unit-toggle" id="unit-toggle" type="button" aria-label="Switch to imperial units">kg</button>
       <button class="sound-toggle" id="sound-toggle" type="button" aria-label="Mute sound">🔊</button>
       <button class="menu-link" id="menu-link" type="button" hidden>☰ Menu</button>
@@ -2133,6 +2201,7 @@
 
     <button class="reset-premium-link" id="reset-premium-link" type="button" hidden>Demo build: Premium is unlocked on this device — reset it</button>
     <button class="reset-premium-link" id="manage-premium-link" type="button" hidden>Premium is active — manage subscription</button>
+    <p class="gems-premium-note" id="gems-premium-note" hidden></p>
 
     <p class="static-pricing-note" id="static-pricing-note">Free to play. Premium unlocks 5 extra modes — <strong>€1.99/mo</strong> or <strong>€12.99/yr</strong> (save 46%). Cancel anytime.</p>
 
@@ -2244,12 +2313,14 @@
     <div class="paywall-plan-toggle" id="paywall-plan-toggle" role="group" aria-label="Billing period">
       <button class="paywall-plan-btn" data-plan="monthly" type="button">Monthly</button>
       <button class="paywall-plan-btn active" data-plan="yearly" type="button">Yearly <span class="paywall-plan-save">Save 46%</span></button>
+      <button class="paywall-plan-btn" data-plan="gems" type="button">💎 Gems</button>
     </div>
 
     <div class="paywall-price-row">
       <span class="paywall-price" id="paywall-price">€12.99</span>
       <span class="paywall-price-note" id="paywall-price-note">per year</span>
     </div>
+    <p class="paywall-gems-balance" id="paywall-gems-balance" hidden>You have 0 💎</p>
 
     <div class="paywall-signin-row" id="paywall-signin-row" hidden>
       <p class="paywall-signin-text">Sign in with Google to subscribe.</p>
@@ -2403,6 +2474,7 @@
         <div class="results-score"><span id="results-score">0/5</span></div>
         <p class="results-msg" id="results-msg"></p>
         <p class="results-sub" id="results-sub"></p>
+        <p class="results-gems-hint" id="results-gems-hint" hidden></p>
 
         <button class="share-btn" id="share-result-btn" type="button" hidden>📋 Copy result to share</button>
 
@@ -2543,7 +2615,7 @@
           <div class="game-info-head">🎯 Objectives</div>
           <div class="objectives-list" id="objectives-list">
             <div class="game-info-stat-row objective-row" id="objective-weeklygrind5">
-              <span class="game-info-stat-label">Complete the Daily Challenge 5 times this week<span class="objective-timer" id="objective-weeklygrind5-timer"></span></span>
+              <span class="game-info-stat-label">Complete the Daily Challenge 5 times this week — <span class="objective-reward">200 💎</span><span class="objective-timer" id="objective-weeklygrind5-timer"></span></span>
               <span class="game-info-stat-value objective-count" id="objective-weeklygrind5-count">0/5</span>
             </div>
           </div>
@@ -3549,6 +3621,18 @@
     // checkout, so there's nothing for that portal to show.
     if (els.resetPremiumLink) els.resetPremiumLink.hidden = !(unlocked && !firebaseAvailable);
     if (els.managePremiumLink) els.managePremiumLink.hidden = !(premiumSubscriptionActive && firebaseAvailable);
+    // Gem-purchased Premium has no Stripe subscription behind it (nothing
+    // for the billing portal to manage) and isn't the demo flag either —
+    // it's just a local expiry, so it gets its own plain note naming when
+    // it runs out rather than piggybacking on either link above.
+    var gemsPremiumExpiresAt = state.stats.premiumGemsExpiresAt || 0;
+    var gemsPremiumActive = gemsPremiumExpiresAt > Date.now();
+    if (els.gemsPremiumNote){
+      els.gemsPremiumNote.hidden = !gemsPremiumActive;
+      if (gemsPremiumActive){
+        els.gemsPremiumNote.textContent = '💎 Premium (bought with gems) active until ' + new Date(gemsPremiumExpiresAt).toLocaleDateString();
+      }
+    }
     // The "buy Premium" side panel is a menu-screen-only ad: it has no
     // reason to show once Premium is already unlocked, and it's force-
     // hidden the instant you leave the menu (see the menu-screen
@@ -3930,7 +4014,7 @@
   var OBJECTIVES_KEY = 'counterweight_objectives';
   var WEEKLY_OBJECTIVE_KEY = 'counterweight_weekly_objective';
   var OBJECTIVES = [
-    { id: 'weeklygrind5', weekly: true, target: 5, desc: 'Complete the Daily Challenge 5 times this week.' }
+    { id: 'weeklygrind5', weekly: true, target: 5, rewardGems: 200, desc: 'Complete the Daily Challenge 5 times this week.' }
   ];
 
   function getUnlockedObjectives(){
@@ -3986,7 +4070,9 @@
         if (!progress.completed && progress.count >= o.target){
           progress.completed = true;
           saveWeeklyObjectiveProgress(progress);
-          showToast('Objective complete!', o.desc, '🎯');
+          if (o.rewardGems) addGems(o.rewardGems);
+          var rewardTag = o.rewardGems ? (' +' + o.rewardGems + ' 💎') : '';
+          showToast('Objective complete!', o.desc + rewardTag, '🎯');
         }
         return;
       }
@@ -4091,6 +4177,7 @@
     resultsScore: document.getElementById('results-score'),
     resultsMsg: document.getElementById('results-msg'),
     resultsSub: document.getElementById('results-sub'),
+    resultsGemsHint: document.getElementById('results-gems-hint'),
     resultsMenuBtn: document.getElementById('results-menu-btn'),
     shareResultBtn: document.getElementById('share-result-btn'),
     again: document.getElementById('again-btn'),
@@ -4172,6 +4259,7 @@
     paywallPlanBtns: Array.prototype.slice.call(document.querySelectorAll('.paywall-plan-btn')),
     paywallPrice: document.getElementById('paywall-price'),
     paywallPriceNote: document.getElementById('paywall-price-note'),
+    paywallGemsBalance: document.getElementById('paywall-gems-balance'),
     pregameScreen: document.getElementById('pregame-screen'),
     pregameIcon: document.getElementById('pregame-icon'),
     pregameTitle: document.getElementById('pregame-title'),
@@ -4184,6 +4272,7 @@
     pregameLbList: document.getElementById('pregame-lb-list'),
     resetPremiumLink: document.getElementById('reset-premium-link'),
     managePremiumLink: document.getElementById('manage-premium-link'),
+    gemsPremiumNote: document.getElementById('gems-premium-note'),
     paywallSigninRow: document.getElementById('paywall-signin-row'),
     paywallSigninBtn: document.getElementById('paywall-signin-btn'),
     paywallStatus: document.getElementById('paywall-status'),
@@ -4194,6 +4283,7 @@
     premiumSidebarBtn: document.getElementById('premium-sidebar-btn'),
     leagueLbList: document.getElementById('league-lb-list'),
     gameInfoBest: document.getElementById('game-info-best'),
+    gemCount: document.getElementById('gem-count'),
     leftPanels: document.getElementById('left-panels'),
     leftPanelsToggle: document.getElementById('left-panels-toggle'),
     leftPanelsToggleLabel: document.getElementById('left-panels-toggle-label'),
@@ -4252,6 +4342,37 @@
   function saveStats(){
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.stats)); } catch(e){}
     queueProgressPush();
+    renderGemDisplay();
+  }
+
+  // --- Gems: the game's in-game currency. Earned via the weekly Objective
+  // reward and per-correct-answer in Daily Challenge (see checkObjectives()
+  // and finishRound()), and now spendable too (see unlockPremium()'s
+  // `gems` branch, which redeems 1500 for a month of Premium). Now that
+  // gems can go DOWN, the balance is no longer a monotonic "only ever
+  // climbs" counter like best/totalPlayed/etc. — every change here stamps
+  // state.stats.updatedAt so mergeStatCounters() below can arbitrate two
+  // devices' balances by recency (last write wins) instead of taking the
+  // max, which would silently un-spend gems on whichever device has the
+  // higher pre-spend number. premiumGemsExpiresAt (the gem-purchased
+  // Premium expiry) rides the same updatedAt for the same reason.
+  function addGems(amount){
+    if (!amount) return;
+    state.stats.gems = (state.stats.gems || 0) + amount;
+    state.stats.updatedAt = Date.now();
+    saveStats();
+  }
+  // Returns true if the spend went through (enough gems), false otherwise
+  // — callers should check this before granting whatever gems paid for.
+  function spendGems(amount){
+    if (!amount || (state.stats.gems || 0) < amount) return false;
+    state.stats.gems -= amount;
+    state.stats.updatedAt = Date.now();
+    saveStats();
+    return true;
+  }
+  function renderGemDisplay(){
+    if (els.gemCount) els.gemCount.textContent = String((state.stats && state.stats.gems) || 0);
   }
 
   // --- Cloud progress sync (achievements/objectives/stats) ---------------
@@ -4294,7 +4415,10 @@
         best: state.stats.best || 0,
         totalPlayed: state.stats.totalPlayed || 0,
         fastAnswers: state.stats.fastAnswers || 0,
-        dailyCompletions: state.stats.dailyCompletions || 0
+        dailyCompletions: state.stats.dailyCompletions || 0,
+        gems: state.stats.gems || 0,
+        premiumGemsExpiresAt: state.stats.premiumGemsExpiresAt || 0,
+        updatedAt: state.stats.updatedAt || 0
       }
     };
   }
@@ -4317,6 +4441,15 @@
     ['best', 'totalPlayed', 'fastAnswers', 'dailyCompletions'].forEach(function(k){
       out[k] = Math.max(a[k] || 0, b[k] || 0);
     });
+    // gems and premiumGemsExpiresAt aren't monotonic (gems can now be
+    // spent — see spendGems()) — max() would un-spend gems or restore an
+    // already-lapsed gem-Premium period on whichever side happens to hold
+    // the higher number, so instead take BOTH fields from whichever side's
+    // updatedAt is more recent (last write wins).
+    var newer = (a.updatedAt || 0) >= (b.updatedAt || 0) ? a : b;
+    out.gems = newer.gems || 0;
+    out.premiumGemsExpiresAt = newer.premiumGemsExpiresAt || 0;
+    out.updatedAt = Math.max(a.updatedAt || 0, b.updatedAt || 0);
     return out;
   }
 
@@ -4376,7 +4509,7 @@
         // here would leave the previous account's numbers stuck in memory
         // for a brand-new account with no cloud doc yet. Spell out the
         // zeroed shape explicitly so every synced field actually resets.
-        stats: (cloud && cloud.stats) || { best: 0, totalPlayed: 0, fastAnswers: 0, dailyCompletions: 0 }
+        stats: (cloud && cloud.stats) || { best: 0, totalPlayed: 0, fastAnswers: 0, dailyCompletions: 0, gems: 0, premiumGemsExpiresAt: 0, updatedAt: 0 }
       };
       applyProgressSnapshot(merged);
       try{ localStorage.setItem(LAST_SYNCED_UID_KEY, uid); } catch(e){}
@@ -5078,6 +5211,31 @@
     var email = state.firebaseUser && state.firebaseUser.email;
     return !!(email && COMPED_EMAILS[email.toLowerCase()]);
   }
+
+  // One-time gem gifts for specific accounts (manual admin grants — e.g.
+  // "add 30,000 gems to this account"), matched by email the same way
+  // COMPED_EMAILS is. There's no server here to just write the balance
+  // directly into that account's Firestore doc, so instead the grant is
+  // claimed client-side the moment that email signs in: applyPendingGemGrants()
+  // below runs after syncProgressFromCloud() so it sees any grant another
+  // device already claimed (via the same one-way "objective" flag
+  // mechanism unlockObjective() uses — reused here purely as a durable,
+  // synced, never-re-granted claim marker, not a real gameplay objective;
+  // it deliberately has no OBJECTIVES array entry, so it never renders as
+  // one), which keeps a grant from paying out twice across devices. Remove
+  // an entry once it's been delivered so it can't fire again for that
+  // email on a future edit of this file.
+  var GEM_GRANTS = {
+    'jvvogrinec@gmail.com': { id: 'grant_jvvogrinec_30000', amount: 30000 }
+  };
+  function applyPendingGemGrants(){
+    var email = state.firebaseUser && state.firebaseUser.email;
+    var grant = email && GEM_GRANTS[email.toLowerCase()];
+    if (!grant || isObjectiveUnlocked(grant.id)) return;
+    unlockObjective(grant.id);
+    addGems(grant.amount);
+    showToast('🎁 Gift received!', '+' + grant.amount + ' 💎', '💎');
+  }
   // League is still being built: it stays locked on the menu no matter
   // what — Premium unlock does not open it — and shows a "Coming soon"
   // badge/tag instead of the usual Premium lock messaging.
@@ -5107,6 +5265,11 @@
   });
 
   function isPremiumUnlocked(){
+    // Gem-purchased Premium (see unlockPremium()'s `gems` branch) is a
+    // plain local expiry check, independent of Firebase/Stripe entirely —
+    // it applies the same whether or not the subscription path below is
+    // even available.
+    if ((state.stats.premiumGemsExpiresAt || 0) > Date.now()) return true;
     if (firebaseAvailable) return premiumSubscriptionActive || isCompedAccount();
     try{ return localStorage.getItem(PREMIUM_KEY) === '1'; } catch(e){ return false; }
   }
@@ -5151,8 +5314,11 @@
   // on the paywall — called whenever the paywall opens, and whenever
   // sign-in state or Firebase availability itself changes.
   function renderPaywallEnvironmentNotes(){
-    if (els.paywallPreviewNote) els.paywallPreviewNote.hidden = firebaseAvailable;
-    if (els.paywallSigninRow) els.paywallSigninRow.hidden = !(firebaseAvailable && !state.firebaseUser);
+    // Both notes are about the money plans' checkout path — the `gems`
+    // plan needs neither Firebase nor sign-in, so it never shows them.
+    var isGemsPlan = selectedPlan === 'gems';
+    if (els.paywallPreviewNote) els.paywallPreviewNote.hidden = isGemsPlan || firebaseAvailable;
+    if (els.paywallSigninRow) els.paywallSigninRow.hidden = isGemsPlan || !(firebaseAvailable && !state.firebaseUser);
   }
 
   // Kicks off a real Stripe Checkout for the given plan by writing a
@@ -5359,11 +5525,17 @@
   // Subscription billing (demo): the paywall lets you toggle between the
   // two plans before "buying" — this only changes the price shown, since
   // unlocking is still just the one local flag above regardless of which
-  // plan was picked.
+  // plan was picked. The third "plan", `gems`, isn't billing at all — it
+  // spends the in-game currency for a fixed 1-month grant instead of going
+  // through Stripe (see unlockPremium()'s `gems` branch below), so it
+  // works even offline/signed-out, same as earning gems does.
   var PREMIUM_PLANS = {
     monthly: { price: '€1.99', note: 'per month' },
-    yearly:  { price: '€12.99', note: 'per year' }
+    yearly:  { price: '€12.99', note: 'per year' },
+    gems:    { price: '1500 💎', note: '1 month of Premium' }
   };
+  var GEMS_PREMIUM_COST = 1500;
+  var GEMS_PREMIUM_DURATION_MS = 30 * 24 * 60 * 60 * 1000;
   var selectedPlan = 'yearly';
 
   function renderPaywallPlan(){
@@ -5372,6 +5544,16 @@
     if (els.paywallPlanBtns) els.paywallPlanBtns.forEach(function(btn){
       btn.classList.toggle('active', btn.dataset.plan === selectedPlan);
     });
+    var isGemsPlan = selectedPlan === 'gems';
+    if (els.paywallUnlockBtn) els.paywallUnlockBtn.textContent = isGemsPlan ? 'Redeem 1500 💎 →' : 'Unlock Premium →';
+    if (els.paywallGemsBalance){
+      els.paywallGemsBalance.hidden = !isGemsPlan;
+      if (isGemsPlan) els.paywallGemsBalance.textContent = 'You have ' + (state.stats.gems || 0) + ' 💎';
+    }
+    // Redeeming with gems is pure local currency spend — no Stripe/Firebase
+    // round trip and no sign-in needed — so the billing-only notes below
+    // (which only make sense for the money plans) stay off for this one.
+    renderPaywallEnvironmentNotes();
   }
 
   // Custom keeps its own dedicated setup screen (which already ends in an
@@ -5511,6 +5693,28 @@
 
   function unlockPremium(){
     sfx.click();
+    if (selectedPlan === 'gems'){
+      // Pure local currency spend — no Stripe, no Firebase, no sign-in
+      // required, same as earning gems. Stacks onto any gem-Premium time
+      // already remaining rather than resetting the clock, so redeeming
+      // early never wastes days you already paid for.
+      if (!spendGems(GEMS_PREMIUM_COST)){
+        showPaywallStatus('Not enough gems — you have ' + (state.stats.gems || 0) + ', need ' + GEMS_PREMIUM_COST + '.', true);
+        return;
+      }
+      state.stats.premiumGemsExpiresAt = Math.max(Date.now(), state.stats.premiumGemsExpiresAt || 0) + GEMS_PREMIUM_DURATION_MS;
+      state.stats.updatedAt = Date.now();
+      saveStats();
+      renderMenuCardStates();
+      if (els.paywallScreen) els.paywallScreen.hidden = true;
+      burstConfetti();
+      sfx.best();
+      var gemsMode = pendingUnlockMode;
+      pendingUnlockMode = null;
+      if (gemsMode) launchMode(gemsMode);
+      else openMenu();
+      return;
+    }
     if (!firebaseAvailable){
       // Preview fallback: no real Stripe/Firebase reachable here (see the
       // comment above isPremiumUnlocked), so keep the old instant local
@@ -5810,6 +6014,11 @@
         } else {
           state.points = roundPts(state.points + earned);
           state.sessionCorrect++;
+          // Daily Challenge only: 5 gems per correct answer, on top of the
+          // 200-gem weekly-completion reward (see showResults) — Custom
+          // runs can't reach mode 'daily' (it's not one of the Custom
+          // builder's engine choices), so no extra exemption is needed here.
+          if (state.mode === 'daily') addGems(5);
         }
       }
       if (tracksStreak){
@@ -6189,6 +6398,10 @@
     if (els.menuLink) els.menuLink.hidden = true;
     state.busy = false;
     state.shareText = null;
+    // Only the Daily Challenge branch below turns this back on — reset it
+    // here so a previous daily run's gems hint doesn't linger into some
+    // other mode's results screen.
+    if (els.resultsGemsHint) els.resultsGemsHint.hidden = true;
 
     if (state.mode === 'endless'){
       var survived = state.round - 1;
@@ -6277,6 +6490,17 @@
           saveStats();
           bumpWeeklyObjectiveProgress();
           checkObjectives();
+          // Surface the weekly gems objective right here too, not just in
+          // the Objectives sidebar, since this is the exact moment a run
+          // that counts toward it just finished.
+          var weeklyObjective = OBJECTIVES.filter(function(o){ return o.weekly; })[0];
+          if (els.resultsGemsHint && weeklyObjective){
+            var wProgress = getWeeklyObjectiveProgress();
+            els.resultsGemsHint.textContent = wProgress.completed
+              ? ('💎 This week’s gem reward is earned — nice!')
+              : ('💎 Earn gems — ' + Math.min(wProgress.count, weeklyObjective.target) + '/' + weeklyObjective.target + ' Daily Challenges this week');
+            els.resultsGemsHint.hidden = false;
+          }
         }
       }
     }
@@ -6613,6 +6837,7 @@
     renderMenuCardStates();
     updateScoreboardVisibility();
     renderStats();
+    renderGemDisplay();
     renderAccount();
     waitForGoogleAndInit(25);
 
@@ -6636,7 +6861,13 @@
         // eventually catch up.
         renderMenuCardStates();
         watchPremiumSubscription(fb, user ? user.uid : null);
-        if (user) syncProgressFromCloud(fb, user.uid);
+        // Chained after the cloud merge resolves (rather than fired
+        // alongside it) so a pending gem grant is checked against the
+        // MERGED unlockedObjectives flags, not whatever this device had
+        // before syncing — otherwise the same grant could pay out again
+        // on a second device that hadn't pulled down the first device's
+        // claim yet.
+        if (user) syncProgressFromCloud(fb, user.uid).then(applyPendingGemGrants);
         if (user && state.pendingPremiumCheckout){
           var plan = state.pendingPremiumCheckout;
           state.pendingPremiumCheckout = null;
