@@ -1398,6 +1398,119 @@
 
   /* --- Pregame confirm screen (mode picked, not started yet) ----------- */
   .pregame-screen[hidden]{ display: none; }
+
+  .league-setup-screen[hidden]{ display: none; }
+  .league-variant-grid{
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .league-variant-card{
+    position: relative;
+    background: var(--panel);
+    border: 1px solid var(--steel);
+    border-radius: 14px;
+    padding: 16px 18px;
+    color: inherit;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    text-align: left;
+    transition: border-color 200ms, transform 150ms, background 200ms;
+  }
+  .league-variant-card:hover{ border-color: var(--amber-dim); transform: translateY(-2px); background: var(--panel-hi); }
+  .league-variant-card:focus-visible{ outline: 2px solid var(--amber); outline-offset: 2px; }
+  .league-variant-icon{ font-size: 1.8rem; line-height: 1; }
+  .league-variant-title{
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.05rem;
+    color: var(--text);
+  }
+  .league-variant-tag{
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    line-height: 1.35;
+  }
+
+  .pvp-screen[hidden]{ display: none; }
+  .pvp-lobby-actions[hidden]{ display: none; }
+  .pvp-lobby-actions{ margin-top: 18px; }
+  .pvp-or{
+    text-align: center;
+    font-size: 0.74rem;
+    color: var(--text-dim);
+    margin: 14px 0 8px;
+  }
+  .pvp-join-row{
+    display: flex;
+    gap: 8px;
+  }
+  .pvp-join-row input{
+    flex: 1 1 auto;
+    min-width: 0;
+    background: var(--panel);
+    border: 1px solid var(--steel);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    padding: 10px 12px;
+  }
+  .pvp-join-row input:focus-visible{ outline: 2px solid var(--amber); outline-offset: 1px; }
+  .pvp-join-row input::placeholder{ text-transform: none; letter-spacing: normal; font-weight: 400; }
+  .pvp-code-display{
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 2rem;
+    letter-spacing: 0.12em;
+    text-align: center;
+    color: var(--amber);
+    background: var(--bg-deep);
+    border: 1px solid var(--steel);
+    border-radius: 12px;
+    padding: 14px;
+    margin: 16px 0;
+  }
+  .pvp-countdown-num{
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 4rem;
+    text-align: center;
+    color: var(--amber);
+    margin: 18px 0;
+  }
+  .pvp-opp-status{
+    text-align: center;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--good);
+    margin: 4px 0 0;
+  }
+  .pvp-opp-status[hidden]{ display: none; }
+  .pvp-round-breakdown{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 14px 0;
+    padding: 0;
+    list-style: none;
+  }
+  .pvp-round-row{
+    background: var(--panel);
+    border: 1px solid var(--steel);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+  }
   .pregame-banner{
     display: flex;
     align-items: center;
@@ -2214,11 +2327,19 @@
     </button>
 
     <button class="menu-card menu-card-daily" data-mode="league" type="button">
-      <span class="menu-card-lock-badge" hidden>🔜 Coming soon</span>
+      <span class="menu-card-lock-badge" hidden>🔒 Premium</span>
       <span class="menu-card-icon" aria-hidden="true">🏆</span>
       <span class="menu-card-daily-text">
         <span class="menu-card-title">League</span>
-        <span class="menu-card-tag">The competitive take on 5 Rounds — one run, once a day.</span>
+        <span class="menu-card-tag">One competitive run, once a day — pick Classic or Guess the Weight.</span>
+      </span>
+    </button>
+
+    <button class="menu-card menu-card-daily" data-mode="pvp" type="button">
+      <span class="menu-card-icon" aria-hidden="true">⚔️</span>
+      <span class="menu-card-daily-text">
+        <span class="menu-card-title">PvP Duel</span>
+        <span class="menu-card-tag">Live 1v1 Guess the Weight — invite a friend and race them.</span>
       </span>
     </button>
 
@@ -2351,6 +2472,90 @@
     </div>
   </div>
 
+  <div class="league-setup-screen" id="league-setup-screen" hidden>
+    <button class="menu-link" id="league-setup-back-btn" type="button">← Menu</button>
+    <div class="pregame-banner">
+      <span class="pregame-icon" aria-hidden="true">🏆</span>
+      <p class="custom-title">League</p>
+    </div>
+    <p class="custom-sub">One competitive run, once a day — pick your gamemode.</p>
+
+    <div class="league-variant-grid">
+      <button class="league-variant-card" id="league-variant-classic-btn" data-variant="classic" type="button">
+        <span class="league-variant-icon" aria-hidden="true">🎯</span>
+        <span class="league-variant-title">Classic</span>
+        <span class="league-variant-tag">Compare two items each round — call the heavier one.</span>
+      </button>
+      <button class="league-variant-card" id="league-variant-guess-btn" data-variant="guess" type="button">
+        <span class="league-variant-icon" aria-hidden="true">⚖️</span>
+        <span class="league-variant-title">Guess the Weight</span>
+        <span class="league-variant-tag">One item, no comparison — how close can you get?</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="pvp-screen" id="pvp-screen" hidden>
+    <button class="menu-link" id="pvp-back-btn" type="button">← Menu</button>
+
+    <div id="pvp-lobby">
+      <div class="pregame-banner">
+        <span class="pregame-icon" aria-hidden="true">⚔️</span>
+        <p class="custom-title">PvP Duel</p>
+      </div>
+      <p class="custom-sub">Live 1v1 Guess the Weight — same 5 items, same order, whoever scores more wins.</p>
+
+      <div class="paywall-signin-row" id="pvp-signin-row" hidden>
+        <p class="paywall-signin-text">Sign in with Google to play PvP.</p>
+        <div id="pvp-signin-btn"></div>
+      </div>
+      <p class="paywall-demo-note" id="pvp-preview-note" hidden>PvP needs a live connection — it works on the deployed site, not this preview.</p>
+
+      <div class="pvp-lobby-actions" id="pvp-lobby-actions" hidden>
+        <button class="next" id="pvp-create-btn" type="button">Create a match →</button>
+        <p class="pvp-or">or join one with a code</p>
+        <div class="pvp-join-row">
+          <input type="text" id="pvp-join-code" maxlength="6" placeholder="ENTER CODE" aria-label="Match code">
+          <button class="next secondary" id="pvp-join-btn" type="button">Join</button>
+        </div>
+      </div>
+      <p class="custom-error" id="pvp-lobby-error" hidden></p>
+    </div>
+
+    <div id="pvp-waiting" hidden>
+      <p class="custom-title">Waiting for opponent…</p>
+      <p class="custom-sub">Send this code or link to whoever you're playing:</p>
+      <p class="pvp-code-display" id="pvp-code-display">AB3F9K</p>
+      <div class="controls controls-row">
+        <button class="next secondary" id="pvp-copy-link-btn" type="button">🔗 Copy invite link</button>
+        <button class="next secondary" id="pvp-copy-code-btn" type="button">📋 Copy code</button>
+      </div>
+      <button class="menu-link" id="pvp-cancel-btn" type="button">Cancel match</button>
+    </div>
+
+    <div id="pvp-countdown" hidden>
+      <p class="custom-title">Opponent found!</p>
+      <p class="pvp-countdown-num" id="pvp-countdown-num">3</p>
+    </div>
+
+    <div id="pvp-ended" hidden>
+      <p class="custom-title">Match ended</p>
+      <p class="custom-sub" id="pvp-ended-text">Your opponent left the match.</p>
+      <div class="controls">
+        <button class="next" id="pvp-ended-menu-btn" type="button">Back to menu →</button>
+      </div>
+    </div>
+
+    <div id="pvp-final" hidden>
+      <p class="h2h-results-title" id="pvp-final-title"></p>
+      <p class="h2h-results-sub" id="pvp-final-sub"></p>
+      <ol class="pvp-round-breakdown" id="pvp-round-breakdown"></ol>
+      <div class="controls controls-row">
+        <button class="next" id="pvp-rematch-btn" type="button">New match →</button>
+        <button class="next secondary" id="pvp-menu-btn" type="button">Back to menu</button>
+      </div>
+    </div>
+  </div>
+
   <div class="paywall-screen" id="paywall-screen" hidden>
     <button class="menu-link" id="paywall-back-btn" type="button">← Menu</button>
     <div class="paywall-badge">🔒 Premium</div>
@@ -2416,6 +2621,13 @@
       <span class="h2h-player" id="h2h-p2">Player 2 — <strong id="h2h-p2-pts">0</strong></span>
     </div>
 
+    <div class="h2h-scoreboard" id="pvp-hud" hidden>
+      <span class="h2h-player active" id="pvp-hud-me">You — <strong id="pvp-my-score">0</strong></span>
+      <span class="h2h-vs" id="pvp-hud-round">Round 1/5</span>
+      <span class="h2h-player" id="pvp-hud-opp"><span id="pvp-hud-opp-name">Opponent</span> — <strong id="pvp-opp-score">0</strong></span>
+    </div>
+    <p class="pvp-opp-status" id="pvp-opp-status" hidden>Opponent has answered ✓</p>
+
     <div class="mode-banner">
       <span class="mode-banner-icon" id="mode-banner-icon" aria-hidden="true">🎯</span>
       <span id="mode-banner-title">5 Rounds</span>
@@ -2479,6 +2691,7 @@
             <div class="guess-unit-toggle" id="guess-unit-toggle" role="group" aria-label="Display unit">
               <button type="button" class="guess-unit-btn" id="guess-unit-btn-g" data-unit="g">g</button>
               <button type="button" class="guess-unit-btn" id="guess-unit-btn-kg" data-unit="kg">kg</button>
+              <button type="button" class="guess-unit-btn" id="guess-unit-btn-t" data-unit="t">t</button>
             </div>
           </div>
           <div class="guess-slider-track-wrap">
@@ -3093,14 +3306,17 @@
     zen:        { icon: "🌿", title: "Zen" },
     headtohead: { icon: "🤝", title: "Head-to-Head" },
     league:     { icon: "🏆", title: "League" },
-    guess:      { icon: "⚖️", title: "Guess the Weight" }
+    guess:      { icon: "⚖️", title: "Guess the Weight" },
+    pvp:        { icon: "⚔️", title: "PvP Duel" }
   };
 
-  // League is the competitive take on 5 Rounds: same rules and difficulty
-  // picker, but a single run whose score goes straight to the leaderboard
-  // and only one shot at it per local day. (LEAGUE_ATTEMPTS used to be 3
-  // back-to-back tries added into one combined score; the multi-try
-  // handoff-screen code below still works if this ever goes back up.)
+  // League is the competitive take on either Classic or Guess the Weight
+  // (picked on its own setup screen, see openLeagueSetup()/state.leagueVariant):
+  // same rules and difficulty picker as whichever gamemode was chosen, but a
+  // single run whose score goes straight to the leaderboard and only one shot
+  // at it per local day. (LEAGUE_ATTEMPTS used to be 3 back-to-back tries
+  // added into one combined score; the multi-try handoff-screen code below
+  // still works if this ever goes back up.)
   var LEAGUE_ATTEMPTS = 1;
 
   // Points scale with how much of the round's time was left when you
@@ -3166,22 +3382,35 @@
     return value.toLocaleString('en-US', {maximumFractionDigits: decimals, minimumFractionDigits: decimals}) + ' ' + unit;
   }
 
-  // --- Guess the Weight: pinned g/kg display -----------------------------
+  // --- Guess the Weight: pinned g/kg/t display ----------------------------
   // Separate from the metric/imperial toggle above (which still governs
   // every other weight in the game). The Guess the Weight slider spans 0.1g
-  // to 1,000,000g — seven orders of magnitude — so formatWeight()'s
-  // auto-switching between mg/g/kg/t is exactly what you don't want while
-  // fine-tuning a guess: the unit itself would keep hopping as you cross
-  // each threshold. Pinning it to plain g or kg keeps the number steady.
+  // to 1,000 t (a Statue of Liberty is in the item pool at 204 t) — twelve
+  // orders of magnitude — so formatWeight()'s auto-switching between
+  // mg/g/kg/t is exactly what you don't want while fine-tuning a guess: the
+  // unit itself would keep hopping as you cross each threshold. Pinning it
+  // to plain g, kg or t keeps the number steady.
   var GUESS_UNIT_KEY = 'counterweight_guess_unit';
   function getGuessUnit(){
-    try{ return localStorage.getItem(GUESS_UNIT_KEY) === 'kg' ? 'kg' : 'g'; } catch(e){ return 'g'; }
+    try{
+      var v = localStorage.getItem(GUESS_UNIT_KEY);
+      return (v === 'kg' || v === 't') ? v : 'g';
+    } catch(e){ return 'g'; }
   }
   function setGuessUnit(unit){
     try{ localStorage.setItem(GUESS_UNIT_KEY, unit); } catch(e){}
   }
   function formatGuessWeight(g, unit){
     unit = unit || getGuessUnit();
+    if (unit === 't'){
+      var t = g / 1e6;
+      // Same extra-decimal-tiers treatment as the kg branch below, just
+      // shifted up a scale — a light guess in this slice still ends up
+      // sub-1t (e.g. right at the 1,000,000g floor), so it needs the same
+      // truthful rounding rather than flattening to "0 t".
+      var decimalsT = t % 1 === 0 ? 0 : (t < 0.01 ? 6 : (t < 1 ? 3 : (t < 10 ? 1 : 0)));
+      return t.toLocaleString('en-US', {maximumFractionDigits: decimalsT, minimumFractionDigits: decimalsT}) + ' t';
+    }
     if (unit === 'kg'){
       var kg = g / 1000;
       // Extra decimal tiers for the small end keep a light guess truthful
@@ -3347,17 +3576,21 @@
   // unusable — a log scale means equal drag distance always feels like an
   // equal *proportional* change in weight, at any point on the bar.
   //
-  // The g/kg toggle isn't just a display re-label: each unit owns its own
-  // 3-decade slice of the scale (1 g – 1000 g, or 1 kg – 1000 kg, i.e.
-  // 1000 g – 1,000,000 g), so switching units re-zooms the whole track into
-  // that decade instead of spreading one drag across all 6 decades at once.
-  // Together the two slices cover 1 g to 1000 kg (~1 ton).
+  // The g/kg/t toggle isn't just a display re-label: each unit owns its own
+  // 3-decade slice of the scale (1 g – 1000 g, 1 kg – 1000 kg, or
+  // 1 t – 1000 t, i.e. 1,000,000 g – 1,000,000,000 g), so switching units
+  // re-zooms the whole track into that decade instead of spreading one drag
+  // across all 9 decades at once. Together the three slices cover 1 g to
+  // 1000 t — the pool's heaviest item (Statue of Liberty, 204 t) needs the
+  // t slice to be guessable at all; without it the slider couldn't reach
+  // past 1000 kg and every item heavier than that would be unguessable.
   var GUESS_RANGES = {
     g:  { minG: 1,    maxG: 1000 },
-    kg: { minG: 1000, maxG: 1e6  }
+    kg: { minG: 1000, maxG: 1e6  },
+    t:  { minG: 1e6,  maxG: 1e9  }
   };
-  var GUESS_SLIDER_MIN_G = GUESS_RANGES.g.minG;   // absolute floor, either unit
-  var GUESS_SLIDER_MAX_G = GUESS_RANGES.kg.maxG;  // absolute ceiling, either unit
+  var GUESS_SLIDER_MIN_G = GUESS_RANGES.g.minG;   // absolute floor, any unit
+  var GUESS_SLIDER_MAX_G = GUESS_RANGES.t.maxG;   // absolute ceiling, any unit
 
   function guessRangeFor(unit){
     return GUESS_RANGES[unit] || GUESS_RANGES.g;
@@ -3579,7 +3812,7 @@
     classic:  { key: 'counterweight_lock_classic',  tag: 'The classic run — five pairs, points for speed, then compare your score.' },
     daily:    { key: 'counterweight_lock_daily',    tag: 'Same five pairs as everyone, today only.' },
     endless:  { key: 'counterweight_lock_endless',  tag: 'Keep guessing until you miss one.' },
-    league:   { key: LEAGUE_LAST_PLAYED_KEY,        tag: 'The competitive take on 5 Rounds — one run, once a day.' },
+    league:   { key: LEAGUE_LAST_PLAYED_KEY,        tag: 'One competitive run, once a day — pick Classic or Guess the Weight.' },
     zen:      { key: 'counterweight_lock_zen',      tag: 'No timer, no pressure — just learn.' },
     guess:    { key: 'counterweight_lock_guess',    tag: 'One item, no comparison — how close can you get? Nail it for 5,000 points.' }
   };
@@ -3890,12 +4123,16 @@
 
   // The League sidebar is a standing board (visible on the menu, not tied
   // to any one finished run), so it just shows the current top 5 rather
-  // than highlighting "your" row the way the post-game board does.
+  // than highlighting "your" row the way the post-game board does. Shown
+  // before a gamemode is even picked, so it defaults to the Classic
+  // variant's board (Classic and Guess the Weight score on incomparable
+  // scales — see buildScoreEntry()'s `variant` field — so this can't just
+  // show every League score mixed together).
   var LEAGUE_SIDEBAR_ROWS = 5;
   async function refreshLeagueSidebarBoard(){
     if (!els.leagueLbList) return;
     var myToken = ++state.menuLbToken;
-    var board = await fetchLeaderboard('league');
+    var board = await fetchLeaderboard('league', function(r){ return (r.variant || 'classic') === 'classic'; });
     if (myToken !== state.menuLbToken) return; // menu was left/reopened since
     renderLeaderboardInto(els.leagueLbList, board.rows.slice(0, LEAGUE_SIDEBAR_ROWS), null, 'No League scores yet — be the first.');
   }
@@ -4357,6 +4594,43 @@
     rightPanels: document.getElementById('right-panels'),
     premiumSidebarBtn: document.getElementById('premium-sidebar-btn'),
     leagueLbList: document.getElementById('league-lb-list'),
+    leagueSetupScreen: document.getElementById('league-setup-screen'),
+    leagueSetupBackBtn: document.getElementById('league-setup-back-btn'),
+    leagueVariantClassicBtn: document.getElementById('league-variant-classic-btn'),
+    leagueVariantGuessBtn: document.getElementById('league-variant-guess-btn'),
+    pvpHud: document.getElementById('pvp-hud'),
+    pvpHudOppName: document.getElementById('pvp-hud-opp-name'),
+    pvpMyScore: document.getElementById('pvp-my-score'),
+    pvpOppScore: document.getElementById('pvp-opp-score'),
+    pvpHudRound: document.getElementById('pvp-hud-round'),
+    pvpOppStatus: document.getElementById('pvp-opp-status'),
+    pvpScreen: document.getElementById('pvp-screen'),
+    pvpBackBtn: document.getElementById('pvp-back-btn'),
+    pvpLobby: document.getElementById('pvp-lobby'),
+    pvpSigninRow: document.getElementById('pvp-signin-row'),
+    pvpSigninBtn: document.getElementById('pvp-signin-btn'),
+    pvpPreviewNote: document.getElementById('pvp-preview-note'),
+    pvpLobbyActions: document.getElementById('pvp-lobby-actions'),
+    pvpCreateBtn: document.getElementById('pvp-create-btn'),
+    pvpJoinCode: document.getElementById('pvp-join-code'),
+    pvpJoinBtn: document.getElementById('pvp-join-btn'),
+    pvpLobbyError: document.getElementById('pvp-lobby-error'),
+    pvpWaiting: document.getElementById('pvp-waiting'),
+    pvpCodeDisplay: document.getElementById('pvp-code-display'),
+    pvpCopyLinkBtn: document.getElementById('pvp-copy-link-btn'),
+    pvpCopyCodeBtn: document.getElementById('pvp-copy-code-btn'),
+    pvpCancelBtn: document.getElementById('pvp-cancel-btn'),
+    pvpCountdown: document.getElementById('pvp-countdown'),
+    pvpCountdownNum: document.getElementById('pvp-countdown-num'),
+    pvpEnded: document.getElementById('pvp-ended'),
+    pvpEndedText: document.getElementById('pvp-ended-text'),
+    pvpEndedMenuBtn: document.getElementById('pvp-ended-menu-btn'),
+    pvpFinal: document.getElementById('pvp-final'),
+    pvpFinalTitle: document.getElementById('pvp-final-title'),
+    pvpFinalSub: document.getElementById('pvp-final-sub'),
+    pvpRoundBreakdown: document.getElementById('pvp-round-breakdown'),
+    pvpRematchBtn: document.getElementById('pvp-rematch-btn'),
+    pvpMenuBtn: document.getElementById('pvp-menu-btn'),
     gameInfoBest: document.getElementById('game-info-best'),
     gemCount: document.getElementById('gem-count'),
     leftPanels: document.getElementById('left-panels'),
@@ -4375,6 +4649,7 @@
     guessSliderValue: document.getElementById('guess-slider-value'),
     guessUnitBtnG: document.getElementById('guess-unit-btn-g'),
     guessUnitBtnKg: document.getElementById('guess-unit-btn-kg'),
+    guessUnitBtnT: document.getElementById('guess-unit-btn-t'),
     guessSliderEndMin: document.getElementById('guess-slider-end-min'),
     guessSliderEndMax: document.getElementById('guess-slider-end-max'),
     guessHeatmap: document.getElementById('guess-slider-heatmap'),
@@ -4732,6 +5007,9 @@
       els.h2hP2.classList.toggle('active', state.activePlayer === 2);
       return;
     }
+    // PvP has its own HUD (pvpRenderHud()), driven by the live match/answers
+    // listeners rather than the local round counters every other mode uses.
+    if (state.mode === 'pvp') return;
     if (state.mode === 'zen'){
       els.roundLabel.textContent = 'Seen';
       els.round.textContent = state.round;
@@ -4753,12 +5031,14 @@
   }
 
   // Shows the readout that fits the current mode: the normal four-stat
-  // strip for everything except Head-to-Head, which gets its own
-  // two-player scoreboard instead.
+  // strip for everything except Head-to-Head and PvP, which each get their
+  // own scoreboard instead.
   function updateScoreboardVisibility(){
     var isH2H = state.mode === 'headtohead';
-    if (els.readout) els.readout.hidden = isH2H;
+    var isPvp = state.mode === 'pvp';
+    if (els.readout) els.readout.hidden = isH2H || isPvp;
     if (els.h2hScoreboard) els.h2hScoreboard.hidden = !isH2H;
+    if (els.pvpHud) els.pvpHud.hidden = !isPvp;
   }
 
   // The `hidden` IDL property doesn't reflect to the content attribute on
@@ -4871,8 +5151,8 @@
     els.guessSliderValue.textContent = formatGuessWeight(g);
   }
 
-  // Keeps the g/kg toggle buttons' active state and the two track-end
-  // labels (currently "0.1 g"/"1 ton"-style hints) in sync with whichever
+  // Keeps the g/kg/t toggle buttons' active state and the two track-end
+  // labels (currently "1 g"/"1000 g"-style hints) in sync with whichever
   // unit is pinned. Called on load, each new round, and right after a
   // toggle click so everything on screen agrees immediately.
   function renderGuessUnitToggle(){
@@ -4880,11 +5160,12 @@
     var range = guessRangeFor(unit);
     if (els.guessUnitBtnG) els.guessUnitBtnG.classList.toggle('is-active', unit === 'g');
     if (els.guessUnitBtnKg) els.guessUnitBtnKg.classList.toggle('is-active', unit === 'kg');
+    if (els.guessUnitBtnT) els.guessUnitBtnT.classList.toggle('is-active', unit === 't');
     if (els.guessSliderEndMin) els.guessSliderEndMin.textContent = formatGuessWeight(range.minG, unit);
     if (els.guessSliderEndMax) els.guessSliderEndMax.textContent = formatGuessWeight(range.maxG, unit);
   }
 
-  // Shared by submitGuess() and the g/kg toggle handler, so switching units
+  // Shared by submitGuess() and the g/kg/t toggle handlers, so switching units
   // after already answering re-words the same sentence in the new unit
   // instead of leaving it stuck in whichever was picked at submit time.
   function renderGuessFeedbackActual(actualG, guessG, isNatural){
@@ -4895,7 +5176,7 @@
   }
 
   // Re-renders whatever's currently on screen in the guess panel after the
-  // g/kg toggle changes: the live slider label pre-answer, or the reveal
+  // g/kg/t toggle changes: the live slider label pre-answer, or the reveal
   // sentence post-answer — never both, since only one is visible at a time.
   // The toggle also re-zooms the track into the new unit's decade, so this
   // carries the current guess across into that decade (clamped, if it
@@ -4970,8 +5251,6 @@
     var actualG = state.guessItem ? state.guessItem.g : 0;
     var tier = guessTierFor(guessG, actualG, isNatural);
     var pts = tier.points;
-    state.points += pts;
-    state.roundLog.push({ points: pts });
 
     els.guessSlider.disabled = true;
     if (els.guessSubmitBtn) els.guessSubmitBtn.disabled = true;
@@ -4985,11 +5264,608 @@
         els.guessFeedbackPoints.className = 'guess-feedback-points ' + tier.cls;
       }
     }
-    renderStats();
     if (pts > 0) sfx.correct(); else sfx.wrong();
+
+    // PvP owns its own scoring/advance flow (see pvpSubmitAnswer below) —
+    // there's no single-player run total or "Next round" button to drive
+    // here, so it branches off before touching either.
+    if (state.mode === 'pvp'){
+      state.busy = false;
+      pvpSubmitAnswer(guessG, pts);
+      return;
+    }
+
+    state.points += pts;
+    state.roundLog.push({ points: pts });
+    renderStats();
     els.next.hidden = false;
     els.next.textContent = state.round < ROUNDS ? 'Next round →' : 'See results →';
     state.busy = false;
+  }
+
+  // --- PvP Duel: live 1v1 Guess the Weight -------------------------------
+  // Counterweight is a static page with Firestore already wired up for the
+  // leaderboards/cloud sync above — there's no separate game server, so a
+  // live match is just one Firestore document both players watch with
+  // onSnapshot rather than anything socket-based:
+  //
+  //   matches/{code}                one doc per match: who's in it, its
+  //                                 status (waiting -> active -> finished,
+  //                                 or abandoned), the 5 shared items (so
+  //                                 both players see the exact same thing
+  //                                 in the exact same order), and the
+  //                                 current round number.
+  //   matches/{code}/answers/{id}   one doc per (round, player) — each
+  //                                 player only ever writes their own, so
+  //                                 two guesses can never collide or
+  //                                 overwrite each other.
+  //
+  // Neither client is a "server": whichever client's answers-listener first
+  // notices BOTH of a round's answer docs exist computes the exact same
+  // next round number (or finished status) and writes it — a harmless race
+  // if both clients do it at once, since it's the same fixed value either
+  // way, not a relative increment. See the Firestore security rules this
+  // needs, given separately.
+  //
+  // This is deliberately honor-system, not hardened: match.items and the
+  // answers subcollection are both readable by either participant, so a
+  // determined player could peek at devtools before answering. Fine for a
+  // casual duel with nothing but bragging rights on the line.
+  var PVP_ROUNDS = ROUNDS;
+  var PVP_ROUND_SECONDS = 20;
+  var PVP_REVEAL_MS = 3200;
+  var PVP_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I — easy to read back off a screen
+  var PVP_STALE_MS = PVP_ROUND_SECONDS * 1000 * 3; // "opponent seems to be away" grace period
+
+  // Non-null for as long as any PvP screen (lobby through final results) is
+  // open — cleared by pvpCleanup(). Ephemeral connection/session state, not
+  // part of `state`, same reasoning as pregameMode/selectedPlan above.
+  var pvp = null;
+
+  function pvpGenerateCode(){
+    var s = '';
+    for (var i = 0; i < 6; i++) s += PVP_CODE_CHARS[Math.floor(Math.random() * PVP_CODE_CHARS.length)];
+    return s;
+  }
+
+  // 5 items, shared by both players, picked once by the host and stored
+  // straight on the match doc — the rare "Your mama" easter egg is excluded
+  // since its spawn odds are a single-player flourish, not something that
+  // belongs in a scored 1v1.
+  function pvpPickItems(){
+    var pool = ITEMS.filter(function(it){ return isFinite(it.g) && it.g > 0 && !it.rareChance; });
+    var picks = [], usedIdx = [];
+    while (picks.length < PVP_ROUNDS && usedIdx.length < pool.length){
+      var idx = Math.floor(Math.random() * pool.length);
+      if (usedIdx.indexOf(idx) !== -1) continue;
+      usedIdx.push(idx);
+      var it = pool[idx];
+      picks.push({ name: it.name, emoji: it.emoji, g: it.g, natural: !!it.natural });
+    }
+    return picks;
+  }
+
+  function pvpShowLobbyError(msg){
+    if (!els.pvpLobbyError) return;
+    els.pvpLobbyError.textContent = msg || '';
+    els.pvpLobbyError.hidden = !msg;
+  }
+
+  // Reads back whatever the current URL's ?match= param says (from a
+  // shared invite link) into the join-code field, so opening a friend's
+  // link lands you one tap away from joining rather than needing to retype
+  // a 6-character code by hand.
+  function pvpCheckUrlJoinCode(){
+    try{
+      var params = new URLSearchParams(window.location.search);
+      var code = params.get('match');
+      if (code && els.pvpJoinCode) els.pvpJoinCode.value = code.toUpperCase().slice(0, 6);
+    } catch(e){}
+  }
+
+  // Sign-in and live-connection gating for the lobby screen: PvP needs both
+  // a real Firestore connection (unavailable in a Claude Artifact preview —
+  // see firebaseAppPromise above) and a signed-in Google account (a match
+  // has to be tied to two real identities, same reasoning as leaderboard
+  // submission). Called on open and again on every auth-state change.
+  function pvpRenderLobbyGate(){
+    var signedIn = !!state.firebaseUser;
+    var unavailable = !firebaseAvailable;
+    if (els.pvpPreviewNote) els.pvpPreviewNote.hidden = !unavailable;
+    if (els.pvpSigninRow) els.pvpSigninRow.hidden = unavailable || signedIn;
+    if (els.pvpLobbyActions) els.pvpLobbyActions.hidden = unavailable || !signedIn;
+  }
+
+  function pvpShowSub(which){
+    ['pvpLobby', 'pvpWaiting', 'pvpCountdown', 'pvpEnded', 'pvpFinal'].forEach(function(key){
+      if (els[key]) els[key].hidden = key !== which;
+    });
+    // The top "← Menu" link only makes sense while nothing's committed yet
+    // (browsing, or waiting solo for an opponent) — the countdown/final/
+    // ended sub-views each have their own explicit way back instead.
+    if (els.pvpBackBtn) els.pvpBackBtn.hidden = (which !== 'pvpLobby' && which !== 'pvpWaiting');
+  }
+
+  function openPvpLobby(){
+    sfx.click();
+    pvpShowLobbyError('');
+    els.menuScreen.hidden = true;
+    if (els.customScreen) els.customScreen.hidden = true;
+    if (els.leagueSetupScreen) els.leagueSetupScreen.hidden = true;
+    if (els.pregameScreen) els.pregameScreen.hidden = true;
+    if (els.paywallScreen) els.paywallScreen.hidden = true;
+    if (els.pvpScreen) els.pvpScreen.hidden = false;
+    pvpShowSub('pvpLobby');
+    if (els.menuLink) els.menuLink.hidden = true;
+    if (els.premiumSidebar) els.premiumSidebar.hidden = true;
+    if (els.leftPanels) els.leftPanels.hidden = true;
+    if (els.rightPanels) els.rightPanels.hidden = true;
+    pvpCheckUrlJoinCode();
+    pvpRenderLobbyGate();
+  }
+
+  function pvpShowWaiting(code){
+    pvpShowSub('pvpWaiting');
+    if (els.pvpCodeDisplay) els.pvpCodeDisplay.textContent = code;
+  }
+
+  function pvpCreateMatch(){
+    sfx.click();
+    pvpShowLobbyError('');
+    var user = state.firebaseUser;
+    if (!firebaseAvailable || !user) return; // the gate above should already prevent this
+    dbPromise.then(function(db){
+      if (!db){ pvpShowLobbyError("Couldn't reach the server — try again."); return; }
+      (function attempt(triesLeft){
+        var code = pvpGenerateCode();
+        var ref = db.collection('matches').doc(code);
+        ref.get().then(function(snap){
+          if (snap.exists){
+            if (triesLeft > 0) return attempt(triesLeft - 1);
+            pvpShowLobbyError("Couldn't create a match — try again.");
+            return;
+          }
+          var items = pvpPickItems();
+          var myName = firebaseDisplayName() || 'Player';
+          ref.set({
+            code: code,
+            hostUid: user.uid, hostName: myName,
+            guestUid: null, guestName: null,
+            status: 'waiting',
+            items: items,
+            round: 1,
+            createdAt: Date.now(), updatedAt: Date.now()
+          }).then(function(){
+            pvp = {
+              matchId: code, role: 'host', myUid: user.uid, myName: myName,
+              oppUid: null, oppName: null, items: items, round: 1, match: null,
+              phase: 'waiting', answersByRound: {}, revealedRounds: {},
+              oppAnsweredShown: false, matchUnsub: null, answersUnsub: null,
+              roundTimerId: null
+            };
+            pvpSubscribeMatch(db);
+            pvpSubscribeAnswers(db);
+            pvpShowWaiting(code);
+            logEvent('pvp_create', {});
+          }).catch(function(){ pvpShowLobbyError("Couldn't create a match — try again."); });
+        }).catch(function(){ pvpShowLobbyError("Couldn't reach the server — try again."); });
+      })(4);
+    });
+  }
+
+  function pvpJoinMatch(codeRaw){
+    sfx.click();
+    pvpShowLobbyError('');
+    var code = String(codeRaw || '').trim().toUpperCase();
+    if (!code){ pvpShowLobbyError('Enter a match code.'); return; }
+    var user = state.firebaseUser;
+    if (!firebaseAvailable || !user) return;
+    dbPromise.then(function(db){
+      if (!db){ pvpShowLobbyError("Couldn't reach the server — try again."); return; }
+      var ref = db.collection('matches').doc(code);
+      ref.get().then(function(snap){
+        if (!snap.exists){ pvpShowLobbyError('No match found with that code.'); return; }
+        var data = snap.data();
+        if (data.hostUid === user.uid){ pvpShowLobbyError("That's your own match — send the code to a friend instead."); return; }
+        if (data.status !== 'waiting' || data.guestUid){ pvpShowLobbyError('That match already started or ended.'); return; }
+        var myName = firebaseDisplayName() || 'Player';
+        ref.update({ guestUid: user.uid, guestName: myName, status: 'active', round: 1, updatedAt: Date.now() }).then(function(){
+          pvp = {
+            matchId: code, role: 'guest', myUid: user.uid, myName: myName,
+            oppUid: data.hostUid, oppName: data.hostName || 'Opponent', items: data.items, round: 1, match: null,
+            phase: 'lobby', answersByRound: {}, revealedRounds: {},
+            oppAnsweredShown: false, matchUnsub: null, answersUnsub: null,
+            roundTimerId: null
+          };
+          pvpSubscribeMatch(db);
+          pvpSubscribeAnswers(db);
+          logEvent('pvp_join', {});
+        }).catch(function(){ pvpShowLobbyError("Couldn't join — try again."); });
+      }).catch(function(){ pvpShowLobbyError("Couldn't reach the server — try again."); });
+    });
+  }
+
+  function pvpSubscribeMatch(db){
+    if (pvp.matchUnsub) pvp.matchUnsub();
+    pvp.matchUnsub = db.collection('matches').doc(pvp.matchId).onSnapshot(function(snap){
+      if (!pvp) return; // cleaned up while this snapshot was in flight
+      var data = snap.data();
+      if (!data){ pvpShowEnded('This match no longer exists.'); return; }
+      pvp.match = data;
+      pvp.items = data.items || pvp.items;
+      pvp.oppUid = pvp.role === 'host' ? data.guestUid : data.hostUid;
+      pvp.oppName = pvp.role === 'host' ? (data.guestName || 'Opponent') : (data.hostName || 'Opponent');
+      if (els.pvpHudOppName) els.pvpHudOppName.textContent = pvp.oppName;
+
+      if (data.status === 'abandoned'){ pvpShowEnded('Your opponent left the match.'); return; }
+      if (data.status === 'waiting') return; // host still alone in the waiting room
+
+      if (data.status === 'active'){
+        if (pvp.phase === 'lobby' || pvp.phase === 'waiting'){
+          pvp.phase = 'countdown';
+          pvp.round = data.round || 1;
+          pvpStartCountdown();
+        } else if (data.round && data.round !== pvp.round){
+          pvp.round = data.round;
+          pvpBeginRound(pvp.round);
+        }
+        return;
+      }
+      if (data.status === 'finished' && pvp.phase !== 'final'){
+        pvp.phase = 'final';
+        pvpShowFinal();
+      }
+    }, function(){ pvpShowEnded('Lost connection to the match.'); });
+  }
+
+  function pvpSubscribeAnswers(db){
+    if (pvp.answersUnsub) pvp.answersUnsub();
+    pvp.answersUnsub = db.collection('matches').doc(pvp.matchId).collection('answers')
+      .onSnapshot(function(snap){
+        if (!pvp) return;
+        var byRound = {};
+        snap.forEach(function(doc){
+          var d = doc.data();
+          byRound[d.round] = byRound[d.round] || {};
+          byRound[d.round][d.uid] = d;
+        });
+        pvp.answersByRound = byRound;
+        pvpCheckRoundProgress();
+      }, function(){ /* ignore — stays at last-known state, same pattern watchPremiumSubscription uses */ });
+  }
+
+  // Sums every completed round's points per player straight from the
+  // answers already cached by pvpSubscribeAnswers — no running score field
+  // on the match doc to keep in sync, just derive it from the one source
+  // of truth every time it's needed.
+  function pvpComputeScores(){
+    var my = 0, opp = 0;
+    var byRound = (pvp && pvp.answersByRound) || {};
+    Object.keys(byRound).forEach(function(r){
+      var round = byRound[r];
+      if (round[pvp.myUid]) my += round[pvp.myUid].points || 0;
+      if (pvp.oppUid && round[pvp.oppUid]) opp += round[pvp.oppUid].points || 0;
+    });
+    return { my: my, opp: opp };
+  }
+
+  function pvpRenderHud(){
+    if (!pvp) return;
+    var scores = pvpComputeScores();
+    if (els.pvpMyScore) els.pvpMyScore.textContent = String(scores.my);
+    if (els.pvpOppScore) els.pvpOppScore.textContent = String(scores.opp);
+    if (els.pvpHudRound) els.pvpHudRound.textContent = 'Round ' + pvp.round + '/' + PVP_ROUNDS;
+    if (els.pvpOppStatus) els.pvpOppStatus.hidden = !pvp.oppAnsweredShown;
+  }
+
+  // Fires on every answers-subcollection update: flips on the "Opponent has
+  // answered ✓" pill the instant their doc lands (without ever showing what
+  // they guessed), and once BOTH of the current round's docs exist, reveals
+  // it — exactly once per round per client, guarded by revealedRounds.
+  function pvpCheckRoundProgress(){
+    if (!pvp || state.mode !== 'pvp') return;
+    var round = pvp.round;
+    var mine = pvp.answersByRound[round] && pvp.answersByRound[round][pvp.myUid];
+    var theirs = pvp.oppUid && pvp.answersByRound[round] && pvp.answersByRound[round][pvp.oppUid];
+    if (theirs && !pvp.oppAnsweredShown){
+      pvp.oppAnsweredShown = true;
+      if (els.pvpOppStatus) els.pvpOppStatus.hidden = false;
+    }
+    if (mine && theirs && !pvp.revealedRounds[round]){
+      pvp.revealedRounds[round] = true;
+      pvpRevealRound();
+    }
+  }
+
+  function pvpRevealRound(){
+    pvpClearTimer();
+    pvpRenderHud();
+    var scores = pvpComputeScores();
+    sfx.results(scores.my >= scores.opp);
+    var isLast = pvp.round >= PVP_ROUNDS;
+    setTimeout(function(){
+      if (!pvp) return;
+      if (isLast) pvpFinishMatchIfNeeded();
+      else pvpAdvanceRoundIfNeeded();
+    }, PVP_REVEAL_MS);
+  }
+
+  // Either client can write these — see the big comment at the top of this
+  // section on why that's safe: the target round/status is the exact same
+  // fixed value no matter which client's write actually lands.
+  function pvpAdvanceRoundIfNeeded(){
+    if (!pvp) return;
+    var matchId = pvp.matchId;
+    var nextRound = pvp.round + 1;
+    dbPromise.then(function(db){
+      if (!db) return;
+      db.collection('matches').doc(matchId).update({ round: nextRound, updatedAt: Date.now() }).catch(function(){});
+    });
+  }
+
+  function pvpFinishMatchIfNeeded(){
+    if (!pvp) return;
+    var matchId = pvp.matchId;
+    dbPromise.then(function(db){
+      if (!db) return;
+      db.collection('matches').doc(matchId).update({ status: 'finished', updatedAt: Date.now() }).catch(function(){});
+    });
+  }
+
+  function pvpStartCountdown(){
+    if (els.pvpScreen) els.pvpScreen.hidden = false;
+    pvpShowSub('pvpCountdown');
+    var n = 3;
+    if (els.pvpCountdownNum) els.pvpCountdownNum.textContent = String(n);
+    sfx.click();
+    var iv = setInterval(function(){
+      if (!pvp){ clearInterval(iv); return; }
+      n--;
+      if (n <= 0){
+        clearInterval(iv);
+        pvpEnterGameArea();
+        pvpBeginRound(pvp.round);
+        return;
+      }
+      if (els.pvpCountdownNum) els.pvpCountdownNum.textContent = String(n);
+      sfx.click();
+    }, 800);
+  }
+
+  function pvpEnterGameArea(){
+    state.mode = 'pvp';
+    renderMode();
+    updateScoreboardVisibility();
+    if (els.pvpScreen) els.pvpScreen.hidden = true;
+    els.menuScreen.hidden = true;
+    if (els.customScreen) els.customScreen.hidden = true;
+    if (els.leagueSetupScreen) els.leagueSetupScreen.hidden = true;
+    if (els.paywallScreen) els.paywallScreen.hidden = true;
+    if (els.pregameScreen) els.pregameScreen.hidden = true;
+    els.gameArea.hidden = false;
+    if (els.menuLink) els.menuLink.hidden = false;
+    if (els.premiumSidebar) els.premiumSidebar.hidden = true;
+    if (els.leftPanels) els.leftPanels.hidden = true;
+    if (els.rightPanels) els.rightPanels.hidden = true;
+    if (els.pvpHudOppName) els.pvpHudOppName.textContent = pvp.oppName || 'Opponent';
+  }
+
+  // Sets up one PvP round's guess-panel UI — deliberately mirrors
+  // newGuessRound() above (same slider reset, same item badge, same
+  // heatmap/feedback reset) but takes the round's item from the match's
+  // shared list instead of picking a random one, and never touches
+  // els.next — PvP drives round-to-round advancement itself (see
+  // pvpRevealRound), not the shared Next-round button.
+  function pvpStartRound(item){
+    showGuessBay();
+    state.busy = false;
+    state.answered = false;
+    state.guessItem = item;
+    state.guessValueG = null;
+    if (els.next) els.next.hidden = true;
+
+    if (item && els.guessItemEmoji && els.guessItemName){
+      var badgeInner = escapeHtml(item.emoji);
+      els.guessItemEmoji.innerHTML = badgeInner;
+      els.guessItemName.innerHTML = displayNameHtml(item);
+    }
+    if (els.guessSlider){
+      els.guessSlider.disabled = false;
+      var guessUnit = getGuessUnit();
+      applyGuessSliderRange(guessUnit);
+      var guessRange = guessRangeFor(guessUnit);
+      var midLog = (Math.log10(guessRange.minG) + Math.log10(guessRange.maxG)) / 2;
+      els.guessSlider.value = String(midLog);
+    }
+    renderGuessSliderValue();
+    renderGuessUnitToggle();
+    resetGuessHeatmap();
+    if (els.guessSubmitBtn) els.guessSubmitBtn.disabled = false;
+    if (els.guessSliderRow) els.guessSliderRow.hidden = false;
+    if (els.guessFeedback) els.guessFeedback.hidden = true;
+    if (els.guessSlider){
+      setTimeout(function(){ els.guessSlider.focus(); }, 50);
+    }
+  }
+
+  function pvpBeginRound(round){
+    pvp.round = round;
+    pvp.oppAnsweredShown = false;
+    if (els.pvpOppStatus) els.pvpOppStatus.hidden = true;
+    pvpStartRound(pvp.items[round - 1]);
+    pvpRenderHud();
+    pvpStartTimer();
+    pvpCheckRoundProgress(); // in case the opponent's answer already arrived
+  }
+
+  function pvpClearTimer(){
+    if (pvp && pvp.roundTimerId){ cancelAnimationFrame(pvp.roundTimerId); pvp.roundTimerId = null; }
+  }
+
+  // A local, per-client countdown (not synced off a shared timestamp — for
+  // a casual duel, both clients starting their own clock the moment they
+  // enter the round is close enough) so a slow answerer doesn't stall the
+  // match forever: at zero, auto-submits a zero-point non-answer for
+  // whichever client's own timer expired, mirroring the classic modes'
+  // finishRound(null) timeout convention.
+  function pvpStartTimer(){
+    pvpClearTimer();
+    if (!pvp) return;
+    var totalMs = PVP_ROUND_SECONDS * 1000;
+    var startTime = performance.now();
+    if (els.timerRow) els.timerRow.hidden = false;
+    if (els.timerBonusMark) els.timerBonusMark.hidden = true;
+    if (els.timerBonusMark2) els.timerBonusMark2.hidden = true;
+    function tick(now){
+      if (!pvp) return;
+      var elapsedMs = now - startTime;
+      var frac = Math.min(elapsedMs / totalMs, 1);
+      var r = Math.round(TIMER_GOOD[0] + (TIMER_BAD[0] - TIMER_GOOD[0]) * frac);
+      var g = Math.round(TIMER_GOOD[1] + (TIMER_BAD[1] - TIMER_GOOD[1]) * frac);
+      var b = Math.round(TIMER_GOOD[2] + (TIMER_BAD[2] - TIMER_GOOD[2]) * frac);
+      var color = 'rgb(' + r + ',' + g + ',' + b + ')';
+      if (els.timerFill){ els.timerFill.style.width = ((1 - frac) * 100) + '%'; els.timerFill.style.backgroundColor = color; }
+      if (els.timerNum){ els.timerNum.style.color = color; els.timerNum.textContent = Math.max(Math.ceil(PVP_ROUND_SECONDS - elapsedMs / 1000), 0); }
+      if (frac >= 1){
+        pvp.roundTimerId = null;
+        pvpHandleTimeout();
+        return;
+      }
+      pvp.roundTimerId = requestAnimationFrame(tick);
+    }
+    pvp.roundTimerId = requestAnimationFrame(tick);
+  }
+
+  function pvpHandleTimeout(){
+    if (!pvp || state.mode !== 'pvp' || state.answered) return;
+    state.answered = true;
+    state.busy = false;
+    if (els.guessSlider) els.guessSlider.disabled = true;
+    if (els.guessSubmitBtn) els.guessSubmitBtn.disabled = true;
+    if (els.guessFeedback){
+      els.guessFeedback.hidden = false;
+      if (els.guessFeedbackActual) els.guessFeedbackActual.textContent = "Time's up — no guess submitted.";
+      if (els.guessFeedbackPoints){
+        els.guessFeedbackPoints.textContent = '+0 pts — Too slow';
+        els.guessFeedbackPoints.className = 'guess-feedback-points tier-red';
+      }
+    }
+    sfx.wrong();
+    pvpSubmitAnswer(null, 0);
+  }
+
+  function pvpSubmitAnswer(guessG, pts){
+    if (!pvp) return;
+    pvpClearTimer();
+    var round = pvp.round;
+    var myUid = pvp.myUid;
+    var matchId = pvp.matchId;
+    dbPromise.then(function(db){
+      if (!db) return;
+      db.collection('matches').doc(matchId).collection('answers').doc('r' + round + '_' + myUid).set({
+        uid: myUid, round: round, guessG: (guessG == null ? null : guessG), points: pts, submittedAt: Date.now()
+      }).catch(function(){ /* best-effort — the round's own timer already ran out for me, and there's no way to retry a rejected write here without risking a duplicate; honor-system scope, same as the rest of PvP */ });
+    });
+    pvpRenderHud();
+  }
+
+  function pvpShowFinal(){
+    pvpClearTimer();
+    if (els.gameArea) els.gameArea.hidden = true;
+    if (els.pvpHud) els.pvpHud.hidden = true;
+    if (els.menuLink) els.menuLink.hidden = true;
+    if (els.pvpScreen) els.pvpScreen.hidden = false;
+    pvpShowSub('pvpFinal');
+
+    var scores = pvpComputeScores();
+    var tied = scores.my === scores.opp;
+    var iWon = scores.my > scores.opp;
+    var oppName = pvp.oppName || 'Opponent';
+    if (els.pvpFinalTitle) els.pvpFinalTitle.textContent = tied ? "It's a tie!" : (iWon ? 'You won! 🎉' : oppName + ' won.');
+    if (els.pvpFinalSub) els.pvpFinalSub.textContent = 'You: ' + scores.my + ' pts · ' + oppName + ': ' + scores.opp + ' pts';
+    sfx.results(iWon || tied);
+    if (iWon) burstConfetti();
+
+    if (els.pvpRoundBreakdown){
+      els.pvpRoundBreakdown.innerHTML = '';
+      for (var r = 1; r <= PVP_ROUNDS; r++){
+        var round = pvp.answersByRound[r];
+        var mine = round && round[pvp.myUid];
+        var theirs = round && pvp.oppUid && round[pvp.oppUid];
+        var item = pvp.items[r - 1];
+        var li = document.createElement('li');
+        li.className = 'pvp-round-row';
+        li.textContent = 'Round ' + r + ' — ' + item.emoji + ' ' + item.name + ': you ' +
+          (mine ? mine.points : 0) + ' pts · ' + oppName + ' ' + (theirs ? theirs.points : 0) + ' pts';
+        els.pvpRoundBreakdown.appendChild(li);
+      }
+    }
+  }
+
+  function pvpShowEnded(text){
+    pvpClearTimer();
+    if (els.gameArea) els.gameArea.hidden = true;
+    if (els.pvpHud) els.pvpHud.hidden = true;
+    if (els.menuLink) els.menuLink.hidden = true;
+    if (els.pvpScreen) els.pvpScreen.hidden = false;
+    pvpShowSub('pvpEnded');
+    if (els.pvpEndedText) els.pvpEndedText.textContent = text;
+    // Stop listening — there's nothing more for either subscription to
+    // tell us once the match is over, but `pvp` itself stays around a
+    // little longer so the "Back to menu" tap below still has a matchId
+    // (harmless if it's used again — pvpMarkAbandoned() is a no-op past
+    // this point) rather than throwing on a null reference.
+    if (pvp){
+      if (pvp.matchUnsub) pvp.matchUnsub();
+      if (pvp.answersUnsub) pvp.answersUnsub();
+      pvp.matchUnsub = null; pvp.answersUnsub = null;
+    }
+  }
+
+  // Only actually writes when the match is still live — a tap on "Back to
+  // menu" from the final-results or already-ended screens should never
+  // relabel a finished match as abandoned.
+  function pvpMarkAbandoned(){
+    if (!pvp || !pvp.matchId) return Promise.resolve();
+    if (pvp.match && (pvp.match.status === 'finished' || pvp.match.status === 'abandoned')) return Promise.resolve();
+    var matchId = pvp.matchId;
+    return dbPromise.then(function(db){
+      if (!db) return;
+      return db.collection('matches').doc(matchId).update({ status: 'abandoned', updatedAt: Date.now() }).catch(function(){});
+    });
+  }
+
+  function pvpCleanup(){
+    if (pvp){
+      if (pvp.matchUnsub) pvp.matchUnsub();
+      if (pvp.answersUnsub) pvp.answersUnsub();
+    }
+    pvpClearTimer();
+    pvp = null;
+    if (els.pvpHud) els.pvpHud.hidden = true;
+    if (els.pvpOppStatus) els.pvpOppStatus.hidden = true;
+    if (els.timerRow) els.timerRow.hidden = true;
+  }
+
+  // The mid-round "☰ Menu" escape hatch, when a live match is in progress —
+  // see handleAbandonLeaveClick below for how it's wired to the shared
+  // abandon-confirm overlay instead of a separate dialog.
+  function pvpAbandonMatch(){
+    sfx.click();
+    closeAbandonConfirm();
+    pvpMarkAbandoned();
+    pvpCleanup();
+    openMenu();
+  }
+
+  // Backing out of the lobby/waiting screens before (or instead of) a real
+  // round ever starts — pvpMarkAbandoned() no-ops harmlessly if `pvp` was
+  // never actually created yet (browsing the lobby with no match).
+  function pvpLeaveMatch(){
+    sfx.click();
+    pvpMarkAbandoned();
+    pvpCleanup();
+    openMenu();
   }
 
   // Bar/number colors, matching --good and --bad — interpolated by hand
@@ -5157,7 +6033,7 @@
     if (state.mode === 'league'){ state.leagueAttempt = 1; state.leagueTotal = 0; state.leagueCorrectTotal = 0; }
     if (state.mode === 'daily') dailyRng = mulberry32(dailySeed());
     if (state.mode === 'timeattack') startGlobalTimer();
-    if (state.mode === 'guess'){ newGuessRound(); return; }
+    if (state.mode === 'guess' || (state.mode === 'league' && state.leagueVariant === 'guess')){ newGuessRound(); return; }
     newRound();
   }
 
@@ -5172,9 +6048,10 @@
     state.streak = 0;
     state.wrongStreak = 0;
     state.usedPairs = [];
+    state.usedGuessItems = [];
     state.roundLog = [];
     if (els.leagueHandoff) els.leagueHandoff.hidden = true;
-    newRound();
+    if (state.leagueVariant === 'guess') newGuessRound(); else newRound();
   }
 
   function showLeagueAttemptComplete(){
@@ -5187,7 +6064,9 @@
     state.busy = false;
     if (!els.leagueHandoff) return;
     els.leagueHandoff.hidden = false;
-    var maxPoints = roundPts(ROUNDS * MAX_ROUND_POINTS * currentPointsMult());
+    var maxPoints = state.leagueVariant === 'guess'
+      ? (GUESS_MAX_POINTS * ROUNDS)
+      : roundPts(ROUNDS * MAX_ROUND_POINTS * currentPointsMult());
     if (els.leagueHandoffTitle) els.leagueHandoffTitle.textContent = 'Try ' + state.leagueAttempt + ' of ' + LEAGUE_ATTEMPTS + ' complete';
     if (els.leagueHandoffSub){
       els.leagueHandoffSub.textContent =
@@ -5245,12 +6124,47 @@
     els.menuScreen.hidden = false;
     els.gameArea.hidden = true;
     if (els.customScreen) els.customScreen.hidden = true;
+    if (els.leagueSetupScreen) els.leagueSetupScreen.hidden = true;
+    if (els.pvpScreen) els.pvpScreen.hidden = true;
     if (els.paywallScreen) els.paywallScreen.hidden = true;
     if (els.pregameScreen) els.pregameScreen.hidden = true;
     if (els.menuLink) els.menuLink.hidden = true;
     renderMenuCardStates();
     refreshLeagueSidebarBoard();
     renderGameInfoPanel();
+  }
+
+  // --- League gamemode picker --------------------------------------------
+  // League itself isn't a gameplay engine — it's a "one competitive run,
+  // once a day" wrapper around whichever gamemode you pick here (see
+  // state.leagueVariant, threaded through newGame()/advance()/
+  // startNextLeagueAttempt() to call newRound() or newGuessRound()). This
+  // screen is reached only once League's own Premium gate (same as every
+  // other Premium mode) has already passed.
+  function openLeagueSetup(){
+    sfx.click();
+    els.menuScreen.hidden = true;
+    if (els.customScreen) els.customScreen.hidden = true;
+    if (els.pvpScreen) els.pvpScreen.hidden = true;
+    if (els.paywallScreen) els.paywallScreen.hidden = true;
+    if (els.pregameScreen) els.pregameScreen.hidden = true;
+    if (els.leagueSetupScreen) els.leagueSetupScreen.hidden = false;
+    if (els.menuLink) els.menuLink.hidden = true;
+    if (els.premiumSidebar) els.premiumSidebar.hidden = true;
+    if (els.leftPanels) els.leftPanels.hidden = true;
+    if (els.rightPanels) els.rightPanels.hidden = true;
+  }
+
+  function closeLeagueSetup(){
+    if (els.leagueSetupScreen) els.leagueSetupScreen.hidden = true;
+    openMenu();
+  }
+
+  function chooseLeagueVariant(variant){
+    sfx.click();
+    state.leagueVariant = variant === 'guess' ? 'guess' : 'classic';
+    if (els.leagueSetupScreen) els.leagueSetupScreen.hidden = true;
+    openPregame('league');
   }
 
   // --- Premium paywall --------------------------------------------------
@@ -5270,7 +6184,7 @@
   // so isPremiumUnlocked() falls back to the old local demo-unlock flag
   // there purely so this mode's cards/paywall can still be tried out.
   var PREMIUM_KEY = 'counterweight_premium_unlocked';
-  var PREMIUM_MODES = { endless: true, timeattack: true, headtohead: true, custom: true, league: true };
+  var PREMIUM_MODES = { endless: true, timeattack: true, custom: true, league: true };
   // Accounts permanently comped to Premium, no Stripe subscription needed
   // (e.g. the developer's own account) — checked by email since that's
   // what a signed-in player can see about themselves, rather than needing
@@ -5319,10 +6233,12 @@
     var amountText = String(grant.amount).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     showGiftModal('Gift received! 🎁', 'You just got ' + amountText + ' 💎 added to your account.');
   }
-  // League is still being built: it stays locked on the menu no matter
-  // what — Premium unlock does not open it — and shows a "Coming soon"
-  // badge/tag instead of the usual Premium lock messaging.
-  var COMING_SOON_MODES = { league: true };
+  // Reserved for modes that are locked on the menu no matter what (Premium
+  // unlock does not open them), shown with a "Coming soon" badge/tag instead
+  // of the usual Premium lock messaging. Empty now that League is live —
+  // League instead opens its own gamemode-picker screen (openLeagueSetup())
+  // once Premium is unlocked, same gate every other Premium mode uses.
+  var COMING_SOON_MODES = {};
   var pendingUnlockMode = null;
 
   // Fill these in from your own Stripe + Firebase Extension setup — see
@@ -5569,6 +6485,7 @@
     renderGoogleButton(els.googleSigninBtn);
     renderGoogleButton(els.lbSigninBtn);
     renderGoogleButton(els.paywallSigninBtn);
+    renderGoogleButton(els.pvpSigninBtn);
   }
 
   // The GIS script loads async and may not be ready the instant start()
@@ -5667,18 +6584,30 @@
     sfx.click();
     pregameMode = mode;
     var m = MODES[mode] || MODES.classic;
+    var isLeagueGuess = mode === 'league' && state.leagueVariant === 'guess';
     if (els.pregameIcon) els.pregameIcon.textContent = m.icon;
-    if (els.pregameTitle) els.pregameTitle.textContent = m.title;
+    if (els.pregameTitle) els.pregameTitle.textContent = mode === 'league'
+      ? ('League — ' + (isLeagueGuess ? 'Guess the Weight' : 'Classic'))
+      : m.title;
     var lockInfo = DAILY_LOCK_INFO[mode];
-    var tag = lockInfo ? lockInfo.tag : (PREGAME_TAGS[mode] || '');
+    var tag;
+    if (mode === 'league'){
+      tag = isLeagueGuess
+        ? 'One item, no comparison — how close can you get? One run, once a day.'
+        : 'Compare two items each round — call the heavier one. One run, once a day.';
+    } else {
+      tag = lockInfo ? lockInfo.tag : (PREGAME_TAGS[mode] || '');
+    }
     if (els.pregameTag) els.pregameTag.textContent = tag;
     // Daily Challenge is fixed to Medium for everyone, so its difficulty
     // picker is swapped for a plain note; Guess the Weight has no
     // difficulty concept at all (the log-ratio scoring already scales
-    // itself), so its picker is just hidden with no note; every other
-    // mode (League included) picks difficulty here, once, before Play.
+    // itself), so its picker is just hidden with no note — same goes for
+    // a League run using the Guess the Weight variant; every other mode
+    // (League's Classic variant included) picks difficulty here, once,
+    // before Play.
     var isDaily = mode === 'daily';
-    if (els.diffRow) els.diffRow.hidden = isDaily || mode === 'guess';
+    if (els.diffRow) els.diffRow.hidden = isDaily || mode === 'guess' || isLeagueGuess;
     if (els.dailyNote) els.dailyNote.hidden = !isDaily;
     renderDifficulty();
     // Head-to-head is local pass-and-play with no shared board to show —
@@ -5693,6 +6622,8 @@
     if (els.pregameLeaderboard) els.pregameLeaderboard.hidden = true;
     els.menuScreen.hidden = true;
     if (els.customScreen) els.customScreen.hidden = true;
+    if (els.leagueSetupScreen) els.leagueSetupScreen.hidden = true;
+    if (els.pvpScreen) els.pvpScreen.hidden = true;
     if (els.paywallScreen) els.paywallScreen.hidden = true;
     if (els.pregameScreen) els.pregameScreen.hidden = false;
     if (els.menuLink) els.menuLink.hidden = true;
@@ -5719,7 +6650,9 @@
       var title = (MODES[mode] || MODES.classic).title;
       els.pregameLbHead.textContent = mode === 'daily' ? "Today's leaderboard" : (title + ' leaderboard');
     }
-    var filterFn = mode === 'daily' ? function(r){ return r.dateKey === todayKey(); } : null;
+    var filterFn = mode === 'daily' ? function(r){ return r.dateKey === todayKey(); }
+      : mode === 'league' ? function(r){ return (r.variant || 'classic') === (state.leagueVariant || 'classic'); }
+      : null;
     fetchLeaderboard(mode, filterFn).then(function(board){
       // A newer open/toggle (or leaving the screen and coming back to a
       // different mode) may have started since this fetch went out —
@@ -5759,6 +6692,8 @@
     renderPaywallEnvironmentNotes();
     els.menuScreen.hidden = true;
     if (els.customScreen) els.customScreen.hidden = true;
+    if (els.leagueSetupScreen) els.leagueSetupScreen.hidden = true;
+    if (els.pvpScreen) els.pvpScreen.hidden = true;
     if (els.pregameScreen) els.pregameScreen.hidden = true;
     if (els.paywallScreen) els.paywallScreen.hidden = false;
     if (els.menuLink) els.menuLink.hidden = true;
@@ -5852,17 +6787,28 @@
     sfx.click();
     // Zen has no score or streak to lose, so "counts as a loss" doesn't
     // apply — but it now spends the same one-per-day try every other
-    // locked mode does, so the warning should say that instead.
+    // locked mode does, so the warning should say that instead. PvP has a
+    // real opponent on the other end, so leaving gets its own wording too.
     if (els.abandonDesc){
-      els.abandonDesc.textContent = state.mode === 'zen'
-        ? "Leaving uses up today's Zen session — come back tomorrow for another."
-        : "Leaving counts as a loss — you won't be able to continue this round.";
+      els.abandonDesc.textContent = state.mode === 'pvp'
+        ? 'Leaving now forfeits the match — your opponent will see you left.'
+        : state.mode === 'zen'
+          ? "Leaving uses up today's Zen session — come back tomorrow for another."
+          : "Leaving counts as a loss — you won't be able to continue this round.";
     }
     if (els.abandonOverlay) els.abandonOverlay.hidden = false;
   }
 
   function closeAbandonConfirm(){
     if (els.abandonOverlay) els.abandonOverlay.hidden = true;
+  }
+
+  // Dispatches the abandon-confirm overlay's "Leave" button to whichever
+  // exit a mode actually needs — PvP forfeits the live match instead of
+  // touching the single-player daily-lock bookkeeping abandonGame() does.
+  function handleAbandonLeaveClick(){
+    if (state.mode === 'pvp') pvpAbandonMatch();
+    else abandonGame();
   }
 
   function handleMenuLinkClick(){
@@ -5963,6 +6909,8 @@
     sfx.click();
     els.menuScreen.hidden = true;
     if (els.customScreen) els.customScreen.hidden = false;
+    if (els.leagueSetupScreen) els.leagueSetupScreen.hidden = true;
+    if (els.pvpScreen) els.pvpScreen.hidden = true;
     if (els.pregameScreen) els.pregameScreen.hidden = true;
     if (els.menuLink) els.menuLink.hidden = true;
     if (els.premiumSidebar) els.premiumSidebar.hidden = true;
@@ -6222,7 +7170,7 @@
     if (state.mode === 'league'){
       if (state.round < ROUNDS){
         state.round++;
-        newRound();
+        if (state.leagueVariant === 'guess') newGuessRound(); else newRound();
       } else {
         state.leagueTotal += state.points;
         state.leagueCorrectTotal += state.sessionCorrect;
@@ -6280,7 +7228,9 @@
     var result = await submitScore(entry);
     if (myToken !== state.resultsToken) return;
     noteSaved(entry.name);
-    var filterFn = entry.mode === 'daily' ? function(r){ return r.dateKey === entry.dateKey; } : null;
+    var filterFn = entry.mode === 'daily' ? function(r){ return r.dateKey === entry.dateKey; }
+      : entry.mode === 'league' ? function(r){ return (r.variant || 'classic') === (entry.variant || 'classic'); }
+      : null;
     var board = await fetchLeaderboard(entry.mode, filterFn);
     if (myToken !== state.resultsToken) return;
     var rows = board.rows;
@@ -6294,7 +7244,9 @@
 
   async function refreshLeaderboardOnly(){
     var myToken = state.resultsToken;
-    var filterFn = state.mode === 'daily' ? function(r){ return r.dateKey === todayKey(); } : null;
+    var filterFn = state.mode === 'daily' ? function(r){ return r.dateKey === todayKey(); }
+      : state.mode === 'league' ? function(r){ return (r.variant || 'classic') === (state.leagueVariant || 'classic'); }
+      : null;
     var board = await fetchLeaderboard(state.mode, filterFn);
     if (myToken !== state.resultsToken) return;
     renderLeaderboard(board.rows, null);
@@ -6343,6 +7295,11 @@
         rounds: ROUNDS * LEAGUE_ATTEMPTS,
         difficulty: state.difficulty,
         mode: 'league',
+        // Classic and Guess the Weight score on totally different scales
+        // (a handful of points vs. up to 1000/round) — tagged here so the
+        // league leaderboard can be filtered back apart by variant instead
+        // of ranking two incomparable point systems against each other.
+        variant: state.leagueVariant || 'classic',
         ts: Date.now()
       };
     } else if (state.mode === 'guess'){
@@ -6412,24 +7369,25 @@
     }).join('');
   }
 
-  // Copies state.shareText (set by showResults()) to the clipboard, with a
-  // manual textarea+execCommand fallback for browsers/contexts where the
-  // async Clipboard API is unavailable or blocked (e.g. non-HTTPS, or an
-  // embedded preview). Flips the button's own label to a confirmation
-  // rather than a separate toast, mirroring Wordle's own share button.
-  function copyResultToClipboard(){
-    if (!state.shareText || !els.shareResultBtn) return;
-    var text = state.shareText;
+  // Copies `text` to the clipboard, with a manual textarea+execCommand
+  // fallback for browsers/contexts where the async Clipboard API is
+  // unavailable or blocked (e.g. non-HTTPS, or an embedded preview). Flips
+  // `btn`'s own label to a confirmation rather than a separate toast,
+  // mirroring Wordle's own share button. Shared by the results-screen share
+  // button and the PvP waiting room's "copy code"/"copy invite link"
+  // buttons — same clipboard dance, just a different bit of text and button.
+  function copyTextToClipboard(text, btn){
     function showCopied(){
-      var btn = els.shareResultBtn;
-      if (!btn.dataset.label) btn.dataset.label = btn.textContent;
-      btn.textContent = '✓ Copied!';
-      btn.classList.add('is-copied');
-      clearTimeout(btn._resetTimer);
-      btn._resetTimer = setTimeout(function(){
-        btn.textContent = btn.dataset.label;
-        btn.classList.remove('is-copied');
-      }, 1600);
+      if (btn){
+        if (!btn.dataset.label) btn.dataset.label = btn.textContent;
+        btn.textContent = '✓ Copied!';
+        btn.classList.add('is-copied');
+        clearTimeout(btn._resetTimer);
+        btn._resetTimer = setTimeout(function(){
+          btn.textContent = btn.dataset.label;
+          btn.classList.remove('is-copied');
+        }, 1600);
+      }
     }
     function fallbackCopy(){
       try{
@@ -6445,12 +7403,17 @@
         showCopied();
       } catch(e){ /* clipboard truly unavailable — nothing more we can do */ }
     }
-    sfx.click();
     if (navigator.clipboard && navigator.clipboard.writeText){
       navigator.clipboard.writeText(text).then(showCopied, fallbackCopy);
     } else {
       fallbackCopy();
     }
+  }
+
+  function copyResultToClipboard(){
+    if (!state.shareText || !els.shareResultBtn) return;
+    sfx.click();
+    copyTextToClipboard(state.shareText, els.shareResultBtn);
   }
 
   // Governs the results-screen leaderboard's sign-in prompt: shows the
@@ -6516,18 +7479,34 @@
       markModePlayedToday('league');
       renderMenuCardStates();
       var leagueRounds = ROUNDS * LEAGUE_ATTEMPTS;
-      var leagueMax = roundPts(leagueRounds * MAX_ROUND_POINTS * currentPointsMult());
-      var leagueTier = resultTier(state.leagueTotal, leagueMax);
       var leagueTriesNote = LEAGUE_ATTEMPTS > 1 ? (' across ' + LEAGUE_ATTEMPTS + ' tries') : '';
-      els.resultsScore.innerHTML = formatPoints(state.leagueTotal) + '<small> / ' + formatPoints(leagueMax) + ' pts</small>';
-      els.resultsMsg.textContent = leagueTier.msg;
-      els.resultsSub.textContent = leagueTier.sub + ' (' + state.leagueCorrectTotal + '/' + leagueRounds + ' correct' + leagueTriesNote + ') · back tomorrow for another run.';
       if (els.lbHead) els.lbHead.textContent = 'League leaderboard';
-      sfx.results(state.leagueCorrectTotal / leagueRounds >= 0.6);
-      state.shareText = 'Counterweight — League ' + MODES.league.icon + '\n' +
-        formatPointsShare(state.leagueTotal) + '/' + formatPointsShare(leagueMax) + ' pts • ' + state.leagueCorrectTotal + '/' + leagueRounds + ' correct\n' +
-        buildRoundGrid() + '\n' +
-        SHARE_URL;
+      if (state.leagueVariant === 'guess'){
+        // Guess the Weight scores on a totally different scale (up to
+        // GUESS_MAX_POINTS per round, no correct/incorrect concept) — same
+        // tiering/share format the standalone Guess the Weight mode uses.
+        var leagueGuessMax = GUESS_MAX_POINTS * leagueRounds;
+        var leagueGuessTier = guessResultTier(state.leagueTotal, leagueGuessMax);
+        els.resultsScore.innerHTML = formatPoints(state.leagueTotal) + '<small> / ' + formatPoints(leagueGuessMax) + ' pts</small>';
+        els.resultsMsg.textContent = leagueGuessTier.msg;
+        els.resultsSub.textContent = leagueGuessTier.sub + leagueTriesNote + ' · back tomorrow for another run.';
+        sfx.results(state.leagueTotal / leagueGuessMax >= 0.5);
+        state.shareText = 'Counterweight — League: Guess the Weight ' + MODES.league.icon + '\n' +
+          formatPointsShare(state.leagueTotal) + '/' + formatPointsShare(leagueGuessMax) + ' pts\n' +
+          buildGuessGrid() + '\n' +
+          SHARE_URL;
+      } else {
+        var leagueMax = roundPts(leagueRounds * MAX_ROUND_POINTS * currentPointsMult());
+        var leagueTier = resultTier(state.leagueTotal, leagueMax);
+        els.resultsScore.innerHTML = formatPoints(state.leagueTotal) + '<small> / ' + formatPoints(leagueMax) + ' pts</small>';
+        els.resultsMsg.textContent = leagueTier.msg;
+        els.resultsSub.textContent = leagueTier.sub + ' (' + state.leagueCorrectTotal + '/' + leagueRounds + ' correct' + leagueTriesNote + ') · back tomorrow for another run.';
+        sfx.results(state.leagueCorrectTotal / leagueRounds >= 0.6);
+        state.shareText = 'Counterweight — League: Classic ' + MODES.league.icon + '\n' +
+          formatPointsShare(state.leagueTotal) + '/' + formatPointsShare(leagueMax) + ' pts • ' + state.leagueCorrectTotal + '/' + leagueRounds + ' correct\n' +
+          buildRoundGrid() + '\n' +
+          SHARE_URL;
+      }
     } else if (state.mode === 'guess'){
       var guessMax = GUESS_MAX_POINTS * ROUNDS;
       var guessTier = guessResultTier(state.points, guessMax);
@@ -6711,12 +7690,38 @@
         var mode = card.dataset.mode;
         if (COMING_SOON_MODES[mode]) return;
         if (PREMIUM_MODES[mode] && !isPremiumUnlocked()) openPaywall(mode);
+        else if (mode === 'league') openLeagueSetup();
+        else if (mode === 'pvp') openPvpLobby();
         else launchMode(mode);
       });
     });
+    if (els.leagueSetupBackBtn) els.leagueSetupBackBtn.addEventListener('click', closeLeagueSetup);
+    if (els.leagueVariantClassicBtn) els.leagueVariantClassicBtn.addEventListener('click', function(){ chooseLeagueVariant('classic'); });
+    if (els.leagueVariantGuessBtn) els.leagueVariantGuessBtn.addEventListener('click', function(){ chooseLeagueVariant('guess'); });
+    if (els.pvpBackBtn) els.pvpBackBtn.addEventListener('click', pvpLeaveMatch);
+    if (els.pvpCreateBtn) els.pvpCreateBtn.addEventListener('click', pvpCreateMatch);
+    if (els.pvpJoinBtn) els.pvpJoinBtn.addEventListener('click', function(){ pvpJoinMatch(els.pvpJoinCode ? els.pvpJoinCode.value : ''); });
+    if (els.pvpJoinCode) els.pvpJoinCode.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') pvpJoinMatch(els.pvpJoinCode.value);
+    });
+    if (els.pvpCancelBtn) els.pvpCancelBtn.addEventListener('click', pvpLeaveMatch);
+    if (els.pvpCopyLinkBtn) els.pvpCopyLinkBtn.addEventListener('click', function(){
+      sfx.click();
+      if (!pvp) return;
+      var link = window.location.origin + window.location.pathname + '?match=' + pvp.matchId;
+      copyTextToClipboard(link, els.pvpCopyLinkBtn);
+    });
+    if (els.pvpCopyCodeBtn) els.pvpCopyCodeBtn.addEventListener('click', function(){
+      sfx.click();
+      if (!pvp) return;
+      copyTextToClipboard(pvp.matchId, els.pvpCopyCodeBtn);
+    });
+    if (els.pvpEndedMenuBtn) els.pvpEndedMenuBtn.addEventListener('click', function(){ sfx.click(); pvpCleanup(); openMenu(); });
+    if (els.pvpMenuBtn) els.pvpMenuBtn.addEventListener('click', function(){ sfx.click(); pvpCleanup(); openMenu(); });
+    if (els.pvpRematchBtn) els.pvpRematchBtn.addEventListener('click', function(){ pvpCleanup(); openPvpLobby(); });
     if (els.menuLink) els.menuLink.addEventListener('click', handleMenuLinkClick);
     if (els.abandonStayBtn) els.abandonStayBtn.addEventListener('click', function(){ sfx.click(); closeAbandonConfirm(); });
-    if (els.abandonLeaveBtn) els.abandonLeaveBtn.addEventListener('click', abandonGame);
+    if (els.abandonLeaveBtn) els.abandonLeaveBtn.addEventListener('click', handleAbandonLeaveClick);
     if (els.giftOkBtn) els.giftOkBtn.addEventListener('click', function(){ sfx.click(); closeGiftModal(); });
     if (els.paywallBackBtn) els.paywallBackBtn.addEventListener('click', closePaywall);
     if (els.paywallUnlockBtn) els.paywallUnlockBtn.addEventListener('click', unlockPremium);
@@ -6816,6 +7821,14 @@
         refreshGuessUnitDisplays();
       });
     }
+    if (els.guessUnitBtnT){
+      els.guessUnitBtnT.addEventListener('click', function(){
+        if (getGuessUnit() === 't') return;
+        sfx.click();
+        setGuessUnit('t');
+        refreshGuessUnitDisplays();
+      });
+    }
     if (els.leftPanelsToggle){
       els.leftPanelsToggle.addEventListener('click', function(){
         sfx.click();
@@ -6895,6 +7908,7 @@
       leagueAttempt: 1,
       leagueTotal: 0,
       leagueCorrectTotal: 0,
+      leagueVariant: (saved && saved.leagueVariant) || 'classic',
       p1Points: 0, p1Correct: 0,
       p2Points: 0, p2Correct: 0,
       activePlayer: 1,
@@ -6944,6 +7958,10 @@
         // watch ever fails to attach, the once-a-second menu refresh) to
         // eventually catch up.
         renderMenuCardStates();
+        // The PvP lobby's sign-in gate (see pvpRenderLobbyGate) reacts live
+        // to this same auth state — harmless no-op whenever that screen
+        // isn't the one currently open.
+        if (els.pvpScreen && !els.pvpScreen.hidden) pvpRenderLobbyGate();
         watchPremiumSubscription(fb, user ? user.uid : null);
         // Chained after the cloud merge resolves (rather than fired
         // alongside it) so a pending gem grant is checked against the
@@ -6965,6 +7983,14 @@
       });
     });
     openMenu();
+
+    // A shared PvP invite link (?match=CODE) lands you straight on the
+    // join screen with the code already filled in, one tap away from
+    // playing, rather than making you find PvP in the menu yourself and
+    // retype a 6-character code by hand.
+    try{
+      if (new URLSearchParams(window.location.search).get('match')) openPvpLobby();
+    } catch(e){}
 
     // Live countdown on any locked menu card, and auto-unlocks the moment
     // local midnight passes while the menu happens to be sitting open —
