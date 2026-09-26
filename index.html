@@ -4828,6 +4828,47 @@
     suppressProgressPush = false;
   }
 
+  // Wipes achievements/objectives/stats (gems, premium, everything
+  // currentProgressSnapshot() tracks) back to a fresh, signed-out state.
+  // Called the moment a signed-in session actually ends (see the
+  // onAuthStateChanged transition check in start(), and signOutOfGoogle()
+  // for instant feedback before that async round-trip completes) — never
+  // for a page load that was already signed out, so a player who's never
+  // touched Google sign-in keeps their local progress exactly as before.
+  // Daily-lock timestamps and other per-device flags live in their own
+  // separate localStorage keys and are deliberately left untouched here.
+  // `uidToFlush` is the account that was JUST signed out of (its own
+  // state.firebaseUser has typically already been nulled by the time this
+  // runs, so callers pass the uid along rather than this reading it back).
+  function resetLocalProgressForSignOut(uidToFlush){
+    // Whatever this session actually earned in the last 800ms (a fresh
+    // achievement, a gem purchase, ...) may still be sitting in the
+    // debounced push queue — flush it up to the account's own cloud doc
+    // RIGHT NOW before wiping local state below, otherwise it would be
+    // lost for good: erased locally, and the pending push that would have
+    // saved it is about to be cancelled.
+    clearTimeout(progressPushTimer);
+    if (uidToFlush){
+      var pendingSnapshot = currentProgressSnapshot();
+      firebaseAppPromise.then(function(fb){
+        if (!fb) return;
+        fb.firestore().collection(PROGRESS_COLLECTION).doc(uidToFlush)
+          .set(pendingSnapshot, { merge: true }).catch(function(){});
+      });
+    }
+    suppressProgressPush = true;
+    state.stats = { best: 0, totalPlayed: 0, fastAnswers: 0, dailyCompletions: 0, gems: 0, premiumGemsExpiresAt: 0, updatedAt: 0 };
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.stats)); } catch(e){}
+    try{ localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify({})); } catch(e){}
+    try{ localStorage.setItem(OBJECTIVES_KEY, JSON.stringify({})); } catch(e){}
+    renderAchievements();
+    renderObjectives();
+    renderStats();
+    renderGemDisplay();
+    renderMenuCardStates();
+    suppressProgressPush = false;
+  }
+
   // Runs once right after sign-in completes (see onAuthStateChanged in
   // start()): pulls whatever this player already has in the cloud (a
   // brand new player has no doc yet, so `cloud` is just null). If this
@@ -6486,6 +6527,11 @@
     sfx.click();
     clearGoogleProfile();
     renderAccount();
+    // The actual progress reset happens once, from the onAuthStateChanged
+    // transition check in start() — real Firebase always fires that right
+    // after signOut() resolves. Deliberately not also resetting here: doing
+    // it in both places would flush-then-immediately-reflush an
+    // already-zeroed snapshot, overwriting the good flush with zeros.
     try{ if (window.google && google.accounts && google.accounts.id) google.accounts.id.disableAutoSelect(); } catch(e){}
     firebaseAppPromise.then(function(fb){ if (fb) fb.auth().signOut().catch(function(){}); });
   }
@@ -7968,7 +8014,15 @@
     firebaseAppPromise.then(function(fb){
       if (!fb) { renderLeaderboardSignInPrompt(); return; }
       fb.auth().onAuthStateChanged(function(user){
+        // Catches every path back to signed-out (the sign-out button
+        // already resets instantly itself — see signOutOfGoogle — but also
+        // a session expiring, or another tab/device signing this one out).
+        // Gated on "WAS signed in" so a page load that was never signed in
+        // to begin with (a lifelong guest player) is never touched.
+        var wasSignedIn = !!state.firebaseUser;
+        var previousUid = state.firebaseUser && state.firebaseUser.uid;
         state.firebaseUser = user;
+        if (wasSignedIn && !user) resetLocalProgressForSignOut(previousUid);
         renderLeaderboardSignInPrompt();
         renderPaywallEnvironmentNotes();
         // isCompedAccount() only needs state.firebaseUser (set just above),
