@@ -6274,12 +6274,22 @@
   });
 
   function isPremiumUnlocked(){
-    // Gem-purchased Premium (see unlockPremium()'s `gems` branch) is a
-    // plain local expiry check, independent of Firebase/Stripe entirely —
-    // it applies the same whether or not the subscription path below is
-    // even available.
+    if (firebaseAvailable){
+      // Gem-purchased Premium (see unlockPremium()'s `gems` branch) now
+      // requires being signed in — the expiry itself is still just a local
+      // field (state.stats.premiumGemsExpiresAt), but syncProgressFromCloud's
+      // per-uid merge/reset already means a DIFFERENT account correctly
+      // zeroes it out locally, so gating on "signed in at all" is enough to
+      // make this only apply to the account that actually bought it: signed
+      // out, or switched to another account, and it's gone; sign back into
+      // the same account and it's back.
+      if (state.firebaseUser && (state.stats.premiumGemsExpiresAt || 0) > Date.now()) return true;
+      return premiumSubscriptionActive || isCompedAccount();
+    }
+    // No real backend reachable at all (offline/preview build, no accounts
+    // to speak of) — fall back to the old fully-local behavior so gems and
+    // the demo-unlock flag both still work for trying the game out here.
     if ((state.stats.premiumGemsExpiresAt || 0) > Date.now()) return true;
-    if (firebaseAvailable) return premiumSubscriptionActive || isCompedAccount();
     try{ return localStorage.getItem(PREMIUM_KEY) === '1'; } catch(e){ return false; }
   }
   function setPremiumUnlocked(v){
