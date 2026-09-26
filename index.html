@@ -4816,6 +4816,15 @@
     renderAchievements();
     renderObjectives();
     renderStats();
+    // Premium can change here too (gem-bought premiumGemsExpiresAt merging
+    // in from another device, or a different account's sync zeroing it back
+    // out — see the safeToMergeLocal branch in syncProgressFromCloud), so
+    // the menu's lock badges need to be refreshed right along with
+    // everything else this function already re-renders. Without this,
+    // Premium can visually stay "stuck" showing whatever it was at the
+    // moment sign-in fired (before this cloud round-trip resolved) until
+    // some unrelated screen transition happens to call this later.
+    renderMenuCardStates();
     suppressProgressPush = false;
   }
 
