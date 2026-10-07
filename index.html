@@ -2327,7 +2327,7 @@
     </button>
 
     <button class="menu-card menu-card-daily" data-mode="league" type="button">
-      <span class="menu-card-lock-badge" hidden>🔒 Premium</span>
+      <span class="menu-card-lock-badge" hidden>🔒 Locked</span>
       <span class="menu-card-icon" aria-hidden="true">🏆</span>
       <span class="menu-card-daily-text">
         <span class="menu-card-title">League</span>
@@ -5155,6 +5155,18 @@
       state.roundDurationMs = 6000;
     } else if (state.mode === 'zen'){
       els.timerRow.hidden = true;
+    } else if (state.mode === 'daily'){
+      // Daily Challenge plays untimed now — no visible countdown and no
+      // auto-forfeit-on-timeout (startTimer() would add both). Still mark
+      // a start time and the normal per-round budget, same basis every
+      // other mode uses, purely so the "answered Fast" bonus/achievement
+      // (state.stats.fastAnswers, see checkFastAchievements()) keeps
+      // working the same as it always has — it's about how quickly you
+      // actually answer, not about a timer pressuring you to.
+      var dailySeconds = (DIFFICULTIES[state.difficulty] || DIFFICULTIES.medium).seconds;
+      state.roundStartTime = performance.now();
+      state.roundDurationMs = dailySeconds * 1000;
+      els.timerRow.hidden = true;
     } else {
       startTimer();
     }
@@ -5289,12 +5301,16 @@
       // Deferred so the slider isn't fighting the round-transition paint.
       setTimeout(function(){ els.guessSlider.focus(); }, 50);
     }
+    // Standalone Guess the Weight only (not League's variant, not PvP —
+    // see startGuessTimer's comment) plays against a per-round clock.
+    if (state.mode === 'guess') startGuessTimer();
   }
 
   function submitGuess(){
     if (state.answered || state.busy || !els.guessSlider) return;
     state.busy = true;
     state.answered = true;
+    stopTimer();
     var guessG = sliderToGrams(parseFloat(els.guessSlider.value));
     state.guessValueG = guessG;
     var isNatural = !!(state.guessItem && state.guessItem.natural);
@@ -6001,6 +6017,102 @@
     if (state.mode !== 'timeattack') els.timerRow.hidden = true;
   }
 
+  // --- Guess the Weight (standalone mode only): per-round timer ----------
+  // Mirrors startTimer()'s visual countdown bar, but on expiry calls
+  // guessTimeUp() instead of finishRound(null) — Guess the Weight has no
+  // chosenIndex/heavier-card concept, so it needs its own forfeit path.
+  // Deliberately NOT used by League's Guess the Weight variant or PvP
+  // (pvpStartRound has its own 20s per-round clock) — only standalone
+  // newGuessRound() calls this, gated on state.mode === 'guess'.
+  function startGuessTimer(){
+    clearTimer();
+    var seconds = (DIFFICULTIES[state.difficulty] || DIFFICULTIES.medium).seconds;
+    var totalMs = seconds * 1000;
+    var startTime = performance.now();
+    state.timeLeft = seconds;
+    state.roundStartTime = startTime;
+    state.roundDurationMs = totalMs;
+
+    els.timerRow.hidden = false;
+    els.timerNum.textContent = seconds;
+    els.timerFill.style.width = '100%';
+    els.timerFill.style.backgroundColor = 'rgb(' + TIMER_GOOD.join(',') + ')';
+    els.timerNum.style.color = 'rgb(' + TIMER_GOOD.join(',') + ')';
+    // Guess the Weight scores on accuracy, not speed, so the speed-tier
+    // bonus marks (Fast/Medium cutoffs, see renderTimerBonusMark) don't
+    // apply here — keep them off the bar.
+    if (els.timerBonusMark) els.timerBonusMark.hidden = true;
+    if (els.timerBonusMark2) els.timerBonusMark2.hidden = true;
+
+    function tick(now){
+      var elapsedMs = now - startTime;
+      var frac = elapsedMs / totalMs;
+      if (frac >= 1) frac = 1;
+
+      els.timerFill.style.width = ((1 - frac) * 100) + '%';
+      var r = Math.round(TIMER_GOOD[0] + (TIMER_BAD[0] - TIMER_GOOD[0]) * frac);
+      var g = Math.round(TIMER_GOOD[1] + (TIMER_BAD[1] - TIMER_GOOD[1]) * frac);
+      var b = Math.round(TIMER_GOOD[2] + (TIMER_BAD[2] - TIMER_GOOD[2]) * frac);
+      var color = 'rgb(' + r + ',' + g + ',' + b + ')';
+      els.timerFill.style.backgroundColor = color;
+      els.timerNum.style.color = color;
+
+      var secondsLeft = Math.max(Math.ceil(seconds - elapsedMs / 1000), 0);
+      if (secondsLeft !== state.timeLeft){
+        state.timeLeft = secondsLeft;
+        els.timerNum.textContent = secondsLeft;
+        if (secondsLeft > 0 && secondsLeft <= 3) sfx.tick();
+      }
+
+      if (frac >= 1){
+        state.timerId = null;
+        guessTimeUp();
+        return;
+      }
+      state.timerId = requestAnimationFrame(tick);
+    }
+
+    state.timerId = requestAnimationFrame(tick);
+  }
+
+  // Called when Guess the Weight's timer runs out before a guess is
+  // submitted — forfeits the round at 0 points, same "ran out of time is
+  // a miss" rule every other timed mode follows (see finishRound's
+  // timedOut branch), while still revealing the actual weight so the
+  // round feels finished rather than just disappearing.
+  function guessTimeUp(){
+    if (state.answered || state.busy) return;
+    state.busy = true;
+    state.answered = true;
+    stopTimer();
+    if (els.guessSlider) els.guessSlider.disabled = true;
+    if (els.guessSubmitBtn) els.guessSubmitBtn.disabled = true;
+
+    var isNatural = !!(state.guessItem && state.guessItem.natural);
+    var actualG = state.guessItem ? state.guessItem.g : 0;
+    state.guessValueG = null;
+    renderGuessHeatmap(actualG, isNatural);
+    if (els.guessFeedback){
+      els.guessFeedback.hidden = false;
+      if (els.guessFeedbackActual) els.guessFeedbackActual.textContent =
+        (isNatural ? 'A typical one weighs about ' : 'It actually weighs ') + formatGuessWeight(actualG) + ' — time\'s up!';
+      if (els.guessFeedbackPoints){
+        els.guessFeedbackPoints.textContent = '+0 pts — Too slow.';
+        els.guessFeedbackPoints.className = 'guess-feedback-points tier-red';
+      }
+    }
+    sfx.wrong();
+
+    // Only ever reached for standalone Guess the Weight (startGuessTimer
+    // is gated on state.mode === 'guess') — League's variant and PvP each
+    // run their own timer, so there's no other mode to branch on here.
+    state.roundLog.push({ points: 0 });
+    renderStats();
+    els.next.hidden = false;
+    els.next.textContent = state.round < ROUNDS ? 'Next round →' : 'See results →';
+    state.busy = false;
+  }
+
   // --- Time Attack's global clock ---------------------------------------
   // A second, independent countdown for Time Attack: it runs across the
   // whole session rather than resetting each round, and ending it ends
@@ -6286,10 +6398,11 @@
   }
   // Reserved for modes that are locked on the menu no matter what (Premium
   // unlock does not open them), shown with a "Coming soon" badge/tag instead
-  // of the usual Premium lock messaging. Empty now that League is live —
-  // League instead opens its own gamemode-picker screen (openLeagueSetup())
-  // once Premium is unlocked, same gate every other Premium mode uses.
-  var COMING_SOON_MODES = {};
+  // of the usual Premium lock messaging. League is temporarily back in here
+  // — pulled from live play for now — so its card is disabled and the
+  // click handler no-ops regardless of Premium state; drop it from this
+  // object to re-enable openLeagueSetup()'s usual Premium gate.
+  var COMING_SOON_MODES = { league: true };
   var pendingUnlockMode = null;
 
   // Fill these in from your own Stripe + Firebase Extension setup — see
