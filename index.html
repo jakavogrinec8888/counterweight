@@ -2072,6 +2072,36 @@
     padding: 2px;
   }
   .account-signout:hover{ color: var(--text); }
+  .account-playername-row{
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .account-playername-row[hidden]{ display: none; }
+  .account-playername-row input{
+    flex: 1;
+    min-width: 0;
+    background: var(--panel);
+    border: 1px solid var(--steel);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    padding: 6px 9px;
+  }
+  .account-playername-row input:focus-visible{ outline: 2px solid var(--amber); outline-offset: 1px; }
+  .account-playername-row button{
+    flex: none;
+    background: var(--amber);
+    color: #1a1305;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.76rem;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
   .account-sync-note{
     font-size: 0.68rem;
     color: var(--text-dim);
@@ -2914,6 +2944,10 @@
         <img class="account-avatar" id="account-avatar" alt="" referrerpolicy="no-referrer">
         <span class="account-name" id="account-name"></span>
         <button class="account-signout" id="account-signout-btn" type="button">Sign out</button>
+      </div>
+      <div class="account-playername-row" id="account-playername-row" hidden>
+        <input type="text" id="account-playername-input" maxlength="16" placeholder="Player name" aria-label="Player name shown on leaderboards">
+        <button id="account-playername-save-btn" type="button">Save</button>
       </div>
       <p class="account-sync-note" id="account-sync-note" hidden>🔄 Achievements, objectives &amp; stats sync to this account</p>
     </aside>
@@ -4515,6 +4549,9 @@
     accountName: document.getElementById('account-name'),
     accountSignoutBtn: document.getElementById('account-signout-btn'),
     accountSyncNote: document.getElementById('account-sync-note'),
+    accountPlayerNameRow: document.getElementById('account-playername-row'),
+    accountPlayerNameInput: document.getElementById('account-playername-input'),
+    accountPlayerNameSaveBtn: document.getElementById('account-playername-save-btn'),
     lbHead: document.getElementById('lb-head'),
     lbSigninRow: document.getElementById('lb-signin-row'),
     lbSigninBtn: document.getElementById('lb-signin-btn'),
@@ -4768,6 +4805,7 @@
         dailyCompletions: state.stats.dailyCompletions || 0,
         gems: state.stats.gems || 0,
         premiumGemsExpiresAt: state.stats.premiumGemsExpiresAt || 0,
+        playerName: state.stats.playerName || '',
         updatedAt: state.stats.updatedAt || 0
       }
     };
@@ -4791,14 +4829,17 @@
     ['best', 'totalPlayed', 'fastAnswers', 'dailyCompletions'].forEach(function(k){
       out[k] = Math.max(a[k] || 0, b[k] || 0);
     });
-    // gems and premiumGemsExpiresAt aren't monotonic (gems can now be
-    // spent — see spendGems()) — max() would un-spend gems or restore an
-    // already-lapsed gem-Premium period on whichever side happens to hold
-    // the higher number, so instead take BOTH fields from whichever side's
-    // updatedAt is more recent (last write wins).
+    // gems, premiumGemsExpiresAt and playerName aren't monotonic (gems can
+    // now be spent — see spendGems() — and a name can be renamed to
+    // something "smaller") — max() would un-spend gems, restore an
+    // already-lapsed gem-Premium period, or revert a rename on whichever
+    // side happens to hold the higher/earlier value, so instead take ALL
+    // THREE fields from whichever side's updatedAt is more recent (last
+    // write wins), same as gems/premiumGemsExpiresAt already did.
     var newer = (a.updatedAt || 0) >= (b.updatedAt || 0) ? a : b;
     out.gems = newer.gems || 0;
     out.premiumGemsExpiresAt = newer.premiumGemsExpiresAt || 0;
+    out.playerName = newer.playerName || '';
     out.updatedAt = Math.max(a.updatedAt || 0, b.updatedAt || 0);
     return out;
   }
@@ -4825,6 +4866,11 @@
     // moment sign-in fired (before this cloud round-trip resolved) until
     // some unrelated screen transition happens to call this later.
     renderMenuCardStates();
+    // playerName rides along inside stats (see currentProgressSnapshot()) —
+    // a synced rename from another device needs the account sidebar (name
+    // display + the editable input) refreshed right along with everything
+    // else here, same reasoning as the renderMenuCardStates() call above.
+    renderAccount();
     suppressProgressPush = false;
   }
 
@@ -4857,7 +4903,7 @@
       });
     }
     suppressProgressPush = true;
-    state.stats = { best: 0, totalPlayed: 0, fastAnswers: 0, dailyCompletions: 0, gems: 0, premiumGemsExpiresAt: 0, updatedAt: 0 };
+    state.stats = { best: 0, totalPlayed: 0, fastAnswers: 0, dailyCompletions: 0, gems: 0, premiumGemsExpiresAt: 0, updatedAt: 0, playerName: '' };
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.stats)); } catch(e){}
     try{ localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify({})); } catch(e){}
     try{ localStorage.setItem(OBJECTIVES_KEY, JSON.stringify({})); } catch(e){}
@@ -4909,7 +4955,7 @@
         // here would leave the previous account's numbers stuck in memory
         // for a brand-new account with no cloud doc yet. Spell out the
         // zeroed shape explicitly so every synced field actually resets.
-        stats: (cloud && cloud.stats) || { best: 0, totalPlayed: 0, fastAnswers: 0, dailyCompletions: 0, gems: 0, premiumGemsExpiresAt: 0, updatedAt: 0 }
+        stats: (cloud && cloud.stats) || { best: 0, totalPlayed: 0, fastAnswers: 0, dailyCompletions: 0, gems: 0, premiumGemsExpiresAt: 0, updatedAt: 0, playerName: '' }
       };
       applyProgressSnapshot(merged);
       try{ localStorage.setItem(LAST_SYNCED_UID_KEY, uid); } catch(e){}
@@ -6396,6 +6442,29 @@
     var amountText = String(grant.amount).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     showGiftModal('Gift received! 🎁', 'You just got ' + amountText + ' 💎 added to your account.');
   }
+
+  // One-time admin achievement wipes for specific accounts (manual
+  // request — "clear completed achievements on this account"), same claim
+  // mechanism as GEM_GRANTS above: there's no server to edit that
+  // account's Firestore doc directly, so the reset is applied client-side
+  // the moment that email next signs in, guarded by the same one-way
+  // "objective" flag so a slow second device can't re-clear (or, worse,
+  // leave a stale local copy that un-clears it on the next sync) things
+  // twice. Only touches achievements — objectives/gems/premium/stats are
+  // untouched. Remove an entry once it's been delivered.
+  var ACHIEVEMENT_RESETS = {
+    'jvvogrinec@gmail.com': { id: 'reset_achievements_jvvogrinec_20261008' }
+  };
+  function applyPendingAchievementResets(){
+    var email = state.firebaseUser && state.firebaseUser.email;
+    var reset = email && ACHIEVEMENT_RESETS[email.toLowerCase()];
+    if (!reset || isObjectiveUnlocked(reset.id)) return;
+    unlockObjective(reset.id);
+    try{ localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify({})); } catch(e){}
+    renderAchievements();
+    queueProgressPush();
+    showGiftModal('Achievements reset', 'Your completed achievements on this account have been cleared.');
+  }
   // Reserved for modes that are locked on the menu no matter what (Premium
   // unlock does not open them), shown with a "Coming soon" badge/tag instead
   // of the usual Premium lock messaging. League is temporarily back in here
@@ -6625,14 +6694,42 @@
     });
   }
 
+  // The player's own override for what shows on leaderboards/PvP instead
+  // of their Google name or email (see firebaseDisplayName()) — lives
+  // inside state.stats so it rides the exact same save/sync/merge path as
+  // gems and premiumGemsExpiresAt (see currentProgressSnapshot(),
+  // mergeStatCounters()): local-first, synced to this Google account,
+  // last-write-wins across devices, wiped on sign-out along with the rest
+  // of that account's progress (see resetLocalProgressForSignOut()).
+  function getPlayerName(){
+    return (state.stats && state.stats.playerName) || '';
+  }
+  function setPlayerName(raw){
+    var trimmed = String(raw || '').trim();
+    // sanitizeName() never returns an empty string (it falls back to
+    // "Anonymous") — an explicitly cleared field should instead go back
+    // to showing the Google name/email, not literally save "Anonymous".
+    var name = trimmed ? sanitizeName(trimmed) : '';
+    state.stats.playerName = name;
+    state.stats.updatedAt = Date.now();
+    saveStats();
+    renderAccount();
+  }
+
   function renderAccount(){
     var profile = getSavedGoogleProfile();
     if (els.accountProfile) els.accountProfile.hidden = !profile;
     if (els.googleSigninBtn) els.googleSigninBtn.hidden = !!profile;
     if (els.accountSyncNote) els.accountSyncNote.hidden = !profile;
+    if (els.accountPlayerNameRow) els.accountPlayerNameRow.hidden = !profile;
     if (profile){
+      var customName = getPlayerName();
       if (els.accountAvatar) els.accountAvatar.src = profile.picture || '';
-      if (els.accountName) els.accountName.textContent = profile.name || profile.email || 'Signed in';
+      if (els.accountName) els.accountName.textContent = customName || profile.name || profile.email || 'Signed in';
+      if (els.accountPlayerNameInput && document.activeElement !== els.accountPlayerNameInput){
+        els.accountPlayerNameInput.value = customName;
+        els.accountPlayerNameInput.placeholder = profile.name || profile.email || 'Player name';
+      }
     }
   }
 
@@ -7382,12 +7479,16 @@
     els.lbNote.textContent = 'Saved as ' + name;
   }
 
-  // The Google display name/email of whoever's currently signed into
-  // Firebase, or null when nobody is — used both for the leaderboard
-  // entry's `name` field and anywhere else that needs to show it.
+  // Whatever name should represent whoever's currently signed into
+  // Firebase — their own player-name override if they've set one (see
+  // getPlayerName()), else their Google display name, else their email —
+  // or null when nobody is signed in. Used for the leaderboard entry's
+  // `name` field, PvP's host/guest names, and anywhere else that needs to
+  // show "who is this".
   function firebaseDisplayName(){
     var user = state.firebaseUser;
-    return user ? sanitizeName(user.displayName || user.email || 'Player') : null;
+    if (!user) return null;
+    return sanitizeName(getPlayerName() || user.displayName || user.email || 'Player');
   }
 
   // Submits one game's result, then re-renders the board with that entry
@@ -8022,6 +8123,12 @@
     });
     if (els.leagueNextBtn) els.leagueNextBtn.addEventListener('click', startNextLeagueAttempt);
     if (els.accountSignoutBtn) els.accountSignoutBtn.addEventListener('click', signOutOfGoogle);
+    if (els.accountPlayerNameSaveBtn) els.accountPlayerNameSaveBtn.addEventListener('click', function(){
+      if (els.accountPlayerNameInput) setPlayerName(els.accountPlayerNameInput.value);
+    });
+    if (els.accountPlayerNameInput) els.accountPlayerNameInput.addEventListener('keydown', function(e){
+      if (e.key === 'Enter'){ e.preventDefault(); setPlayerName(els.accountPlayerNameInput.value); els.accountPlayerNameInput.blur(); }
+    });
     els.achievementBadges.forEach(function(badge){
       badge.addEventListener('mouseenter', function(){ showAchvTooltip(badge); });
       badge.addEventListener('mouseleave', hideAchvTooltip);
@@ -8156,7 +8263,10 @@
         // before syncing — otherwise the same grant could pay out again
         // on a second device that hadn't pulled down the first device's
         // claim yet.
-        if (user) syncProgressFromCloud(fb, user.uid).then(applyPendingGemGrants);
+        if (user) syncProgressFromCloud(fb, user.uid).then(function(){
+          applyPendingGemGrants();
+          applyPendingAchievementResets();
+        });
         if (user && state.pendingPremiumCheckout){
           var plan = state.pendingPremiumCheckout;
           state.pendingPremiumCheckout = null;
